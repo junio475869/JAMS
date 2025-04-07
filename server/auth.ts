@@ -112,14 +112,20 @@ export function setupAuth(app: Express) {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const firebaseUID = decodedToken.uid;
         
-        // Check if user exists by email
-        let user = await storage.getUserByEmail(email);
+        // Check if user exists by either email or firebaseUID
+        let user = await storage.getUserByEmail(email) || await storage.getUserByFirebaseUID(firebaseUID);
         
-        if (!user) {
+        if (user) {
+          // Update existing user with Firebase UID and latest info
+          user = await storage.updateUser(user.id, { 
+            firebaseUID,
+            fullName: displayName || user.fullName,
+            profilePicture: photoURL || user.profilePicture,
+            email: email // Update email in case it changed
+          });
+        } else {
           // Create a new user in our database
-          // Generate a username from the email
           const username = email.split('@')[0] + '-' + Math.floor(Math.random() * 1000);
-          
           user = await storage.createUser({
             username,
             email,
@@ -127,12 +133,6 @@ export function setupAuth(app: Express) {
             password: await hashPassword(generateRandomPassword()),
             profilePicture: photoURL || '',
             firebaseUID,
-          });
-        } else if (!user.firebaseUID) {
-          // Update existing user with Firebase UID if they don't have one
-          user = await storage.updateUser(user.id, { 
-            firebaseUID,
-            profilePicture: user.profilePicture || photoURL || ''
           });
         }
         
