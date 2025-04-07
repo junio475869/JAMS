@@ -240,7 +240,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Google Sign In Successful",
         description: "You have successfully signed in with Google.",
       });
-
+      
+      window.location.href = '/';
       return userData;
     } catch (firebaseError: any) {
         console.error("Firebase Google sign in error:", firebaseError);

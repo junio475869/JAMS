@@ -18,9 +18,10 @@ import { Button } from "@/components/ui/button";
 interface SidebarProps {
   isOpen: boolean;
   closeSidebar: () => void;
+  isAuthenticated: boolean; // Added to track authentication status
 }
 
-export function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
+export function Sidebar({ isOpen, closeSidebar, isAuthenticated }: SidebarProps) {
   const [location, setLocation] = useLocation();
 
   const handleNavigation = (path: string) => {
@@ -42,10 +43,10 @@ export function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "bg-gray-850 border-r border-gray-700 transition-all duration-300 ease-in-out z-20",
+      "bg-gray-850 border-r border-gray-700 transition-all duration-300 ease-in-out z-20 fixed h-screen", // Added fixed height and border-right
       isOpen 
-        ? "fixed inset-0 w-64 md:relative md:w-64 md:translate-x-0" 
-        : "fixed -translate-x-full md:translate-x-0 md:relative md:w-64"
+        ? "w-64 md:relative md:w-64 md:translate-x-0" 
+        : "translate-x-[-100%] md:translate-x-0 md:relative md:w-64" //Improved transition
     )}>
       <div className="p-4">
         <div className="relative">
