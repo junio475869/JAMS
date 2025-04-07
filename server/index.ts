@@ -4,6 +4,10 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 app.use(express.json());
+
+// Run migrations
+import { createTables } from './migrations';
+createTables().catch(console.error);
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
