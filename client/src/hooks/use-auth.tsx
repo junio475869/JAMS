@@ -214,8 +214,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOut(auth);
       }
 
-      const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const idToken = await result.user.getIdToken();
 
       const res = await apiRequest("POST", "/api/firebase-auth", {
         idToken,
@@ -240,6 +241,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       return userData;
+    } catch (firebaseError: any) {
+        console.error("Firebase Google sign in error:", firebaseError);
+        switch (firebaseError.code) {
+          case 'auth/operation-not-allowed':
+            throw new Error('Google sign-in is not enabled. Please contact support.');
+          case 'auth/popup-blocked':
+            throw new Error('Popup was blocked. Please allow popups for this site.');
+          case 'auth/popup-closed-by-user':
+            throw new Error('Sign-in was cancelled.');
+          case 'auth/unauthorized-domain':
+            throw new Error('This domain is not authorized for Google sign-in.');
+          default:
+            throw new Error(firebaseError.message || 'Google sign-in failed');
+        }
+      }
     } catch (error: any) {
       console.error("Google sign in error:", error);
       toast({
