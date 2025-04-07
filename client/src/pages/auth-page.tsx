@@ -84,6 +84,7 @@ export default function AuthPage() {
     password: string;
     fullName: string;
   }) => {
+    console.log("Registering with data:", data, registerMutation);
     registerMutation.mutate(data);
   };
 
