@@ -6,9 +6,11 @@ const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
 if (!projectId || !clientEmail || !privateKey) {
-  throw new Error(
-    "Missing Firebase Admin credentials in environment variables.",
-  );
+  console.error("Missing Firebase Admin credentials. Please check environment variables:");
+  console.error("- FIREBASE_PROJECT_ID");
+  console.error("- FIREBASE_CLIENT_EMAIL");
+  console.error("- FIREBASE_PRIVATE_KEY");
+  throw new Error("Missing Firebase Admin credentials in environment variables.");
 }
 
 // Replace escaped newlines with actual newlines
