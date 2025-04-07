@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { RoleBasedRoute } from "./components/role-based-route";
 import { MainLayout } from "./components/layout/main-layout";
 import { UserRole } from "@shared/schema";
+import { AuthProvider } from "./context/auth-context"; // Assuming this is where your AuthProvider is
 
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
@@ -22,6 +23,7 @@ import ChatPage from "@/pages/chat-page";
 function App() {
   return (
     <>
+      <AuthProvider> {/* Added AuthProvider wrapper */}
       <Switch>
         <Route path="/auth" component={AuthPage} />
 
@@ -66,6 +68,7 @@ function App() {
         </Route>
       </Switch>
       <Toaster />
+      </AuthProvider> {/* Closed AuthProvider wrapper */}
     </>
   );
 }
