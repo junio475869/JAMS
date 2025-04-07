@@ -311,9 +311,14 @@ export default function AuthPage() {
                     className="w-full bg-primary-600 hover:bg-primary-700"
                     disabled={registerMutation.isPending}
                   >
-                    {registerMutation.isPending
-                      ? "Creating account..."
-                      : "Create Account"}
+                    {registerMutation.isPending ? (
+                      <div className="flex items-center justify-center">
+                        <span className="mr-2">Creating account...</span>
+                        <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+                      </div>
+                    ) : (
+                      "Create Account"
+                    )}
                   </Button>
                 </form>
               </Form>
