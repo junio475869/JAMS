@@ -15,6 +15,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   UserCredential,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
 
@@ -47,6 +48,7 @@ type AuthContextType = {
     Error,
     RegisterData
   >;
+  forgotPasswordMutation: UseMutationResult<void, Error, { email: string }>;
   googleSignIn: () => Promise<void>;
   loginSchema: typeof loginSchema;
   registerSchema: typeof registerSchema;
@@ -78,6 +80,7 @@ export const AuthContext = createContext<AuthContextType>({
   loginMutation: createMockMutation() as any,
   logoutMutation: createMockMutation() as any,
   registerMutation: createMockMutation() as any,
+  forgotPasswordMutation: createMockMutation() as any,
   googleSignIn: async () => {},
   loginSchema,
   registerSchema,
@@ -280,6 +283,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Forgot Password
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      await sendPasswordResetEmail(auth, email);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your email for a password reset link.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Password Reset Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+
   // Logout from both Firebase and our backend
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -314,6 +338,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        forgotPasswordMutation,
         googleSignIn,
         loginSchema,
         registerSchema,
