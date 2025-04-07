@@ -129,34 +129,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       try {
-        // Option 1: Authenticate with Firebase first
+        // Sign out any existing Firebase user
         if (auth.currentUser) {
           await signOut(auth);
         }
 
-        try {
-          // Try Firebase authentication first
-          await signInWithEmailAndPassword(
-            auth,
-            credentials.email,
-            credentials.password,
-          );
-        } catch (firebaseError) {
-          console.log(
-            "Firebase auth failed, trying backend auth:",
-            firebaseError,
-          );
-          // If Firebase fails, we continue with backend auth
-        }
+        // Authenticate with Firebase
+        const firebaseResult = await signInWithEmailAndPassword(
+          auth,
+          credentials.email,
+          credentials.password
+        );
 
-        // Then authenticate with our backend
-        const res = await apiRequest("POST", "/api/login", credentials);
+        // Get the Firebase ID token
+        const idToken = await firebaseResult.user.getIdToken();
+
+        // Authenticate with our backend using Firebase token
+        const res = await apiRequest("POST", "/api/firebase-auth", {
+          idToken,
+          email: credentials.email,
+          displayName: firebaseResult.user.displayName || '',
+          photoURL: firebaseResult.user.photoURL || '',
+        });
+
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.message || "Invalid email or password");
+          throw new Error(errorData.message || "Authentication failed");
         }
+
         return await res.json();
       } catch (error: any) {
+        // Sign out on error
+        await signOut(auth);
         throw new Error(error.message || "Login failed");
       }
     },
