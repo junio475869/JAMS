@@ -12,8 +12,19 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+try {
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  auth.useDeviceLanguage(); // Set language to device default
+  
+  const googleProvider = new GoogleAuthProvider();
+  googleProvider.addScope('email');
+  googleProvider.addScope('profile');
+  
+  export { auth, googleProvider };
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+  throw error;
+}
 
 export { auth, googleProvider };

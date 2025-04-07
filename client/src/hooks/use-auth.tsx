@@ -137,12 +137,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await signOut(auth);
         }
 
+        // Clear any persisted auth state
+        await auth.setPersistence(browserLocalPersistence);
+
         // Authenticate with Firebase
-        const firebaseResult = await signInWithEmailAndPassword(
-          auth,
-          credentials.email,
-          credentials.password
-        );
+        let firebaseResult: UserCredential;
+        try {
+          firebaseResult = await signInWithEmailAndPassword(
+            auth,
+            credentials.email,
+            credentials.password
+          );
+        } catch (firebaseError: any) {
+          // Handle specific Firebase auth errors
+          switch (firebaseError.code) {
+            case 'auth/invalid-credential':
+              throw new Error('Invalid email or password. Please try again.');
+            case 'auth/user-not-found':
+              throw new Error('No account found with this email.');
+            case 'auth/wrong-password':
+              throw new Error('Incorrect password.');
+            case 'auth/too-many-requests':
+              throw new Error('Too many attempts. Please try again later.');
+            default:
+              console.error('Firebase auth error:', firebaseError);
+              throw new Error('Authentication failed. Please try again.');
+          }
+        }
 
         // Get the Firebase ID token
         const idToken = await firebaseResult.user.getIdToken();
