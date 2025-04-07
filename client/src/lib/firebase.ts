@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
@@ -11,20 +12,12 @@ const firebaseConfig = {
   measurementId: "G-ZFDCPE872P",
 };
 
-// Initialize Firebase
-try {
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  auth.useDeviceLanguage(); // Set language to device default
-  
-  const googleProvider = new GoogleAuthProvider();
-  googleProvider.addScope('email');
-  googleProvider.addScope('profile');
-  
-  export { auth, googleProvider };
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-  throw error;
-}
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+auth.useDeviceLanguage();
+
+const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
 
 export { auth, googleProvider };
