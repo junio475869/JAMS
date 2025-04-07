@@ -16,6 +16,8 @@ import {
   createUserWithEmailAndPassword,
   UserCredential,
   sendPasswordResetEmail,
+  browserLocalPersistence,
+  setPersistence,
 } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
 
@@ -138,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Clear any persisted auth state
-        await auth.setPersistence(browserLocalPersistence);
+        await setPersistence(auth, browserLocalPersistence);
 
         // Authenticate with Firebase
         let firebaseResult: UserCredential;
