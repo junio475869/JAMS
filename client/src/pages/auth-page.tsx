@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,11 +48,13 @@ function GoogleIcon() {
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
+  const { toast } = useToast();
   const {
     user,
     isLoading,
     loginMutation,
     registerMutation,
+    forgotPasswordMutation,
     googleSignIn,
     loginSchema,
     registerSchema,
@@ -218,8 +221,20 @@ export default function AuthPage() {
                           <Button
                             variant="link"
                             className="text-primary-400 hover:text-primary-300 p-0 h-auto text-xs"
+                            onClick={() => {
+                              const email = loginForm.getValues("email");
+                              if (!email) {
+                                toast({
+                                  title: "Email required",
+                                  description: "Please enter your email address first.",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              forgotPasswordMutation.mutate({ email });
+                            }}
                           >
-                            Forgot password?
+                            {forgotPasswordMutation.isPending ? "Sending..." : "Forgot password?"}
                           </Button>
                         </div>
                       </FormItem>

@@ -15,6 +15,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   UserCredential,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
 
@@ -47,6 +48,7 @@ type AuthContextType = {
     Error,
     RegisterData
   >;
+  forgotPasswordMutation: UseMutationResult<void, Error, { email: string }>;
   googleSignIn: () => Promise<void>;
   loginSchema: typeof loginSchema;
   registerSchema: typeof registerSchema;
@@ -78,6 +80,7 @@ export const AuthContext = createContext<AuthContextType>({
   loginMutation: createMockMutation() as any,
   logoutMutation: createMockMutation() as any,
   registerMutation: createMockMutation() as any,
+  forgotPasswordMutation: createMockMutation() as any,
   googleSignIn: async () => {},
   loginSchema,
   registerSchema,
@@ -129,34 +132,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       try {
-        // Option 1: Authenticate with Firebase first
+        // Sign out any existing Firebase user
         if (auth.currentUser) {
           await signOut(auth);
         }
 
-        try {
-          // Try Firebase authentication first
-          await signInWithEmailAndPassword(
-            auth,
-            credentials.email,
-            credentials.password,
-          );
-        } catch (firebaseError) {
-          console.log(
-            "Firebase auth failed, trying backend auth:",
-            firebaseError,
-          );
-          // If Firebase fails, we continue with backend auth
-        }
+        // Authenticate with Firebase
+        const firebaseResult = await signInWithEmailAndPassword(
+          auth,
+          credentials.email,
+          credentials.password
+        );
 
-        // Then authenticate with our backend
-        const res = await apiRequest("POST", "/api/login", credentials);
+        // Get the Firebase ID token
+        const idToken = await firebaseResult.user.getIdToken();
+
+        // Authenticate with our backend using Firebase token
+        const res = await apiRequest("POST", "/api/firebase-auth", {
+          idToken,
+          email: credentials.email,
+          displayName: firebaseResult.user.displayName || '',
+          photoURL: firebaseResult.user.photoURL || '',
+        });
+
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.message || "Invalid email or password");
+          throw new Error(errorData.message || "Authentication failed");
         }
+
         return await res.json();
       } catch (error: any) {
+        // Sign out on error
+        await signOut(auth);
         throw new Error(error.message || "Login failed");
       }
     },
@@ -276,6 +283,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Forgot Password
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      await sendPasswordResetEmail(auth, email);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your email for a password reset link.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Password Reset Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+
   // Logout from both Firebase and our backend
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -310,6 +338,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        forgotPasswordMutation,
         googleSignIn,
         loginSchema,
         registerSchema,
