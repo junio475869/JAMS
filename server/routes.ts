@@ -680,6 +680,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Gmail endpoints
+  app.get("/api/gmail/auth", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const authUrl = gmailService.getAuthUrl();
+    res.json({ authUrl });
+  });
+
+  app.get("/api/gmail/oauth/callback", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { code } = req.query;
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ error: "No authorization code provided" });
+    }
+    
+    try {
+      await gmailService.handleCallback(code, req.user!.id);
+      res.redirect('/email');
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.status(500).json({ error: "Failed to complete OAuth flow" });
+    }
+  });
+
   app.get("/api/gmail/inbox", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {

@@ -89,9 +89,45 @@ export default function EmailPage() {
   
   // Demo mode check
   const isDemoMode = localStorage.getItem("demoMode") === "true";
+  const [isConnected, setIsConnected] = useState(false);
   
   // Mock emails for demo mode
   const [emails, setEmails] = useState<Email[]>([]);
+
+  // Connect Gmail account
+  const connectGmail = async () => {
+    try {
+      const response = await fetch('/api/gmail/auth');
+      const data = await response.json();
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      }
+    } catch (error) {
+      console.error('Failed to get auth URL:', error);
+    }
+  };
+
+  // Fetch real emails
+  const fetchEmails = async () => {
+    if (isDemoMode) return;
+    
+    try {
+      const response = await fetch('/api/gmail/inbox');
+      if (response.ok) {
+        const data = await response.json();
+        setEmails(data);
+        setIsConnected(true);
+      }
+    } catch (error) {
+      console.error('Failed to fetch emails:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isDemoMode) {
+      fetchEmails();
+    }
+  }, [isDemoMode]);
   
   useEffect(() => {
     if (isDemoMode) {
@@ -594,6 +630,19 @@ Best regards,
 
   return (
     <div className="container max-w-full py-6 px-4">
+      {!isDemoMode && !isConnected && (
+        <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <p className="text-blue-300 font-medium">
+              Connect your Gmail account to see your emails
+            </p>
+            <Button onClick={connectGmail}>
+              <Plus className="h-4 w-4 mr-2" />
+              Connect Gmail
+            </Button>
+          </div>
+        </div>
+      )}
       {isDemoMode && (
         <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6">
           <p className="text-blue-300 font-medium">
