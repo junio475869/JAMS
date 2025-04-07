@@ -25,37 +25,42 @@ function App() {
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
 
-        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/applications" element={<ApplicationsPage />} />
-            <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/email" element={<EmailPage />} />
-            <Route path="/interview" element={<InterviewPrepPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/chat" element={<ChatPage />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/applications" element={<ApplicationsPage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/email" element={<EmailPage />} />
+          <Route path="/interview" element={<InterviewPrepPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/chat" element={<ChatPage />} />
 
-            <Route 
-              path="/team-management" 
-              element={
-                <RoleBasedRoute 
-                  allowedRoles={[UserRole.ADMIN, UserRole.GROUP_LEADER]}
-                  element={<TeamManagementPage />}
-                />
-              } 
-            />
+          <Route
+            path="/team-management"
+            element={
+              <RoleBasedRoute
+                allowedRoles={[UserRole.ADMIN, UserRole.GROUP_LEADER]}
+                element={<TeamManagementPage />}
+              />
+            }
+          />
 
-            <Route
-              path="/job-apply"
-              element={
-                <RoleBasedRoute
-                  allowedRoles={[UserRole.JOB_SEEKER, UserRole.JOB_BIDDER]}
-                  element={<JobApplyPage />}
-                />
-              }
-            />
-          </Route>
+          <Route
+            path="/job-apply"
+            element={
+              <RoleBasedRoute
+                allowedRoles={[UserRole.JOB_SEEKER, UserRole.JOB_BIDDER]}
+                element={<JobApplyPage />}
+              />
+            }
+          />
         </Route>
 
         <Route path="*" element={<NotFound />} />
