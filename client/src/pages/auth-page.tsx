@@ -85,10 +85,11 @@ export default function AuthPage() {
     fullName: string;
   }) => {
     try {
-      const result = await registerMutation.mutateAsync({
+      console.log(registerMutation);
+      await registerMutation.mutateAsync({
         email: data.email,
         password: data.password,
-        fullName: data.fullName
+        fullName: data.fullName,
       });
       // navigate("/");
     } catch (error) {
