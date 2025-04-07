@@ -53,9 +53,9 @@ type AuthContextType = {
 };
 
 // Create a minimal mock for UseMutationResult
-const createMockMutation = () => ({
+const createMockMutation = <TData, TError, TVariables>(): UseMutationResult<TData, TError, TVariables> => ({
   mutate: () => {},
-  mutateAsync: async () => ({}),
+  mutateAsync: async () => { throw new Error("Not implemented"); },
   isPending: false,
   isError: false,
   isSuccess: false,
@@ -70,15 +70,15 @@ const createMockMutation = () => ({
   variables: undefined,
 });
 
-// Create the context with a default value to prevent the "must be used within a Provider" error
+// Create the context with properly typed default values
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: false,
   error: null,
-  loginMutation: createMockMutation() as any,
-  logoutMutation: createMockMutation() as any,
-  registerMutation: createMockMutation() as any,
-  googleSignIn: async () => {},
+  loginMutation: createMockMutation<Omit<SelectUser, "password">, Error, LoginData>(),
+  logoutMutation: createMockMutation<void, Error, void>(),
+  registerMutation: createMockMutation<Omit<SelectUser, "password">, Error, RegisterData>(),
+  googleSignIn: async () => { throw new Error("Not implemented"); },
   loginSchema,
   registerSchema,
 });
