@@ -79,13 +79,21 @@ export default function AuthPage() {
     loginMutation.mutate(data);
   };
 
-  const onRegisterSubmit = (data: {
+  const onRegisterSubmit = async (data: {
     email: string;
     password: string;
     fullName: string;
   }) => {
-    console.log("Registering with data:", data, registerMutation);
-    registerMutation.mutate(data);
+    try {
+      const result = await registerMutation.mutateAsync({
+        email: data.email,
+        password: data.password,
+        fullName: data.fullName
+      });
+      // navigate("/");
+    } catch (error) {
+      console.error("Registration error:", error);
+    }
   };
 
   const handleGoogleSignIn = async () => {
