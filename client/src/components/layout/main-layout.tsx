@@ -1,5 +1,6 @@
+
 import React, { ReactNode, useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,8 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const [location] = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user, logoutMutation } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -118,26 +120,26 @@ export function MainLayout({ children }: MainLayoutProps) {
             <ScrollArea className="flex-1 py-4">
               <nav className="space-y-1 px-2">
                 {navigationItems.map((item) => {
-                  const isActive = location === item.href;
+                  const isActive = location.pathname === item.href;
                   return (
-                    <Link key={item.href} href={item.href}>
-                      <Button
-                        variant="ghost"
-                        className={`w-full justify-start ${
-                          isActive 
-                            ? "sidebar-item-active text-foreground" 
-                            : "text-foreground/70 sidebar-item hover:text-foreground"
-                        }`}
-                        onClick={() => {
-                          if (sidebarOpen) {
-                            setSidebarOpen(false);
-                          }
-                        }}
-                      >
-                        <item.icon className="h-4 w-4 mr-3" />
-                        {item.label}
-                      </Button>
-                    </Link>
+                    <Button
+                      key={item.href}
+                      variant="ghost"
+                      className={`w-full justify-start ${
+                        isActive 
+                          ? "sidebar-item-active text-foreground" 
+                          : "text-foreground/70 sidebar-item hover:text-foreground"
+                      }`}
+                      onClick={() => {
+                        navigate(item.href);
+                        if (sidebarOpen) {
+                          setSidebarOpen(false);
+                        }
+                      }}
+                    >
+                      <item.icon className="h-4 w-4 mr-3" />
+                      {item.label}
+                    </Button>
                   );
                 })}
               </nav>
