@@ -1,4 +1,3 @@
-
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -26,7 +25,7 @@ function App() {
       <Switch>
         <Route path="/auth" component={AuthPage} />
 
-        <Route path="/:rest*">
+        <Route>
           {(params) => (
             <ProtectedRoute>
               <MainLayout>
@@ -51,7 +50,10 @@ function App() {
                   <Route path="/job-apply">
                     {() => (
                       <RoleBasedRoute
-                        allowedRoles={[UserRole.JOB_SEEKER, UserRole.JOB_BIDDER]}
+                        allowedRoles={[
+                          UserRole.JOB_SEEKER,
+                          UserRole.JOB_BIDDER,
+                        ]}
                         element={<JobApplyPage />}
                       />
                     )}
