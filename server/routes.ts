@@ -702,7 +702,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/gmail/inbox", async (req, res) => {
+  app.post("/api/calendar/events", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const connections = await storage.getGmailConnectionsByUserId(req.user!.id);
+    if (!connections || connections.length === 0) {
+      return res.status(404).json({ error: "No Google account connected" });
+    }
+
+    const event = await gmailService.createCalendarEvent(connections[0], req.body);
+    res.json(event);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/gmail/inbox", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
       const connections = await storage.getGmailConnectionsByUserId(req.user!.id);

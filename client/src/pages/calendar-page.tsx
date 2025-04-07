@@ -45,10 +45,10 @@ export default function CalendarPage() {
     from: new Date(),
     to: addDays(new Date(), 7),
   });
-  
+
   // Demo mode check
   const isDemoMode = localStorage.getItem("demoMode") === "true";
-  
+
   // Connected calendars
   const [calendarSources, setCalendarSources] = useState<CalendarSource[]>([
     { id: "primary", name: "JAMS Calendar", color: "#3b82f6", enabled: true },
@@ -58,21 +58,21 @@ export default function CalendarPage() {
 
   // View type state
   const [calendarViewType, setCalendarViewType] = useState<"monthly" | "weekly" | "daily" | "timeline">("monthly");
-  
+
   // Selected event for modal
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
-  
+
   // Generate mock events for demo mode
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  
+
   useEffect(() => {
     if (isDemoMode) {
       // Current month and next month
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
-      
+
       // Generate mock interview events
       const mockEvents: CalendarEvent[] = [
         {
@@ -157,11 +157,11 @@ export default function CalendarPage() {
           location: "Cyberdyne Office - 123 Tech Parkway, Building B"
         }
       ];
-      
+
       setEvents(mockEvents);
     }
   }, [isDemoMode]);
-  
+
   // Toggle calendar source
   const toggleCalendarSource = (id: string) => {
     setCalendarSources(sources => 
@@ -170,26 +170,26 @@ export default function CalendarPage() {
       )
     );
   };
-  
+
   // Format day based on events
   const formatDayWithEvents = (day: Date) => {
     const dayEvents = events.filter(event => isSameDay(event.date, day));
     const hasEvents = dayEvents.length > 0;
-    
+
     return {
       hasEvents,
       isWeekend: isWeekend(day),
       events: dayEvents
     };
   };
-  
+
   // Generate availability text
   const generateAvailabilityText = () => {
     if (!dateRange?.from || !dateRange?.to) return "";
-    
+
     const availabilityLines = [];
     let currentDate = dateRange.from;
-    
+
     while (currentDate <= (dateRange.to || dateRange.from)) {
       if (!isWeekend(currentDate)) {
         const dateStr = format(currentDate, "EEE MMM do");
@@ -197,28 +197,28 @@ export default function CalendarPage() {
       }
       currentDate = addDays(currentDate, 1);
     }
-    
+
     return `I'm available on the following days:\n${availabilityLines.join("\n")}\n\nPlease let me know what works best for you.`;
   };
-  
+
   // Find today's events
   const todayEvents = events.filter(event => 
     isSameDay(event.date, new Date())
   );
-  
+
   // Find upcoming events (next 7 days)
   const upcomingEvents = events.filter(event => {
     const now = new Date();
     const sevenDaysFromNow = addDays(now, 7);
     return event.date > now && event.date <= sevenDaysFromNow;
   }).sort((a, b) => a.date.getTime() - b.date.getTime());
-  
+
   // Handle view event click
   const handleViewEvent = (event: CalendarEvent) => {
     setSelectedEvent(event);
     setShowEventModal(true);
   };
-  
+
   // Event type to badge color mapping
   const getEventBadgeColor = (type: string) => {
     switch (type) {
@@ -228,34 +228,34 @@ export default function CalendarPage() {
       default: return "bg-gray-500 hover:bg-gray-600";
     }
   };
-  
+
   // Weekly view data preparation
   const getWeeklyViewData = () => {
     const today = date || new Date();
     const startOfWeekDate = startOfWeek(today, { weekStartsOn: 1 }); // Monday
     const endOfWeekDate = endOfWeek(today, { weekStartsOn: 1 }); // Sunday
-    
+
     const days = eachDayOfInterval({
       start: startOfWeekDate,
       end: endOfWeekDate
     });
-    
+
     const dayEvents = days.map(day => ({
       date: day,
       events: events.filter(event => isSameDay(event.date, day))
     }));
-    
+
     return dayEvents;
   };
-  
+
   // Daily view data preparation
   const getDailyViewData = () => {
     const viewDate = date || new Date();
     const workHoursStart = 8; // 8 AM
     const workHoursEnd = 18; // 6 PM
-    
+
     const hours = Array.from({ length: workHoursEnd - workHoursStart + 1 }, (_, i) => workHoursStart + i);
-    
+
     const hourEvents = hours.map(hour => {
       const hourStart = setHours(viewDate, hour);
       const hourEnd = setHours(viewDate, hour + 1);
@@ -268,21 +268,21 @@ export default function CalendarPage() {
         )
       };
     });
-    
+
     return hourEvents;
   };
-  
+
   // Timeline view data preparation
   const getTimelineViewData = () => {
     const today = date || new Date();
     const startDate = subDays(today, 3);
     const endDate = addDays(today, 10);
-    
+
     const days = eachDayOfInterval({
       start: startDate,
       end: endDate
     });
-    
+
     return days.map(day => ({
       date: day,
       isToday: isSameDay(day, new Date()),
@@ -300,7 +300,7 @@ export default function CalendarPage() {
           </p>
         </div>
       )}
-      
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Calendar</h1>
         <Button onClick={() => toast({ 
@@ -311,14 +311,14 @@ export default function CalendarPage() {
           Connect Calendar
         </Button>
       </div>
-      
+
       <Tabs defaultValue="calendar">
         <TabsList className="mb-6">
           <TabsTrigger value="calendar">Calendar View</TabsTrigger>
           <TabsTrigger value="availability">Availability</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="calendar">
           <div className="mb-6 flex flex-wrap justify-between items-center">
             <div className="flex items-center space-x-2 mb-2 sm:mb-0">
@@ -351,7 +351,7 @@ export default function CalendarPage() {
                   : format(date || new Date(), "MMMM yyyy")}
               </span>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Select 
                 value={calendarViewType} 
@@ -367,7 +367,7 @@ export default function CalendarPage() {
                   <SelectItem value="timeline">Timeline</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <div className="relative w-64 max-w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
@@ -386,7 +386,7 @@ export default function CalendarPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Calendar View Tabs */}
           <Card className="mb-6">
             <CardContent className="p-6">
@@ -406,12 +406,12 @@ export default function CalendarPage() {
                       weekend: "text-red-500"
                     }}
                   />
-                  
+
                   {/* Show events for selected day */}
                   {date && (
                     <div className="mt-6 border-t pt-6">
                       <h3 className="font-medium mb-4">Events for {format(date, "MMMM d, yyyy")}</h3>
-                      
+
                       {events.filter(event => isSameDay(event.date, date)).length > 0 ? (
                         <div className="space-y-3">
                           {events
@@ -452,7 +452,7 @@ export default function CalendarPage() {
                   )}
                 </div>
               )}
-              
+
               {calendarViewType === "weekly" && (
                 <div>
                   <div className="grid grid-cols-7 gap-1">
@@ -492,13 +492,13 @@ export default function CalendarPage() {
                   </div>
                 </div>
               )}
-              
+
               {calendarViewType === "daily" && (
                 <div>
                   <div className="text-center mb-4">
                     <h3 className="text-xl font-medium">{format(date || new Date(), "EEEE, MMMM d, yyyy")}</h3>
                   </div>
-                  
+
                   <div className="border rounded-md">
                     {getDailyViewData().map((hourSlot, index) => (
                       <div 
@@ -537,7 +537,7 @@ export default function CalendarPage() {
                   </div>
                 </div>
               )}
-              
+
               {calendarViewType === "timeline" && (
                 <div className="overflow-x-auto">
                   <div className="min-w-[800px]">
@@ -551,7 +551,7 @@ export default function CalendarPage() {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="grid" style={{ gridTemplateColumns: `repeat(${getTimelineViewData().length}, minmax(120px, 1fr))` }}>
                         {getTimelineViewData().map((day, dayIndex) => (
                           <div key={dayIndex} className={`border-r last:border-r-0 ${day.isWeekend ? 'bg-muted/30' : ''} ${day.isToday ? 'bg-primary/5' : ''}`}>
@@ -561,7 +561,7 @@ export default function CalendarPage() {
                                 {format(day.date, "MMM d")}
                               </div>
                             </div>
-                            
+
                             {/* All day events */}
                             <div className="p-1 h-12 border-b">
                               {day.events
@@ -577,12 +577,12 @@ export default function CalendarPage() {
                                 ))
                               }
                             </div>
-                            
+
                             {/* Hourly events */}
                             {Array.from({ length: 12 }).map((_, hourIndex) => {
                               const hour = hourIndex + 8; // Start from 8 AM
                               const hourEvents = day.events.filter(event => getHours(event.date) === hour);
-                              
+
                               return (
                                 <div key={hourIndex} className="p-1 h-12 border-b">
                                   {hourEvents.map(event => (
@@ -606,7 +606,7 @@ export default function CalendarPage() {
               )}
             </CardContent>
           </Card>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
               <Card>
@@ -657,17 +657,45 @@ export default function CalendarPage() {
                   )}
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full" onClick={() => toast({
-                    title: "Not available in demo mode",
-                    description: "This feature would add a new event to your calendar"
-                  })}>
+                  <Button variant="outline" className="w-full" onClick={async () => {
+    try {
+      const response = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          summary: "New Event",
+          description: "Event Description",
+          startTime: new Date(),
+          endTime: new Date(Date.now() + 3600000), // 1 hour later
+          location: "Virtual"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create event');
+      }
+
+      toast({
+        title: "Event created",
+        description: "The event has been added to your calendar"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create event. Make sure your Google Calendar is connected.",
+        variant: "destructive"
+      });
+    }
+  }}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Event
                   </Button>
                 </CardFooter>
               </Card>
             </div>
-            
+
             <div>
               <Card className="mb-6">
                 <CardHeader className="pb-3">
@@ -709,7 +737,7 @@ export default function CalendarPage() {
                   )}
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Calendar Legend</CardTitle>
@@ -739,7 +767,7 @@ export default function CalendarPage() {
             </div>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="availability">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="md:col-span-2">
@@ -763,7 +791,7 @@ export default function CalendarPage() {
                     }}
                   />
                 </div>
-                
+
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="time-preferences">Time Preferences</Label>
@@ -779,7 +807,7 @@ export default function CalendarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="timezone">Timezone</Label>
                     <Select defaultValue="est">
@@ -797,7 +825,7 @@ export default function CalendarPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Availability Text</CardTitle>
@@ -826,7 +854,7 @@ export default function CalendarPage() {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="settings">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
@@ -867,7 +895,7 @@ export default function CalendarPage() {
                 </Button>
               </CardFooter>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Notification Settings</CardTitle>
@@ -890,7 +918,7 @@ export default function CalendarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <Label htmlFor="notify-deadlines" className="flex-1">Application deadline alerts</Label>
                     <Select defaultValue="1day">
@@ -905,17 +933,17 @@ export default function CalendarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 pt-4">
                     <Checkbox id="email-notifications" />
                     <Label htmlFor="email-notifications">Email notifications</Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Checkbox id="browser-notifications" />
                     <Label htmlFor="browser-notifications">Browser notifications</Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Checkbox id="slack-notifications" />
                     <Label htmlFor="slack-notifications">Slack notifications</Label>
@@ -923,7 +951,7 @@ export default function CalendarPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle>Calendar Integration</CardTitle>
@@ -939,13 +967,13 @@ export default function CalendarPage() {
                     In a real implementation, you would be able to connect to Google Calendar, Outlook, and Apple Calendar.
                   </div>
                 </div>
-                
+
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button variant="outline" className="w-full" onClick={() => toast({
                     title: "Not available in demo mode",
                     description: "This would import events from connected calendars"
                   })}>Import Calendar Events</Button>
-                  
+
                   <Button variant="outline" className="w-full" onClick={() => toast({
                     title: "Not available in demo mode", 
                     description: "This would export your calendar in iCal format"
@@ -956,7 +984,7 @@ export default function CalendarPage() {
           </div>
         </TabsContent>
       </Tabs>
-      
+
       {/* Event Modal */}
       <Dialog open={showEventModal} onOpenChange={setShowEventModal}>
         <DialogContent className="max-w-3xl">
@@ -973,7 +1001,7 @@ export default function CalendarPage() {
                   {format(selectedEvent.date, "EEEE, MMMM d, yyyy")} at {format(selectedEvent.date, "h:mm a")}
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   {selectedEvent.notes && (
@@ -982,21 +1010,21 @@ export default function CalendarPage() {
                       <p className="text-sm text-muted-foreground">{selectedEvent.notes}</p>
                     </div>
                   )}
-                  
+
                   {selectedEvent.location && (
                     <div>
                       <h3 className="text-sm font-medium mb-1">Location</h3>
                       <p className="text-sm text-muted-foreground">{selectedEvent.location}</p>
                     </div>
                   )}
-                  
+
                   {selectedEvent.company && (
                     <div>
                       <h3 className="text-sm font-medium mb-1">Company</h3>
                       <p className="text-sm text-muted-foreground">{selectedEvent.company}</p>
                     </div>
                   )}
-                  
+
                   {selectedEvent.companyOverview && (
                     <div>
                       <h3 className="text-sm font-medium mb-1">Company Overview</h3>
@@ -1004,7 +1032,7 @@ export default function CalendarPage() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="space-y-4">
                   {selectedEvent.contactEmail && (
                     <div>
@@ -1017,7 +1045,7 @@ export default function CalendarPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   {selectedEvent.interviewLink && (
                     <div>
                       <h3 className="text-sm font-medium mb-1">Interview Link</h3>
@@ -1029,7 +1057,7 @@ export default function CalendarPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   {selectedEvent.jobUrl && (
                     <div>
                       <h3 className="text-sm font-medium mb-1">Job Posting</h3>
@@ -1043,7 +1071,7 @@ export default function CalendarPage() {
                   )}
                 </div>
               </div>
-              
+
               <DialogFooter className="flex justify-between items-center gap-2">
                 <div>
                   <Button variant="outline" size="sm" onClick={() => toast({

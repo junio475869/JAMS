@@ -30,9 +30,52 @@ export class GmailService {
   getAuthUrl() {
     return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/gmail.readonly'],
+      scope: [
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/calendar.events'
+      ],
       prompt: 'consent'
     });
+  }
+
+  async createCalendarEvent(connection: GmailConnection, event: {
+    summary: string;
+    description?: string;
+    startTime: Date;
+    endTime: Date;
+    location?: string;
+  }) {
+    try {
+      this.oauth2Client.setCredentials({
+        access_token: connection.accessToken,
+        refresh_token: connection.refreshToken
+      });
+
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      
+      const calendarEvent = await calendar.events.insert({
+        calendarId: 'primary',
+        requestBody: {
+          summary: event.summary,
+          description: event.description,
+          start: {
+            dateTime: event.startTime.toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          },
+          end: {
+            dateTime: event.endTime.toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          },
+          location: event.location
+        }
+      });
+
+      return calendarEvent.data;
+    } catch (error) {
+      console.error('Error creating calendar event:', error);
+      throw error;
+    }
   }
 
   async handleCallback(code: string, userId: number) {
