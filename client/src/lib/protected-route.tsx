@@ -1,11 +1,10 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Navigate, Route } from "react-router-dom";
+import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
 import { queryClient } from "@/lib/queryClient";
 
-// Demo user data for bypassing authentication
 const demoUser = {
   id: 999,
   username: "demo-user",
@@ -14,10 +13,9 @@ const demoUser = {
   profilePicture: "",
   createdAt: new Date(),
   updatedAt: new Date(),
-  password: "*****", // Masked password field
+  password: "*****",
 };
 
-// Check if we're using demo mode
 const isDemoMode = () => {
   return localStorage.getItem("demoMode") === "true";
 };
@@ -55,7 +53,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user && !isDemoMode()) {
-    return <Navigate to="/auth" replace />;
+    return <Redirect to="/auth" />;
   }
 
   return <>{children}</>;
