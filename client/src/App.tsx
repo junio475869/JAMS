@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+
+import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "./lib/protected-route";
 import { RoleBasedRoute } from "./components/role-based-route";
@@ -22,49 +23,46 @@ import ChatPage from "@/pages/chat-page";
 function App() {
   return (
     <>
-      <Routes>
-        <Route path="/auth" element={<AuthPage />} />
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
 
-        <Route
-          element={
+        <Route path="/:rest*">
+          {(params) => (
             <ProtectedRoute>
-              <MainLayout />
+              <MainLayout>
+                <Switch>
+                  <Route path="/" component={DashboardPage} />
+                  <Route path="/applications" component={ApplicationsPage} />
+                  <Route path="/documents" component={DocumentsPage} />
+                  <Route path="/analytics" component={AnalyticsPage} />
+                  <Route path="/calendar" component={CalendarPage} />
+                  <Route path="/email" component={EmailPage} />
+                  <Route path="/interview" component={InterviewPrepPage} />
+                  <Route path="/profile" component={ProfilePage} />
+                  <Route path="/chat" component={ChatPage} />
+                  <Route path="/team-management">
+                    {() => (
+                      <RoleBasedRoute
+                        allowedRoles={[UserRole.ADMIN, UserRole.GROUP_LEADER]}
+                        element={<TeamManagementPage />}
+                      />
+                    )}
+                  </Route>
+                  <Route path="/job-apply">
+                    {() => (
+                      <RoleBasedRoute
+                        allowedRoles={[UserRole.JOB_SEEKER, UserRole.JOB_BIDDER]}
+                        element={<JobApplyPage />}
+                      />
+                    )}
+                  </Route>
+                  <Route component={NotFound} />
+                </Switch>
+              </MainLayout>
             </ProtectedRoute>
-          }
-        >
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/applications" element={<ApplicationsPage />} />
-          <Route path="/documents" element={<DocumentsPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/email" element={<EmailPage />} />
-          <Route path="/interview" element={<InterviewPrepPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/chat" element={<ChatPage />} />
-
-          <Route
-            path="/team-management"
-            element={
-              <RoleBasedRoute
-                allowedRoles={[UserRole.ADMIN, UserRole.GROUP_LEADER]}
-                element={<TeamManagementPage />}
-              />
-            }
-          />
-
-          <Route
-            path="/job-apply"
-            element={
-              <RoleBasedRoute
-                allowedRoles={[UserRole.JOB_SEEKER, UserRole.JOB_BIDDER]}
-                element={<JobApplyPage />}
-              />
-            }
-          />
+          )}
         </Route>
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      </Switch>
       <Toaster />
     </>
   );
