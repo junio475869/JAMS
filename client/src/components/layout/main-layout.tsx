@@ -1,6 +1,6 @@
 
 import React, { ReactNode, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,7 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -131,7 +130,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                           : "text-foreground/70 sidebar-item hover:text-foreground"
                       }`}
                       onClick={() => {
-                        navigate(item.href);
+                        setLocation(item.href);
                         if (sidebarOpen) {
                           setSidebarOpen(false);
                         }
