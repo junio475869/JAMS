@@ -90,7 +90,7 @@ export default function AuthPage() {
         password: data.password,
         fullName: data.fullName
       });
-      navigate("/");
+      // navigate("/");
     } catch (error) {
       console.error("Registration error:", error);
     }
