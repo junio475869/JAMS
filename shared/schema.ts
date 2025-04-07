@@ -411,3 +411,19 @@ export const ChatMessageType = {
 } as const;
 
 export type ChatMessageTypeType = typeof ChatMessageType[keyof typeof ChatMessageType];
+
+// Gmail Connections
+export const gmailConnections = pgTable("gmail_connections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  email: text("email").notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  expiry: timestamp("expiry").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertGmailConnectionSchema = createInsertSchema(gmailConnections);
+export type GmailConnection = typeof gmailConnections.$inferSelect;
+export type InsertGmailConnection = z.infer<typeof insertGmailConnectionSchema>;
