@@ -179,9 +179,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Google Sign In
   const googleSignIn = async () => {
     try {
+      // Sign out any existing Firebase user first
+      if (auth.currentUser) {
+        await signOut(auth);
+      }
+      
       const result = await signInWithPopup(auth, googleProvider);
-      // Now sync with our backend
       const idToken = await result.user.getIdToken();
+      
       const res = await apiRequest("POST", "/api/firebase-auth", {
         idToken,
         email: result.user.email,
@@ -189,9 +194,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         photoURL: result.user.photoURL,
       });
 
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to authenticate with server");
+      }
+
       const userData = await res.json();
       queryClient.setQueryData(["/api/user"], userData);
-
+      
       toast({
         title: "Google Sign In Successful",
         description: "You have successfully signed in with Google.",
@@ -199,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return userData;
     } catch (error: any) {
+      console.error("Google sign in error:", error);
       toast({
         title: "Google Sign In Failed",
         description: error.message || "An error occurred during Google sign in",
