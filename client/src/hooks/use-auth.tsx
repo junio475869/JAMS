@@ -77,7 +77,7 @@ export const AuthContext = createContext<AuthContextType>({
   error: null,
   loginMutation: createMockMutation() as any,
   logoutMutation: createMockMutation() as any,
-  registerMutation: createMockMutation() as any,
+  registerMutation: createMockMutation() as UseMutationResult<Omit<SelectUser, "password">, Error, RegisterData>,
   googleSignIn: async () => {},
   loginSchema,
   registerSchema,
