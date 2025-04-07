@@ -1,0 +1,794 @@
+import { 
+  User, InsertUser, 
+  Application, InsertApplication, 
+  Document, InsertDocument, 
+  Interview, InsertInterview, 
+  Contact, InsertContact, 
+  TimelineEvent, InsertTimelineEvent,
+  ApplicationStatus
+} from "@shared/schema";
+import session from "express-session";
+import createMemoryStore from "memorystore";
+
+const MemoryStore = createMemoryStore(session);
+
+export interface IStorage {
+  // Users
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByFirebaseUID(firebaseUID: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<User>): Promise<User>;
+
+  // Applications
+  getApplicationById(id: number): Promise<Application | undefined>;
+  getApplicationsByUserId(userId: number): Promise<Application[]>;
+  createApplication(application: InsertApplication): Promise<Application>;
+  updateApplication(id: number, application: Partial<Application>): Promise<Application>;
+  deleteApplication(id: number): Promise<void>;
+
+  // Documents
+  getDocumentById(id: number): Promise<Document | undefined>;
+  getDocumentsByUserId(userId: number, type?: string): Promise<Document[]>;
+  createDocument(document: InsertDocument): Promise<Document>;
+  updateDocument(id: number, document: Partial<Document>): Promise<Document>;
+  deleteDocument(id: number): Promise<void>;
+
+  // Interviews
+  getInterviewById(id: number): Promise<Interview | undefined>;
+  getInterviewsByUserId(userId: number): Promise<Interview[]>;
+  getInterviewsByApplicationId(applicationId: number): Promise<Interview[]>;
+  createInterview(interview: InsertInterview): Promise<Interview>;
+  updateInterview(id: number, interview: Partial<Interview>): Promise<Interview>;
+  deleteInterview(id: number): Promise<void>;
+
+  // Contacts
+  getContactById(id: number): Promise<Contact | undefined>;
+  getContactsByApplicationId(applicationId: number): Promise<Contact[]>;
+  createContact(contact: InsertContact): Promise<Contact>;
+  updateContact(id: number, contact: Partial<Contact>): Promise<Contact>;
+  deleteContact(id: number): Promise<void>;
+
+  // Timeline events
+  getTimelineEventById(id: number): Promise<TimelineEvent | undefined>;
+  getTimelineEventsByApplicationId(applicationId: number): Promise<TimelineEvent[]>;
+  createTimelineEvent(event: InsertTimelineEvent): Promise<TimelineEvent>;
+  updateTimelineEvent(id: number, event: Partial<TimelineEvent>): Promise<TimelineEvent>;
+  deleteTimelineEvent(id: number): Promise<void>;
+
+  // Dashboard stats
+  getDashboardStats(userId: number): Promise<{
+    totalApplications: number;
+    interviews: number;
+    offers: number;
+    completionRate: number;
+  }>;
+
+  // Session store
+  sessionStore: any;
+}
+
+export class MemStorage implements IStorage {
+  // Storage
+  private users: Map<number, User>;
+  private applications: Map<number, Application>;
+  private documents: Map<number, Document>;
+  private interviews: Map<number, Interview>;
+  private contacts: Map<number, Contact>;
+  private timelineEvents: Map<number, TimelineEvent>;
+  
+  // Current IDs
+  private userId: number;
+  private applicationId: number;
+  private documentId: number;
+  private interviewId: number;
+  private contactId: number;
+  private timelineEventId: number;
+  
+  // Session store
+  sessionStore: any;
+
+  constructor() {
+    this.users = new Map();
+    this.applications = new Map();
+    this.documents = new Map();
+    this.interviews = new Map();
+    this.contacts = new Map();
+    this.timelineEvents = new Map();
+    
+    this.userId = 1;
+    this.applicationId = 1;
+    this.documentId = 1;
+    this.interviewId = 1;
+    this.contactId = 1;
+    this.timelineEventId = 1;
+    
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.username === username
+    );
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email
+    );
+  }
+  
+  async getUserByFirebaseUID(firebaseUID: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.firebaseUID === firebaseUID
+    );
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = this.userId++;
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      createdAt: new Date(),
+      firebaseUID: insertUser.firebaseUID || null,
+      fullName: insertUser.fullName || null,
+      profilePicture: insertUser.profilePicture || null
+    };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const user = this.users.get(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    const updatedUser = { ...user, ...updates };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  // Application methods
+  async getApplicationById(id: number): Promise<Application | undefined> {
+    return this.applications.get(id);
+  }
+
+  async getApplicationsByUserId(userId: number): Promise<Application[]> {
+    return Array.from(this.applications.values()).filter(
+      (app) => app.userId === userId
+    );
+  }
+
+  async createApplication(application: InsertApplication): Promise<Application> {
+    const id = this.applicationId++;
+    const now = new Date();
+    const newApplication: Application = {
+      ...application,
+      id,
+      status: application.status || "applied",
+      url: application.url || null,
+      description: application.description || null,
+      notes: application.notes || null,
+      appliedDate: application.appliedDate || now,
+      lastActivity: now
+    };
+    
+    this.applications.set(id, newApplication);
+    return newApplication;
+  }
+
+  async updateApplication(id: number, updates: Partial<Application>): Promise<Application> {
+    const application = this.applications.get(id);
+    if (!application) {
+      throw new Error("Application not found");
+    }
+    
+    const updatedApplication = {
+      ...application,
+      ...updates,
+      lastActivity: new Date()
+    };
+    
+    this.applications.set(id, updatedApplication);
+    return updatedApplication;
+  }
+
+  async deleteApplication(id: number): Promise<void> {
+    this.applications.delete(id);
+    
+    // Also delete related data
+    Array.from(this.interviews.values())
+      .filter(interview => interview.applicationId === id)
+      .forEach(interview => this.interviews.delete(interview.id));
+    
+    Array.from(this.contacts.values())
+      .filter(contact => contact.applicationId === id)
+      .forEach(contact => this.contacts.delete(contact.id));
+    
+    Array.from(this.timelineEvents.values())
+      .filter(event => event.applicationId === id)
+      .forEach(event => this.timelineEvents.delete(event.id));
+  }
+
+  // Document methods
+  async getDocumentById(id: number): Promise<Document | undefined> {
+    return this.documents.get(id);
+  }
+
+  async getDocumentsByUserId(userId: number, type?: string): Promise<Document[]> {
+    return Array.from(this.documents.values()).filter(
+      (doc) => doc.userId === userId && (!type || doc.type === type)
+    );
+  }
+
+  async createDocument(document: InsertDocument): Promise<Document> {
+    const id = this.documentId++;
+    const now = new Date();
+    const newDocument: Document = {
+      ...document,
+      id,
+      version: document.version || 1,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.documents.set(id, newDocument);
+    return newDocument;
+  }
+
+  async updateDocument(id: number, updates: Partial<Document>): Promise<Document> {
+    const document = this.documents.get(id);
+    if (!document) {
+      throw new Error("Document not found");
+    }
+    
+    const updatedDocument = {
+      ...document,
+      ...updates,
+      updatedAt: updates.updatedAt || new Date()
+    };
+    
+    this.documents.set(id, updatedDocument);
+    return updatedDocument;
+  }
+
+  async deleteDocument(id: number): Promise<void> {
+    this.documents.delete(id);
+  }
+
+  // Interview methods
+  async getInterviewById(id: number): Promise<Interview | undefined> {
+    return this.interviews.get(id);
+  }
+
+  async getInterviewsByUserId(userId: number): Promise<Interview[]> {
+    return Array.from(this.interviews.values()).filter(
+      (interview) => interview.userId === userId
+    );
+  }
+
+  async getInterviewsByApplicationId(applicationId: number): Promise<Interview[]> {
+    return Array.from(this.interviews.values()).filter(
+      (interview) => interview.applicationId === applicationId
+    );
+  }
+
+  async createInterview(interview: InsertInterview): Promise<Interview> {
+    const id = this.interviewId++;
+    const newInterview: Interview = {
+      ...interview,
+      id,
+      notes: interview.notes || null,
+      location: interview.location || null,
+      completed: false
+    };
+    
+    this.interviews.set(id, newInterview);
+    return newInterview;
+  }
+
+  async updateInterview(id: number, updates: Partial<Interview>): Promise<Interview> {
+    const interview = this.interviews.get(id);
+    if (!interview) {
+      throw new Error("Interview not found");
+    }
+    
+    const updatedInterview = { ...interview, ...updates };
+    this.interviews.set(id, updatedInterview);
+    return updatedInterview;
+  }
+
+  async deleteInterview(id: number): Promise<void> {
+    this.interviews.delete(id);
+  }
+
+  // Contact methods
+  async getContactById(id: number): Promise<Contact | undefined> {
+    return this.contacts.get(id);
+  }
+
+  async getContactsByApplicationId(applicationId: number): Promise<Contact[]> {
+    return Array.from(this.contacts.values()).filter(
+      (contact) => contact.applicationId === applicationId
+    );
+  }
+
+  async createContact(contact: InsertContact): Promise<Contact> {
+    const id = this.contactId++;
+    const newContact: Contact = {
+      ...contact,
+      id,
+      email: contact.email || null,
+      title: contact.title || null,
+      phone: contact.phone || null,
+      notes: contact.notes || null
+    };
+    
+    this.contacts.set(id, newContact);
+    return newContact;
+  }
+
+  async updateContact(id: number, updates: Partial<Contact>): Promise<Contact> {
+    const contact = this.contacts.get(id);
+    if (!contact) {
+      throw new Error("Contact not found");
+    }
+    
+    const updatedContact = { ...contact, ...updates };
+    this.contacts.set(id, updatedContact);
+    return updatedContact;
+  }
+
+  async deleteContact(id: number): Promise<void> {
+    this.contacts.delete(id);
+  }
+
+  // Timeline event methods
+  async getTimelineEventById(id: number): Promise<TimelineEvent | undefined> {
+    return this.timelineEvents.get(id);
+  }
+
+  async getTimelineEventsByApplicationId(applicationId: number): Promise<TimelineEvent[]> {
+    return Array.from(this.timelineEvents.values())
+      .filter((event) => event.applicationId === applicationId)
+      .sort((a, b) => {
+        const aTime = a.date ? a.date.getTime() : 0;
+        const bTime = b.date ? b.date.getTime() : 0;
+        return bTime - aTime;
+      }); // Sort by date descending
+  }
+
+  async createTimelineEvent(event: InsertTimelineEvent): Promise<TimelineEvent> {
+    const id = this.timelineEventId++;
+    const newEvent: TimelineEvent = {
+      ...event,
+      id,
+      description: event.description || null,
+      date: event.date || new Date()
+    };
+    
+    this.timelineEvents.set(id, newEvent);
+    
+    // Update the application's lastActivity
+    const application = await this.getApplicationById(event.applicationId);
+    if (application) {
+      await this.updateApplication(application.id, { lastActivity: new Date() });
+    }
+    
+    return newEvent;
+  }
+
+  async updateTimelineEvent(id: number, updates: Partial<TimelineEvent>): Promise<TimelineEvent> {
+    const event = this.timelineEvents.get(id);
+    if (!event) {
+      throw new Error("Timeline event not found");
+    }
+    
+    const updatedEvent = { ...event, ...updates };
+    this.timelineEvents.set(id, updatedEvent);
+    return updatedEvent;
+  }
+
+  async deleteTimelineEvent(id: number): Promise<void> {
+    this.timelineEvents.delete(id);
+  }
+
+  // Dashboard stats
+  async getDashboardStats(userId: number): Promise<{
+    totalApplications: number;
+    interviews: number;
+    offers: number;
+    completionRate: number;
+  }> {
+    const userApplications = await this.getApplicationsByUserId(userId);
+    
+    const totalApplications = userApplications.length;
+    
+    const interviews = userApplications.filter(
+      app => app.status === ApplicationStatus.INTERVIEW
+    ).length;
+    
+    const offers = userApplications.filter(
+      app => app.status === ApplicationStatus.OFFER
+    ).length;
+    
+    // Consider "completed" applications as those that have reached a final status (OFFER or REJECTED)
+    const completedApplications = userApplications.filter(
+      app => app.status === ApplicationStatus.OFFER || app.status === ApplicationStatus.REJECTED
+    ).length;
+    
+    const completionRate = totalApplications > 0 
+      ? Math.round((completedApplications / totalApplications) * 100) 
+      : 0;
+    
+    return {
+      totalApplications,
+      interviews,
+      offers,
+      completionRate
+    };
+  }
+}
+
+// Switched from MemStorage to DatabaseStorage
+import { db } from "./db";
+import { eq, and, desc, count } from "drizzle-orm";
+import connectPg from "connect-pg-simple";
+import session from "express-session";
+import { pool } from "./db";
+
+const PostgresSessionStore = connectPg(session);
+
+export class DatabaseStorage implements IStorage {
+  sessionStore: any;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByFirebaseUID(firebaseUID: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.firebaseUID, firebaseUID));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  // Application methods
+  async getApplicationById(id: number): Promise<Application | undefined> {
+    const [application] = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.id, id));
+    return application;
+  }
+
+  async getApplicationsByUserId(userId: number): Promise<Application[]> {
+    return await db
+      .select()
+      .from(applications)
+      .where(eq(applications.userId, userId))
+      .orderBy(desc(applications.updatedAt));
+  }
+
+  async createApplication(application: InsertApplication): Promise<Application> {
+    const [newApplication] = await db
+      .insert(applications)
+      .values({
+        ...application,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newApplication;
+  }
+
+  async updateApplication(id: number, updates: Partial<Application>): Promise<Application> {
+    const [updatedApplication] = await db
+      .update(applications)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(applications.id, id))
+      .returning();
+    return updatedApplication;
+  }
+
+  async deleteApplication(id: number): Promise<void> {
+    await db.delete(applications).where(eq(applications.id, id));
+  }
+
+  // Document methods
+  async getDocumentById(id: number): Promise<Document | undefined> {
+    const [document] = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.id, id));
+    return document;
+  }
+
+  async getDocumentsByUserId(userId: number, type?: string): Promise<Document[]> {
+    let query = db
+      .select()
+      .from(documents)
+      .where(eq(documents.userId, userId));
+    
+    if (type) {
+      query = query.where(eq(documents.type, type));
+    }
+    
+    return await query.orderBy(desc(documents.updatedAt));
+  }
+
+  async createDocument(document: InsertDocument): Promise<Document> {
+    const [newDocument] = await db
+      .insert(documents)
+      .values({
+        ...document,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newDocument;
+  }
+
+  async updateDocument(id: number, updates: Partial<Document>): Promise<Document> {
+    const [updatedDocument] = await db
+      .update(documents)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(documents.id, id))
+      .returning();
+    return updatedDocument;
+  }
+
+  async deleteDocument(id: number): Promise<void> {
+    await db.delete(documents).where(eq(documents.id, id));
+  }
+
+  // Interview methods
+  async getInterviewById(id: number): Promise<Interview | undefined> {
+    const [interview] = await db
+      .select()
+      .from(interviews)
+      .where(eq(interviews.id, id));
+    return interview;
+  }
+
+  async getInterviewsByUserId(userId: number): Promise<Interview[]> {
+    return await db
+      .select()
+      .from(interviews)
+      .where(eq(interviews.userId, userId))
+      .orderBy(desc(interviews.scheduledAt));
+  }
+
+  async getInterviewsByApplicationId(applicationId: number): Promise<Interview[]> {
+    return await db
+      .select()
+      .from(interviews)
+      .where(eq(interviews.applicationId, applicationId))
+      .orderBy(desc(interviews.scheduledAt));
+  }
+
+  async createInterview(interview: InsertInterview): Promise<Interview> {
+    const [newInterview] = await db
+      .insert(interviews)
+      .values({
+        ...interview,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newInterview;
+  }
+
+  async updateInterview(id: number, updates: Partial<Interview>): Promise<Interview> {
+    const [updatedInterview] = await db
+      .update(interviews)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(interviews.id, id))
+      .returning();
+    return updatedInterview;
+  }
+
+  async deleteInterview(id: number): Promise<void> {
+    await db.delete(interviews).where(eq(interviews.id, id));
+  }
+
+  // Contact methods
+  async getContactById(id: number): Promise<Contact | undefined> {
+    const [contact] = await db
+      .select()
+      .from(contacts)
+      .where(eq(contacts.id, id));
+    return contact;
+  }
+
+  async getContactsByApplicationId(applicationId: number): Promise<Contact[]> {
+    return await db
+      .select()
+      .from(contacts)
+      .where(eq(contacts.applicationId, applicationId))
+      .orderBy(desc(contacts.createdAt));
+  }
+
+  async createContact(contact: InsertContact): Promise<Contact> {
+    const [newContact] = await db
+      .insert(contacts)
+      .values({
+        ...contact,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newContact;
+  }
+
+  async updateContact(id: number, updates: Partial<Contact>): Promise<Contact> {
+    const [updatedContact] = await db
+      .update(contacts)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(contacts.id, id))
+      .returning();
+    return updatedContact;
+  }
+
+  async deleteContact(id: number): Promise<void> {
+    await db.delete(contacts).where(eq(contacts.id, id));
+  }
+
+  // Timeline events methods
+  async getTimelineEventById(id: number): Promise<TimelineEvent | undefined> {
+    const [event] = await db
+      .select()
+      .from(timelineEvents)
+      .where(eq(timelineEvents.id, id));
+    return event;
+  }
+
+  async getTimelineEventsByApplicationId(applicationId: number): Promise<TimelineEvent[]> {
+    return await db
+      .select()
+      .from(timelineEvents)
+      .where(eq(timelineEvents.applicationId, applicationId))
+      .orderBy(desc(timelineEvents.date));
+  }
+
+  async createTimelineEvent(event: InsertTimelineEvent): Promise<TimelineEvent> {
+    const [newEvent] = await db
+      .insert(timelineEvents)
+      .values({
+        ...event,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newEvent;
+  }
+
+  async updateTimelineEvent(id: number, updates: Partial<TimelineEvent>): Promise<TimelineEvent> {
+    const [updatedEvent] = await db
+      .update(timelineEvents)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(timelineEvents.id, id))
+      .returning();
+    return updatedEvent;
+  }
+
+  async deleteTimelineEvent(id: number): Promise<void> {
+    await db.delete(timelineEvents).where(eq(timelineEvents.id, id));
+  }
+
+  // Dashboard stats
+  async getDashboardStats(userId: number): Promise<{
+    totalApplications: number;
+    interviews: number;
+    offers: number;
+    completionRate: number;
+  }> {
+    // Get total applications count
+    const [{ count: totalApplications }] = await db
+      .select({ count: count() })
+      .from(applications)
+      .where(eq(applications.userId, userId));
+
+    // Get interviews count
+    const [{ count: interviews }] = await db
+      .select({ count: count() })
+      .from(interviews)
+      .where(eq(interviews.userId, userId));
+
+    // Get offers count (applications with status 'OFFER')
+    const [{ count: offers }] = await db
+      .select({ count: count() })
+      .from(applications)
+      .where(and(
+        eq(applications.userId, userId),
+        eq(applications.status, 'OFFER')
+      ));
+
+    // Calculate completion rate
+    // (completed applications / total applications) * 100
+    const [{ count: completedApplications }] = await db
+      .select({ count: count() })
+      .from(applications)
+      .where(and(
+        eq(applications.userId, userId),
+        eq(applications.status, 'REJECTED')
+      ));
+
+    const [{ count: acceptedApplications }] = await db
+      .select({ count: count() })
+      .from(applications)
+      .where(and(
+        eq(applications.userId, userId),
+        eq(applications.status, 'ACCEPTED')
+      ));
+
+    const totalCompleted = Number(completedApplications) + Number(acceptedApplications) + Number(offers);
+    const completionRate = totalApplications > 0 
+      ? (totalCompleted / Number(totalApplications)) * 100 
+      : 0;
+
+    return {
+      totalApplications: Number(totalApplications),
+      interviews: Number(interviews),
+      offers: Number(offers),
+      completionRate,
+    };
+  }
+}
+
+export const storage = new DatabaseStorage();

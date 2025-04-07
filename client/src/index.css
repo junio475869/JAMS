@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #020817;
+    --card: #ffffff;
+    --card-foreground: #020817;
+    --popover: #ffffff;
+    --popover-foreground: #020817;
+    --primary: #3b82f6;
+    --primary-foreground: #f8fafc;
+
+    --primary-50: #f0f9ff;
+    --primary-100: #e0f2fe;
+    --primary-200: #bae6fd;
+    --primary-300: #7dd3fc;
+    --primary-400: #38bdf8;
+    --primary-500: #0ea5e9;
+    --primary-600: #0284c7;
+    --primary-700: #0369a1;
+    --primary-800: #075985;
+    --primary-900: #0c4a6e;
+    
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+    --accent: #f8fafc;
+    --accent-foreground: #0f172a;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #3b82f6;
+    --sidebar-bg: #f8fafc;
+    --sidebar-border: #e2e8f0;
+    --sidebar-item-hover: #f1f5f9;
+    --sidebar-item-active: #e2e8f0;
+    --header-bg: #ffffff;
+    --header-border: #e2e8f0;
+  }
+
+  .theme-dark-blue {
+    --background: #0f172a;
+    --foreground: #f8fafc;
+    --card: #1e293b;
+    --card-foreground: #f8fafc;
+    --popover: #1e293b;
+    --popover-foreground: #f8fafc;
+    --primary: #3b82f6;
+    --primary-foreground: #f8fafc;
+
+    --primary-50: #eff6ff;
+    --primary-100: #dbeafe;
+    --primary-200: #bfdbfe;
+    --primary-300: #93c5fd;
+    --primary-400: #60a5fa;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+    --primary-800: #1e40af;
+    --primary-900: #1e3a8a;
+    
+    --secondary: #334155;
+    --secondary-foreground: #f8fafc;
+    --accent: #1e293b;
+    --accent-foreground: #f8fafc;
+    --border: #334155;
+    --input: #334155;
+    --ring: #3b82f6;
+    --sidebar-bg: #0f172a;
+    --sidebar-border: #1e293b;
+    --sidebar-item-hover: #1e293b;
+    --sidebar-item-active: #334155;
+    --header-bg: #1e293b;
+    --header-border: #334155;
+  }
+
+  .theme-dark-gray {
+    --background: #111827;
+    --foreground: #f9fafb;
+    --card: #1f2937;
+    --card-foreground: #f9fafb;
+    --popover: #1f2937;
+    --popover-foreground: #f9fafb;
+    --primary: #6b7280;
+    --primary-foreground: #f9fafb;
+
+    --primary-50: #f9fafb;
+    --primary-100: #f3f4f6;
+    --primary-200: #e5e7eb;
+    --primary-300: #d1d5db;
+    --primary-400: #9ca3af;
+    --primary-500: #6b7280;
+    --primary-600: #4b5563;
+    --primary-700: #374151;
+    --primary-800: #1f2937;
+    --primary-900: #111827;
+    
+    --secondary: #374151;
+    --secondary-foreground: #f9fafb;
+    --accent: #1f2937;
+    --accent-foreground: #f9fafb;
+    --border: #374151;
+    --input: #374151;
+    --ring: #6b7280;
+    --sidebar-bg: #111827;
+    --sidebar-border: #1f2937;
+    --sidebar-item-hover: #1f2937;
+    --sidebar-item-active: #374151;
+    --header-bg: #1f2937;
+    --header-border: #374151;
+  }
+
+  .theme-dark-purple {
+    --background: #1e1b4b;
+    --foreground: #f5f3ff;
+    --card: #312e81;
+    --card-foreground: #f5f3ff;
+    --popover: #312e81;
+    --popover-foreground: #f5f3ff;
+    --primary: #8b5cf6;
+    --primary-foreground: #f5f3ff;
+
+    --primary-50: #f5f3ff;
+    --primary-100: #ede9fe;
+    --primary-200: #ddd6fe;
+    --primary-300: #c4b5fd;
+    --primary-400: #a78bfa;
+    --primary-500: #8b5cf6;
+    --primary-600: #7c3aed;
+    --primary-700: #6d28d9;
+    --primary-800: #5b21b6;
+    --primary-900: #4c1d95;
+
+    --secondary: #4338ca;
+    --secondary-foreground: #f5f3ff;
+    --accent: #312e81;
+    --accent-foreground: #f5f3ff;
+    --border: #4338ca;
+    --input: #4338ca;
+    --ring: #8b5cf6;
+    --sidebar-bg: #1e1b4b;
+    --sidebar-border: #312e81;
+    --sidebar-item-hover: #312e81;
+    --sidebar-item-active: #4338ca;
+    --header-bg: #312e81;
+    --header-border: #4338ca;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground transition-colors duration-200 ease-in-out;
+  }
+
+  /* Custom component theming */
+  .main-layout-sidebar {
+    @apply bg-[var(--sidebar-bg)] border-[var(--sidebar-border)];
+  }
+
+  .main-layout-header {
+    @apply bg-[var(--header-bg)] border-[var(--header-border)];
+  }
+
+  .sidebar-item {
+    @apply hover:bg-[var(--sidebar-item-hover)];
+  }
+
+  .sidebar-item-active {
+    @apply bg-[var(--sidebar-item-active)];
+  }
+}
