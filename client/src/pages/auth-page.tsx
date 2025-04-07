@@ -85,7 +85,6 @@ export default function AuthPage() {
     fullName: string;
   }) => {
     try {
-      console.log(registerMutation);
       await registerMutation.mutateAsync({
         email: data.email,
         password: data.password,
