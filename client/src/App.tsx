@@ -4,7 +4,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { RoleBasedRoute } from "./components/role-based-route";
 import { MainLayout } from "./components/layout/main-layout";
 import { UserRole } from "@shared/schema";
-import { AuthProvider } from "./context/auth-context"; // Assuming this is where your AuthProvider is
+import { AuthProvider } from "@/hooks/use-auth"; // Assuming this is where your AuthProvider is
 
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
@@ -23,52 +23,54 @@ import ChatPage from "@/pages/chat-page";
 function App() {
   return (
     <>
-      <AuthProvider> {/* Added AuthProvider wrapper */}
-      <Switch>
-        <Route path="/auth" component={AuthPage} />
+      <AuthProvider>
+        {/* Added AuthProvider wrapper */}
+        <Switch>
+          <Route path="/auth" component={AuthPage} />
 
-        <Route>
-          {(params) => (
-            <ProtectedRoute>
-              <MainLayout>
-                <Switch>
-                  <Route path="/" component={DashboardPage} />
-                  <Route path="/applications" component={ApplicationsPage} />
-                  <Route path="/documents" component={DocumentsPage} />
-                  <Route path="/analytics" component={AnalyticsPage} />
-                  <Route path="/calendar" component={CalendarPage} />
-                  <Route path="/email" component={EmailPage} />
-                  <Route path="/interview" component={InterviewPrepPage} />
-                  <Route path="/profile" component={ProfilePage} />
-                  <Route path="/chat" component={ChatPage} />
-                  <Route path="/team-management">
-                    {() => (
-                      <RoleBasedRoute
-                        allowedRoles={[UserRole.ADMIN, UserRole.GROUP_LEADER]}
-                        element={<TeamManagementPage />}
-                      />
-                    )}
-                  </Route>
-                  <Route path="/job-apply">
-                    {() => (
-                      <RoleBasedRoute
-                        allowedRoles={[
-                          UserRole.JOB_SEEKER,
-                          UserRole.JOB_BIDDER,
-                        ]}
-                        element={<JobApplyPage />}
-                      />
-                    )}
-                  </Route>
-                  <Route component={NotFound} />
-                </Switch>
-              </MainLayout>
-            </ProtectedRoute>
-          )}
-        </Route>
-      </Switch>
-      <Toaster />
-      </AuthProvider> {/* Closed AuthProvider wrapper */}
+          <Route>
+            {(params) => (
+              <ProtectedRoute>
+                <MainLayout>
+                  <Switch>
+                    <Route path="/" component={DashboardPage} />
+                    <Route path="/applications" component={ApplicationsPage} />
+                    <Route path="/documents" component={DocumentsPage} />
+                    <Route path="/analytics" component={AnalyticsPage} />
+                    <Route path="/calendar" component={CalendarPage} />
+                    <Route path="/email" component={EmailPage} />
+                    <Route path="/interview" component={InterviewPrepPage} />
+                    <Route path="/profile" component={ProfilePage} />
+                    <Route path="/chat" component={ChatPage} />
+                    <Route path="/team-management">
+                      {() => (
+                        <RoleBasedRoute
+                          allowedRoles={[UserRole.ADMIN, UserRole.GROUP_LEADER]}
+                          element={<TeamManagementPage />}
+                        />
+                      )}
+                    </Route>
+                    <Route path="/job-apply">
+                      {() => (
+                        <RoleBasedRoute
+                          allowedRoles={[
+                            UserRole.JOB_SEEKER,
+                            UserRole.JOB_BIDDER,
+                          ]}
+                          element={<JobApplyPage />}
+                        />
+                      )}
+                    </Route>
+                    <Route component={NotFound} />
+                  </Switch>
+                </MainLayout>
+              </ProtectedRoute>
+            )}
+          </Route>
+        </Switch>
+        <Toaster />
+      </AuthProvider>{" "}
+      {/* Closed AuthProvider wrapper */}
     </>
   );
 }
