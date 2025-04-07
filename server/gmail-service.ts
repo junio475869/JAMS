@@ -15,10 +15,14 @@ export class GmailService {
   private oauth2Client: OAuth2Client;
 
   constructor() {
+    const replHost = process.env.REPL_SLUG && process.env.REPL_OWNER 
+      ? `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
+      : process.env.APP_URL?.replace('https://', '');
+      
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/api/gmail/oauth/callback`
+      `https://${replHost}/api/gmail/oauth/callback`
     );
   }
 
