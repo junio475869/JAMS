@@ -30,6 +30,10 @@ import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { db, pool } from "./db";
 
+// Placeholder type - needs to be defined elsewhere
+type GmailConnection = { id: number; userId: number; accessToken: string; refreshToken: string };
+type InsertGmailConnection = Omit<GmailConnection, 'id'>;
+
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -119,6 +123,8 @@ export interface IStorage {
 
   // Session store
   sessionStore: any;
+  getGmailConnectionsByUserId(userId: number): Promise<GmailConnection[]>;
+  saveGmailConnection(connection: InsertGmailConnection): Promise<GmailConnection>;
 }
 
 const PostgresSessionStore = connectPg(session);
@@ -198,10 +204,10 @@ export class DatabaseStorage implements IStorage {
     await db.delete(timelineEvents).where(eq(timelineEvents.userId, id));
     await db.delete(interviewQuestions).where(eq(interviewQuestions.userId, id));
     await db.delete(interviewAssistance).where(eq(interviewAssistance.userId, id));
-    
+
     // Then delete applications
     await db.delete(applications).where(eq(applications.userId, id));
-    
+
     // Finally delete the user
     await db.delete(users).where(eq(users.id, id));
   }
@@ -252,7 +258,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(interviews).where(eq(interviews.applicationId, id));
     await db.delete(contacts).where(eq(contacts.applicationId, id));
     await db.delete(timelineEvents).where(eq(timelineEvents.applicationId, id));
-    
+
     // Then delete the application
     await db.delete(applications).where(eq(applications.id, id));
   }
@@ -521,7 +527,7 @@ export class DatabaseStorage implements IStorage {
     const completionRate = Number(totalApplications) > 0 
       ? (totalCompleted / Number(totalApplications)) * 100 
       : 0;
-    
+
     // Get status breakdown
     const userApplications = await db
       .select({
@@ -533,32 +539,32 @@ export class DatabaseStorage implements IStorage {
       })
       .from(applications)
       .where(eq(applications.userId, userId));
-    
+
     // Calculate status breakdown
     const statusCounts: Record<string, number> = {};
     userApplications.forEach(app => {
       const status = app.status || 'unknown';
       statusCounts[status] = (statusCounts[status] || 0) + 1;
     });
-    
+
     const statusBreakdown = Object.entries(statusCounts).map(([status, count]) => ({
       status,
       count
     }));
-    
+
     // Calculate applications by company
     const companyCounts: Record<string, number> = {};
     userApplications.forEach(app => {
       const company = app.company || 'Unknown';
       companyCounts[company] = (companyCounts[company] || 0) + 1;
     });
-    
+
     // Sort by count descending and take top 10
     const applicationsByCompany = Object.entries(companyCounts)
       .map(([company, count]) => ({ company, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
-    
+
     // Calculate applications by month
     const monthCounts: Record<string, number> = {};
     userApplications.forEach(app => {
@@ -570,34 +576,34 @@ export class DatabaseStorage implements IStorage {
       } else if (app.createdAt) {
         date = new Date(app.createdAt);
       }
-      
+
       if (!date) {
         return; // Skip this application if no date is available
       }
-      
+
       const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       monthCounts[monthYear] = (monthCounts[monthYear] || 0) + 1;
     });
-    
+
     // Convert to array and sort by date
     const monthsOrder: Record<string, number> = {
       'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
       'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
     };
-    
+
     const applicationsByMonth = Object.entries(monthCounts)
       .map(([month, count]) => ({ month, count }))
       .sort((a, b) => {
         const [aMonth, aYear] = a.month.split(' ');
         const [bMonth, bYear] = b.month.split(' ');
-        
+
         if (aYear !== bYear) {
           return parseInt(aYear) - parseInt(bYear);
         }
-        
+
         return monthsOrder[aMonth] - monthsOrder[bMonth];
       });
-    
+
     // Calculate response rate (applications with interviews / total applications)
     const [{ count: applicationsWithInterviews }] = await db
       .select({ count: count() })
@@ -606,16 +612,16 @@ export class DatabaseStorage implements IStorage {
         eq(applications.userId, userId),
         eq(applications.status, ApplicationStatus.INTERVIEW)
       ));
-    
+
     const responseRate = Number(totalApplications) > 0
       ? ((Number(applicationsWithInterviews) + Number(offersCount) + Number(acceptedApplications)) / Number(totalApplications)) * 100
       : 0;
-    
+
     // Calculate average days to interview
     // For each application with interviews, find the earliest interview date and calculate days from application date
     let totalDaysToInterview = 0;
     let interviewsWithDates = 0;
-    
+
     // Fetch all interviews with their associated applications
     const interviewsWithApplications = await db
       .select({
@@ -626,43 +632,43 @@ export class DatabaseStorage implements IStorage {
       .from(interviews)
       .innerJoin(applications, eq(interviews.applicationId, applications.id))
       .where(eq(interviews.userId, userId));
-    
+
     interviewsWithApplications.forEach(item => {
       if (item.interviewDate) {
         const interviewDate = new Date(item.interviewDate);
         let applicationDate: Date | null = null;
-        
+
         if (item.applicationDate) {
           applicationDate = new Date(item.applicationDate);
         } else if (item.applicationCreatedAt) {
           applicationDate = new Date(item.applicationCreatedAt);
         } 
-        
+
         if (!applicationDate) {
           return; // Skip if no date is available
         }
-        
+
         const diffTime = Math.abs(interviewDate.getTime() - applicationDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         totalDaysToInterview += diffDays;
         interviewsWithDates++;
       }
     });
-    
+
     const averageDaysToInterview = interviewsWithDates > 0 
       ? totalDaysToInterview / interviewsWithDates 
       : 0;
-    
+
     // Calculate average days to offer
     // For each application with OFFER status, calculate days from application date to last status change
     const applicationsWithOffers = userApplications.filter(app => 
       app.status === ApplicationStatus.OFFER || app.status === ApplicationStatus.ACCEPTED
     );
-    
+
     let totalDaysToOffer = 0;
     let offersWithDates = 0;
-    
+
     // For each offer application, find the date when status changed to OFFER
     for (const app of applicationsWithOffers) {
       const timelineEntries = await db
@@ -676,29 +682,29 @@ export class DatabaseStorage implements IStorage {
           eq(timelineEvents.type, 'offer')
         ))
         .orderBy(timelineEvents.date);
-      
+
       if (timelineEntries.length > 0 && timelineEntries[0].date) {
         const offerDate = new Date(timelineEntries[0].date);
         let applicationDate: Date | null = null;
-        
+
         if (app.appliedDate) {
           applicationDate = new Date(app.appliedDate);
         } else if (app.createdAt) {
           applicationDate = new Date(app.createdAt);
         }
-        
+
         if (!applicationDate) {
           continue; // Skip if no date is available
         }
-        
+
         const diffTime = Math.abs(offerDate.getTime() - applicationDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         totalDaysToOffer += diffDays;
         offersWithDates++;
       }
     }
-    
+
     const averageDaysToOffer = offersWithDates > 0 
       ? totalDaysToOffer / offersWithDates 
       : 0;
@@ -745,7 +751,7 @@ export class DatabaseStorage implements IStorage {
   ): Promise<InterviewQuestion[]> {
     // Start with the base condition
     let conditions = [eq(interviewQuestions.public, true)];
-    
+
     // Add additional conditions based on filters
     if (filters) {
       if (filters.company) {
@@ -761,19 +767,19 @@ export class DatabaseStorage implements IStorage {
         conditions.push(eq(interviewQuestions.difficulty, filters.difficulty));
       }
     }
-    
+
     // Combine all conditions with AND
     const query = db
       .select()
       .from(interviewQuestions)
       .where(and(...conditions))
       .orderBy(desc(interviewQuestions.upvotes));
-    
+
     // Apply limit if provided
     if (limit) {
       return await query.limit(limit);
     }
-    
+
     return await query;
   }
 
@@ -885,6 +891,16 @@ export class DatabaseStorage implements IStorage {
 
   async deleteInterviewAssistance(id: number): Promise<void> {
     await db.delete(interviewAssistance).where(eq(interviewAssistance.id, id));
+  }
+
+  async getGmailConnectionsByUserId(userId: number): Promise<GmailConnection[]> {
+    // Implement Gmail connection retrieval logic here.  This is a placeholder.
+    return [];
+  }
+
+  async saveGmailConnection(connection: InsertGmailConnection): Promise<GmailConnection> {
+    // Implement Gmail connection saving logic here. This is a placeholder.
+    return {id: 1, ...connection};
   }
 }
 

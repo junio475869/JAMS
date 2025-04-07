@@ -679,11 +679,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Gmail endpoints (placeholders)
+  // Gmail endpoints
   app.get("/api/gmail/inbox", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
-      const emails = await gmailService.getInboxEmails(req.user!.id); // Placeholder function call
+      const connections = await storage.getGmailConnectionsByUserId(req.user!.id);
+      if (!connections || connections.length === 0) {
+        return res.status(404).json({ error: "No Gmail accounts connected" });
+      }
+
+      // Get emails from all connected accounts
+      const allEmails = await Promise.all(
+        connections.map(connection => gmailService.getEmails(connection))
+      );
+
+      // Flatten and sort by date
+      const emails = allEmails
+        .flat()
+        .sort((a, b) => b.date.getTime() - a.date.getTime());
+
       res.json(emails);
     } catch (error) {
       res.status(500).json({ error: error.message });

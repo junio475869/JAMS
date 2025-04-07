@@ -29,6 +29,21 @@ const PostgresSessionStore = connectPg(session);
 export class DatabaseStorage implements IStorage {
   sessionStore: any;
 
+  async getGmailConnectionsByUserId(userId: number): Promise<GmailConnection[]> {
+    return await db
+      .select()
+      .from(gmailConnections)
+      .where(eq(gmailConnections.userId, userId));
+  }
+
+  async saveGmailConnection(connection: InsertGmailConnection): Promise<GmailConnection> {
+    const [newConnection] = await db
+      .insert(gmailConnections)
+      .values(connection)
+      .returning();
+    return newConnection;
+  }
+
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 
       pool, 
