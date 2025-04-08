@@ -5,16 +5,16 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { setupTeamRoutes } from "./team-routes";
 import { storage } from "./storage";
-import { 
-  generateCoverLetter, 
-  analyzeResume, 
-  generateInterviewQuestions, 
+import {
+  generateCoverLetter,
+  analyzeResume,
+  generateInterviewQuestions,
   generateResponseToQuestion,
   analyzeInterviewTranscript,
   generateInterviewFeedback,
   createMockInterview,
   analyzeApplicationStatus,
-  StatusColorAnalysis
+  StatusColorAnalysis,
 } from "./ai";
 import { z } from "zod";
 import {
@@ -28,7 +28,7 @@ import {
   ApplicationStatus,
   DocumentType,
   InterviewQuestionCategory,
-  InterviewQuestionDifficulty
+  InterviewQuestionDifficulty,
 } from "@shared/schema";
 import { db } from "./db";
 import { gmailService } from "./gmail-service"; // Added import
@@ -62,12 +62,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         title: "Application Submitted",
         description: `Applied for ${application.position} at ${application.company}`,
-        type: "application"
+        type: "application",
       });
 
       res.status(201).json(application);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Invalid request";
+      const errorMessage =
+        error instanceof Error ? error.message : "Invalid request";
       res.status(400).json({ error: errorMessage });
     }
   });
@@ -102,7 +103,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const updatedApplication = await storage.updateApplication(applicationId, req.body);
+      const updatedApplication = await storage.updateApplication(
+        applicationId,
+        req.body,
+      );
 
       // If status has changed, add timeline event
       if (req.body.status && req.body.status !== application.status) {
@@ -125,7 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: req.user!.id,
           title: eventTitle,
           description: `Status changed from ${application.status} to ${req.body.status}`,
-          type: eventType
+          type: eventType,
         });
       }
 
@@ -211,7 +215,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedData = { ...req.body, version, updatedAt: new Date() };
-      const updatedDocument = await storage.updateDocument(documentId, updatedData);
+      const updatedDocument = await storage.updateDocument(
+        documentId,
+        updatedData,
+      );
       res.json(updatedDocument);
     } catch (error) {
       res.status(400).json({ error: error.message || "Invalid request" });
@@ -251,7 +258,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertInterviewSchema.parse(userData);
 
       // Check that the application belongs to the user
-      const application = await storage.getApplicationById(validatedData.applicationId);
+      const application = await storage.getApplicationById(
+        validatedData.applicationId,
+      );
       if (!application || application.userId !== req.user!.id) {
         return res.status(404).json({ error: "Application not found" });
       }
@@ -264,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         title: "Interview Scheduled",
         description: `${interview.type} interview scheduled for ${interview.title} at ${interview.company}`,
-        type: "interview"
+        type: "interview",
       });
 
       res.status(201).json(interview);
@@ -328,7 +337,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Application not found" });
     }
 
-    const timeline = await storage.getTimelineEventsByApplicationId(applicationId);
+    const timeline =
+      await storage.getTimelineEventsByApplicationId(applicationId);
     res.json(timeline);
   });
 
@@ -371,21 +381,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       jobDescription: z.string(),
       resumeId: z.number().optional(),
       company: z.string(),
-      position: z.string()
+      position: z.string(),
     });
 
     try {
-      const { jobDescription, resumeId, company, position } = schema.parse(req.body);
+      const { jobDescription, resumeId, company, position } = schema.parse(
+        req.body,
+      );
 
       let resumeContent = "";
       if (resumeId) {
         const resume = await storage.getDocumentById(resumeId);
-        if (resume && resume.userId === req.user!.id && resume.type === DocumentType.RESUME) {
+        if (
+          resume &&
+          resume.userId === req.user!.id &&
+          resume.type === DocumentType.RESUME
+        ) {
           resumeContent = resume.content;
         }
       }
 
-      const coverLetter = await generateCoverLetter(jobDescription, resumeContent, company, position);
+      const coverLetter = await generateCoverLetter(
+        jobDescription,
+        resumeContent,
+        company,
+        position,
+      );
 
       res.json({ coverLetter });
     } catch (error) {
@@ -398,14 +419,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const schema = z.object({
       resumeId: z.number(),
-      jobDescription: z.string()
+      jobDescription: z.string(),
     });
 
     try {
       const { resumeId, jobDescription } = schema.parse(req.body);
 
       const resume = await storage.getDocumentById(resumeId);
-      if (!resume || resume.userId !== req.user!.id || resume.type !== DocumentType.RESUME) {
+      if (
+        !resume ||
+        resume.userId !== req.user!.id ||
+        resume.type !== DocumentType.RESUME
+      ) {
         return res.status(404).json({ error: "Resume not found" });
       }
 
@@ -422,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const schema = z.object({
-      applicationId: z.number()
+      applicationId: z.number(),
     });
 
     try {
@@ -435,17 +460,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get timeline events for status history
-      const timelineEvents = await storage.getTimelineEventsByApplicationId(applicationId);
+      const timelineEvents =
+        await storage.getTimelineEventsByApplicationId(applicationId);
       const statusHistory = timelineEvents
-        .filter(event => event.title.includes("Status") || event.type === "application" || 
-                event.type === "interview" || event.type === "offer" || event.type === "rejection")
-        .map(event => ({
-          status: event.title.includes("Status") ? event.description.split("to ")[1] : 
-                 event.type === "application" ? "applied" :
-                 event.type === "interview" ? "interview" :
-                 event.type === "offer" ? "offer" :
-                 event.type === "rejection" ? "rejected" : "unknown",
-          date: event.date
+        .filter(
+          (event) =>
+            event.title.includes("Status") ||
+            event.type === "application" ||
+            event.type === "interview" ||
+            event.type === "offer" ||
+            event.type === "rejection",
+        )
+        .map((event) => ({
+          status: event.title.includes("Status")
+            ? event.description.split("to ")[1]
+            : event.type === "application"
+              ? "applied"
+              : event.type === "interview"
+                ? "interview"
+                : event.type === "offer"
+                  ? "offer"
+                  : event.type === "rejection"
+                    ? "rejected"
+                    : "unknown",
+          date: event.date,
         }));
 
       // Call the AI to analyze the application status
@@ -456,14 +494,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: application.status,
         appliedDate: application.appliedDate,
         notes: application.notes,
-        description: application.description
+        description: application.description,
       };
 
-      const colorAnalysis = await analyzeApplicationStatus(safeApplication, statusHistory);
+      const colorAnalysis = await analyzeApplicationStatus(
+        safeApplication,
+        statusHistory,
+      );
 
       res.json({ colorAnalysis });
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Invalid request";
+      const errorMessage =
+        error instanceof Error ? error.message : "Invalid request";
       res.status(400).json({ error: errorMessage });
     }
   });
@@ -482,10 +524,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       company: req.query.company as string | undefined,
       role: req.query.role as string | undefined,
       category: req.query.category as string | undefined,
-      difficulty: req.query.difficulty as string | undefined
+      difficulty: req.query.difficulty as string | undefined,
     };
 
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    const limit = req.query.limit
+      ? parseInt(req.query.limit as string)
+      : undefined;
 
     const questions = await storage.getPublicInterviewQuestions(filters, limit);
     res.json(questions);
@@ -513,7 +557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const schema = z.object({
-      isUpvote: z.boolean()
+      isUpvote: z.boolean(),
     });
 
     try {
@@ -522,7 +566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedQuestion = await storage.voteInterviewQuestion(
         questionId,
         req.user!.id,
-        isUpvote
+        isUpvote,
       );
 
       res.json(updatedQuestion);
@@ -535,7 +579,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/interview-assistance", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const assistances = await storage.getInterviewAssistanceByUserId(req.user!.id);
+    const assistances = await storage.getInterviewAssistanceByUserId(
+      req.user!.id,
+    );
     res.json(assistances);
   });
 
@@ -548,7 +594,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check that the interview belongs to the user if provided
       if (validatedData.interviewId) {
-        const interview = await storage.getInterviewById(validatedData.interviewId);
+        const interview = await storage.getInterviewById(
+          validatedData.interviewId,
+        );
         if (!interview || interview.userId !== req.user!.id) {
           return res.status(404).json({ error: "Interview not found" });
         }
@@ -568,13 +616,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const schema = z.object({
       jobDescription: z.string(),
       position: z.string(),
-      company: z.string()
+      company: z.string(),
     });
 
     try {
       const { jobDescription, position, company } = schema.parse(req.body);
 
-      const questions = await generateInterviewQuestions(jobDescription, position, company);
+      const questions = await generateInterviewQuestions(
+        jobDescription,
+        position,
+        company,
+      );
 
       res.json({ questions });
     } catch (error) {
@@ -590,26 +642,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       resumeId: z.number().optional(),
       framework: z.string().optional(),
       keywords: z.array(z.string()).optional(),
-      tone: z.string().optional()
+      tone: z.string().optional(),
     });
 
     try {
-      const { question, resumeId, framework, keywords, tone } = schema.parse(req.body);
+      const { question, resumeId, framework, keywords, tone } = schema.parse(
+        req.body,
+      );
 
       let resumeContent = "";
       if (resumeId) {
         const resume = await storage.getDocumentById(resumeId);
-        if (resume && resume.userId === req.user!.id && resume.type === DocumentType.RESUME) {
+        if (
+          resume &&
+          resume.userId === req.user!.id &&
+          resume.type === DocumentType.RESUME
+        ) {
           resumeContent = resume.content;
         }
       }
 
       const answer = await generateResponseToQuestion(
-        question, 
-        resumeContent, 
-        framework, 
-        keywords, 
-        tone
+        question,
+        resumeContent,
+        framework,
+        keywords,
+        tone,
       );
 
       res.json({ answer });
@@ -624,13 +682,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const schema = z.object({
       questions: z.array(z.string()),
       answers: z.array(z.string()),
-      position: z.string()
+      position: z.string(),
     });
 
     try {
       const { questions, answers, position } = schema.parse(req.body);
 
-      const feedback = await generateInterviewFeedback(questions, answers, position);
+      const feedback = await generateInterviewFeedback(
+        questions,
+        answers,
+        position,
+      );
 
       res.json({ feedback });
     } catch (error) {
@@ -645,13 +707,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       position: z.string(),
       company: z.string(),
       level: z.string().optional(),
-      focusAreas: z.array(z.string()).optional()
+      focusAreas: z.array(z.string()).optional(),
     });
 
     try {
       const { position, company, level, focusAreas } = schema.parse(req.body);
 
-      const mockInterview = await createMockInterview(position, company, level, focusAreas);
+      const mockInterview = await createMockInterview(
+        position,
+        company,
+        level,
+        focusAreas,
+      );
 
       res.json(mockInterview);
     } catch (error) {
@@ -665,13 +732,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const schema = z.object({
       transcript: z.string(),
       jobDescription: z.string(),
-      position: z.string()
+      position: z.string(),
     });
 
     try {
       const { transcript, jobDescription, position } = schema.parse(req.body);
 
-      const analysis = await analyzeInterviewTranscript(transcript, jobDescription, position);
+      const analysis = await analyzeInterviewTranscript(
+        transcript,
+        jobDescription,
+        position,
+      );
 
       res.json({ analysis });
     } catch (error) {
@@ -689,46 +760,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/gmail/oauth/callback", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const { code } = req.query;
-    if (!code || typeof code !== 'string') {
+    if (!code || typeof code !== "string") {
       return res.status(400).json({ error: "No authorization code provided" });
     }
-    
+
     try {
       await gmailService.handleCallback(code, req.user!.id);
-      res.redirect('/email');
+      res.redirect("/email");
     } catch (error) {
-      console.error('OAuth callback error:', error);
+      console.error("OAuth callback error:", error);
       res.status(500).json({ error: "Failed to complete OAuth flow" });
     }
   });
 
   app.post("/api/calendar/events", async (req, res) => {
-  if (!req.isAuthenticated()) return res.sendStatus(401);
-  
-  try {
-    const connections = await storage.getGmailConnectionsByUserId(req.user!.id);
-    if (!connections || connections.length === 0) {
-      return res.status(404).json({ error: "No Google account connected" });
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const connections = await storage.getGmailConnectionsByUserId(
+        req.user!.id,
+      );
+      if (!connections || connections.length === 0) {
+        return res.status(404).json({ error: "No Google account connected" });
+      }
+
+      const event = await gmailService.createCalendarEvent(
+        connections[0],
+        req.body,
+      );
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
+  });
 
-    const event = await gmailService.createCalendarEvent(connections[0], req.body);
-    res.json(event);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  app.post("/api/events", async (req, res) => {
+    const { title, description, date } = req.body;
+    try {
+      const newEvent = {
+        title,
+        description,
+        date: new Date(date), // Ensure to handle the Date correctly
+      };
+      // Save the event to your database
+      await dbStorage.createTimelineEvent(newEvent);
+      res.status(201).send({ message: "Event created successfully!" });
+    } catch (error) {
+      console.error("Error saving event:", error);
+      res.status(500).send({ error: "Failed to create event." });
+    }
+  });
 
-app.get("/api/gmail/inbox", async (req, res) => {
+  app.get("/api/gmail/inbox", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
-      const connections = await storage.getGmailConnectionsByUserId(req.user!.id);
+      const connections = await storage.getGmailConnectionsByUserId(
+        req.user!.id,
+      );
       if (!connections || connections.length === 0) {
         return res.status(404).json({ error: "No Gmail accounts connected" });
       }
 
       // Get emails from all connected accounts
       const allEmails = await Promise.all(
-        connections.map(connection => gmailService.getEmails(connection))
+        connections.map((connection) => gmailService.getEmails(connection)),
       );
 
       // Flatten and sort by date
@@ -741,7 +836,6 @@ app.get("/api/gmail/inbox", async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   });
-
 
   const httpServer = createServer(app);
   return httpServer;

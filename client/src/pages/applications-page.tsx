@@ -25,6 +25,46 @@ import { ApplicationStatus } from "@shared/schema";
 
 export default function ApplicationsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [company, setCompany] = useState("");
+  const [position, setPosition] = useState("");
+  const [status, setStatus] = useState(ApplicationStatus.APPLIED);
+  const [url, setUrl] = useState("");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  // const { data: applications, isLoading } = useQuery{
+  //   queryKey: ["/api/applications"],
+  //     queryFn: async () =>
+  //       (await fetch("/api/applications")).json()
+  // };
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    console.log(event);
+    setError(null);
+    setSuccess(null);
+    if (!company || !position)
+      return setError("Company and position are required.");
+    if (url && !url.startsWith("http"))
+      return setError("URL must start with http or https.");
+    if (notes.length > 500)
+      return setError("Notes must be less than 500 characters.");
+    const newApplication = { company, position, status, url, notes }; // Add additional fields as necessary
+    try {
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newApplication),
+      });
+      if (response.ok) {
+        alert("Application added successfully!");
+        // Optionally reset form or redirect
+      } else {
+        alert("Failed to add application.");
+      }
+    } catch (error) {
+      console.error("Error adding application:", error);
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -32,7 +72,9 @@ export default function ApplicationsPage() {
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <div>
           <h1 className="text-2xl font-bold">Applications</h1>
-          <p className="text-muted-foreground mt-1">Track and manage all your job applications</p>
+          <p className="text-muted-foreground mt-1">
+            Track and manage all your job applications
+          </p>
         </div>
 
         <div className="mt-4 md:mt-0 flex flex-col sm:flex-row sm:space-x-3">
@@ -50,7 +92,10 @@ export default function ApplicationsPage() {
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -58,63 +103,83 @@ export default function ApplicationsPage() {
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Application</DialogTitle>
-                <DialogDescription>
-                  Fill out the details for your new job application.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    placeholder="Enter company name"
-                  />
+              <form onSubmit={handleSubmit}>
+                <DialogHeader>
+                  <DialogTitle>Add New Application</DialogTitle>
+                  <DialogDescription>
+                    Fill out the details for your new job application.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="company">Company</Label>
+                    <Input
+                      id="company"
+                      placeholder="Enter company name"
+                      onChange={(e) => setCompany(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="position">Position</Label>
+                    <Input
+                      id="position"
+                      placeholder="Enter job position"
+                      onChange={(e) => setPosition(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      defaultValue={ApplicationStatus.APPLIED}
+                      onChange={(e) => setStatus(e.target.value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ApplicationStatus.APPLIED}>
+                          Applied
+                        </SelectItem>
+                        <SelectItem value={ApplicationStatus.INTERVIEW}>
+                          Interview
+                        </SelectItem>
+                        <SelectItem value={ApplicationStatus.OFFER}>
+                          Offer
+                        </SelectItem>
+                        <SelectItem value={ApplicationStatus.REJECTED}>
+                          Rejected
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="url">Job Posting URL</Label>
+                    <Input
+                      id="url"
+                      placeholder="Enter job posting URL"
+                      onChange={(e) => setUrl(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <textarea
+                      id="notes"
+                      placeholder="Enter any notes about this application"
+                      className="min-h-[100px] rounded-md border bg-background p-3"
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="position">Position</Label>
-                  <Input
-                    id="position"
-                    placeholder="Enter job position"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select defaultValue={ApplicationStatus.APPLIED}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
-                      <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
-                      <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
-                      <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="url">Job Posting URL</Label>
-                  <Input
-                    id="url"
-                    placeholder="Enter job posting URL"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <textarea
-                    id="notes"
-                    placeholder="Enter any notes about this application"
-                    className="min-h-[100px] rounded-md border bg-background p-3"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save Application</Button>
-              </DialogFooter>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">Save Application</Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
         </div>

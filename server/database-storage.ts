@@ -29,14 +29,18 @@ const PostgresSessionStore = connectPg(session);
 export class DatabaseStorage implements IStorage {
   sessionStore: any;
 
-  async getGmailConnectionsByUserId(userId: number): Promise<GmailConnection[]> {
+  async getGmailConnectionsByUserId(
+    userId: number,
+  ): Promise<GmailConnection[]> {
     return await db
       .select()
       .from(gmailConnections)
       .where(eq(gmailConnections.userId, userId));
   }
 
-  async saveGmailConnection(connection: InsertGmailConnection): Promise<GmailConnection> {
+  async saveGmailConnection(
+    connection: InsertGmailConnection,
+  ): Promise<GmailConnection> {
     const [newConnection] = await db
       .insert(gmailConnections)
       .values(connection)
@@ -45,9 +49,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
@@ -58,7 +62,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username));
     return user;
   }
 
@@ -68,7 +75,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByFirebaseUID(firebaseUID: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.firebaseUID, firebaseUID));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.firebaseUID, firebaseUID));
     return user;
   }
 
@@ -103,24 +113,29 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(applications.updatedAt));
   }
 
-  async createApplication(application: InsertApplication): Promise<Application> {
+  async createApplication(
+    application: InsertApplication,
+  ): Promise<Application> {
     const [newApplication] = await db
       .insert(applications)
       .values({
         ...application,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
     return newApplication;
   }
 
-  async updateApplication(id: number, updates: Partial<Application>): Promise<Application> {
+  async updateApplication(
+    id: number,
+    updates: Partial<Application>,
+  ): Promise<Application> {
     const [updatedApplication] = await db
       .update(applications)
       .set({
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(applications.id, id))
       .returning();
@@ -140,16 +155,16 @@ export class DatabaseStorage implements IStorage {
     return document;
   }
 
-  async getDocumentsByUserId(userId: number, type?: string): Promise<Document[]> {
-    let query = db
-      .select()
-      .from(documents)
-      .where(eq(documents.userId, userId));
-    
+  async getDocumentsByUserId(
+    userId: number,
+    type?: string,
+  ): Promise<Document[]> {
+    let query = db.select().from(documents).where(eq(documents.userId, userId));
+
     if (type) {
       query = query.where(eq(documents.type, type));
     }
-    
+
     return await query.orderBy(desc(documents.updatedAt));
   }
 
@@ -159,18 +174,21 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...document,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
     return newDocument;
   }
 
-  async updateDocument(id: number, updates: Partial<Document>): Promise<Document> {
+  async updateDocument(
+    id: number,
+    updates: Partial<Document>,
+  ): Promise<Document> {
     const [updatedDocument] = await db
       .update(documents)
       .set({
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(documents.id, id))
       .returning();
@@ -198,7 +216,9 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(interviews.scheduledAt));
   }
 
-  async getInterviewsByApplicationId(applicationId: number): Promise<Interview[]> {
+  async getInterviewsByApplicationId(
+    applicationId: number,
+  ): Promise<Interview[]> {
     return await db
       .select()
       .from(interviews)
@@ -212,18 +232,21 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...interview,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
     return newInterview;
   }
 
-  async updateInterview(id: number, updates: Partial<Interview>): Promise<Interview> {
+  async updateInterview(
+    id: number,
+    updates: Partial<Interview>,
+  ): Promise<Interview> {
     const [updatedInterview] = await db
       .update(interviews)
       .set({
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(interviews.id, id))
       .returning();
@@ -257,7 +280,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...contact,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
     return newContact;
@@ -268,7 +291,7 @@ export class DatabaseStorage implements IStorage {
       .update(contacts)
       .set({
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(contacts.id, id))
       .returning();
@@ -288,7 +311,9 @@ export class DatabaseStorage implements IStorage {
     return event;
   }
 
-  async getTimelineEventsByApplicationId(applicationId: number): Promise<TimelineEvent[]> {
+  async getTimelineEventsByApplicationId(
+    applicationId: number,
+  ): Promise<TimelineEvent[]> {
     return await db
       .select()
       .from(timelineEvents)
@@ -296,24 +321,29 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(timelineEvents.date));
   }
 
-  async createTimelineEvent(event: InsertTimelineEvent): Promise<TimelineEvent> {
+  async createTimelineEvent(
+    event: InsertTimelineEvent,
+  ): Promise<TimelineEvent> {
     const [newEvent] = await db
       .insert(timelineEvents)
       .values({
         ...event,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
     return newEvent;
   }
 
-  async updateTimelineEvent(id: number, updates: Partial<TimelineEvent>): Promise<TimelineEvent> {
+  async updateTimelineEvent(
+    id: number,
+    updates: Partial<TimelineEvent>,
+  ): Promise<TimelineEvent> {
     const [updatedEvent] = await db
       .update(timelineEvents)
       .set({
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(timelineEvents.id, id))
       .returning();
@@ -347,33 +377,40 @@ export class DatabaseStorage implements IStorage {
     const [{ count: offersCount }] = await db
       .select({ count: count() })
       .from(applications)
-      .where(and(
-        eq(applications.userId, userId),
-        eq(applications.status, 'OFFER')
-      ));
+      .where(
+        and(eq(applications.userId, userId), eq(applications.status, "OFFER")),
+      );
 
     // Calculate completion rate
     // (completed applications / total applications) * 100
     const [{ count: completedApplications }] = await db
       .select({ count: count() })
       .from(applications)
-      .where(and(
-        eq(applications.userId, userId),
-        eq(applications.status, 'REJECTED')
-      ));
+      .where(
+        and(
+          eq(applications.userId, userId),
+          eq(applications.status, "REJECTED"),
+        ),
+      );
 
     const [{ count: acceptedApplications }] = await db
       .select({ count: count() })
       .from(applications)
-      .where(and(
-        eq(applications.userId, userId),
-        eq(applications.status, 'ACCEPTED')
-      ));
+      .where(
+        and(
+          eq(applications.userId, userId),
+          eq(applications.status, "ACCEPTED"),
+        ),
+      );
 
-    const totalCompleted = Number(completedApplications) + Number(acceptedApplications) + Number(offersCount);
-    const completionRate = Number(totalApplications) > 0 
-      ? (totalCompleted / Number(totalApplications)) * 100 
-      : 0;
+    const totalCompleted =
+      Number(completedApplications) +
+      Number(acceptedApplications) +
+      Number(offersCount);
+    const completionRate =
+      Number(totalApplications) > 0
+        ? (totalCompleted / Number(totalApplications)) * 100
+        : 0;
 
     return {
       totalApplications: Number(totalApplications),
