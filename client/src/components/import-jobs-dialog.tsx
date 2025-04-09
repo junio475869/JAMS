@@ -52,6 +52,7 @@ export function ImportJobsDialog() {
         description: `Imported ${data.count} applications successfully`,
       });
       setIsOpen(false);
+      setUrl("");
       // Refresh applications list
       queryClient.invalidateQueries(["applications"]);
     } catch (error) {
