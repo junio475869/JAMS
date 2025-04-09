@@ -76,9 +76,12 @@ const DEMO_APPLICATIONS = [
   }
 ];
 
-export default function KanbanBoard() {
-  const isDemoMode = localStorage.getItem("demoMode") === "true";
-  const [applications, setApplications] = useState<Application[]>([]);
+interface KanbanBoardProps {
+  applications: Application[];
+  onDrop: (applicationId: number, newStatus: string) => void;
+}
+
+export default function KanbanBoard({ applications, onDrop }: KanbanBoardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   
@@ -135,7 +138,7 @@ export default function KanbanBoard() {
     if (!isNaN(applicationId)) {
       const application = applications.find(app => app.id === applicationId);
       if (application && application.status !== columnId) {
-        updateApplication(applicationId, { status: columnId });
+        onDrop(applicationId, columnId);
       }
     }
   };
