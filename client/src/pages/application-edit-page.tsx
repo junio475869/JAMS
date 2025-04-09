@@ -120,9 +120,34 @@ export function ApplicationEditPage() {
         <h1 className="text-2xl font-bold">Edit Application</h1>
       </div>
 
+      <div className="flex space-x-4 mb-6">
+        <Button
+          variant={activeTab === "edit" ? "default" : "outline"}
+          onClick={() => setActiveTab("edit")}
+        >
+          Interview Process
+        </Button>
+        <Button
+          variant={activeTab === "others" ? "default" : "outline"}
+          onClick={() => setActiveTab("others")}
+        >
+          Other Applicants ({otherApplicants.length})
+        </Button>
+      </div>
+
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Basic Information {formData.status}</CardTitle>
+          <div className="flex items-center gap-3">
+            <CardTitle>Basic Information</CardTitle>
+            <Badge variant={
+              formData.status === 'applied' ? 'default' :
+              formData.status === 'interview' ? 'warning' :
+              formData.status === 'offer' ? 'success' :
+              'destructive'
+            }>
+              {formData.status?.charAt(0).toUpperCase() + formData.status?.slice(1)}
+            </Badge>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -297,16 +322,20 @@ export function ApplicationEditPage() {
         </DialogContent>
       </Dialog>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Interview Timeline</CardTitle>
-          <Button onClick={() => setIsAddingStep(true)} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Step
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="relative pl-4 border-l-2 border-gray-700 space-y-6">
+      {activeTab === "edit" && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Interview Timeline</CardTitle>
+            <Button onClick={() => setIsAddingStep(true)} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Step
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="relative pl-4 border-l-2 border-gray-700 space-y-6">
+              {application?.steps?.length === 0 && (
+                <p className="text-muted-foreground text-sm">No interview steps added yet</p>
+              )}
             {application?.steps?.map((step, index) => (
               <div key={step.id} className="relative">
                 <div className="absolute -left-[25px] w-4 h-4 rounded-full bg-gray-800 border-2 border-gray-700" />
