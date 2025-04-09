@@ -52,25 +52,31 @@ export function ApplicationCard({
             {statusNames[status]}
           </span>
         </div>
-        {application.steps && application.steps.length > 0 && (
-          <div className="flex items-center gap-1 mt-2">
-            {application.steps.map((step, index) => (
-              <div 
-                key={step.id} 
-                className={`flex items-center ${index !== 0 ? 'ml-1' : ''}`}
-              >
-                {index !== 0 && <div className="w-2 h-[2px] bg-gray-600 mr-1" />}
+        {application.steps && (
+          <div className="space-y-2 mt-2">
+            <div className="flex items-center justify-between text-xs text-gray-400">
+              <span>Progress: {application.steps.filter(s => s.completed).length}/{application.steps.length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {application.steps.map((step, index) => (
                 <div 
-                  className={`text-xs px-2 py-1 rounded ${
-                    step.completed 
-                      ? 'bg-green-900/30 text-green-400' 
-                      : 'bg-gray-700 text-gray-300'
-                  }`}
+                  key={step.id} 
+                  className={`flex items-center ${index !== 0 ? 'ml-1' : ''}`}
                 >
-                  {step.stepName.split(' ')[0]}
+                  {index !== 0 && <div className="w-2 h-[2px] bg-gray-600 mr-1" />}
+                  <div 
+                    className={`text-xs px-2 py-1 rounded ${
+                      step.completed 
+                        ? 'bg-green-900/30 text-green-400' 
+                        : 'bg-gray-700 text-gray-300'
+                    }`}
+                    title={step.stepName}
+                  >
+                    {step.stepName.split(' ')[0]}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
         <div className="mt-3 flex items-center text-xs text-gray-400">

@@ -106,12 +106,23 @@ export function ApplicationEditPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Basic info form fields */}
+          </form>
+        </CardContent>
+      </Card>
+
       <div className="flex space-x-4 mb-6">
         <Button
           variant={activeTab === "edit" ? "default" : "outline"}
           onClick={() => setActiveTab("edit")}
         >
-          My Application
+          Interview Process
         </Button>
         <Button
           variant={activeTab === "others" ? "default" : "outline"}
@@ -120,6 +131,35 @@ export function ApplicationEditPage() {
           Other Applicants ({otherApplicants.length})
         </Button>
       </div>
+
+      {activeTab === "edit" ? (
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Interview Timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative pl-4 border-l-2 border-gray-700 space-y-6">
+                {application?.steps?.map((step, index) => (
+                  <div key={step.id} className="relative">
+                    <div className="absolute -left-[25px] w-4 h-4 rounded-full bg-gray-800 border-2 border-gray-700" />
+                    <div className={`ml-4 p-4 rounded-lg ${step.completed ? 'bg-green-900/30' : 'bg-gray-800'}`}>
+                      <h3 className="font-medium">{step.stepName}</h3>
+                      {step.date && (
+                        <p className="text-sm text-gray-400">
+                          Scheduled: {new Date(step.date).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        // Other applicants content
+      )}
       <div className="flex items-center gap-4 mb-6">
         <Button variant="outline" onClick={() => setLocation("/applications")}>
           <ArrowLeft className="h-4 w-4 mr-2" />

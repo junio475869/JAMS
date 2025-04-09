@@ -10,11 +10,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 
 const COLUMN_DEFINITIONS = [
-  { id: ApplicationStatus.APPLIED, title: "Applied", color: "bg-blue-500" },
-  { id: ApplicationStatus.INTERVIEW, title: "Interview", color: "bg-purple-500" },
-  { id: ApplicationStatus.OFFER, title: "Offer", color: "bg-green-500" },
-  { id: ApplicationStatus.REJECTED, title: "Rejected", color: "bg-red-500" },
+  { id: ApplicationStatus.APPLIED, title: "Applied", color: "bg-sky-500" },
+  { id: ApplicationStatus.INTERVIEW, title: "Interview", color: "bg-amber-500" },
+  { id: ApplicationStatus.OFFER, title: "Offer", color: "bg-emerald-500" },
+  { id: ApplicationStatus.REJECTED, title: "Rejected", color: "bg-rose-500" },
 ];
+
+const fetchApplications = async (columnId: string, page: number) => {
+  const response = await fetch(`/api/applications?status=${columnId}&page=${page}&limit=${ITEMS_PER_PAGE}`);
+  const data = await response.json();
+  return {
+    applications: data.applications,
+    totalPages: data.totalPages,
+    totalItems: data.totalItems
+  };
+};
 
 interface KanbanBoardProps {
   applications: Application[];
