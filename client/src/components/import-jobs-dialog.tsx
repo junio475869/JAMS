@@ -12,13 +12,26 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ImportJobsDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [url, setUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleImport = async () => {
+    if (!url.includes("docs.google.com/spreadsheets")) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid Google Sheets URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
     try {
       const response = await fetch("/api/applications/import", {
         method: "POST",
@@ -29,21 +42,24 @@ export function ImportJobsDialog() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to import applications");
+        throw new Error(await response.text());
       }
 
       const data = await response.json();
       toast({
         title: "Success",
-        description: `Imported ${data.count} applications`,
+        description: `Imported ${data.count} applications successfully`,
       });
       setIsOpen(false);
+      queryClient.invalidateQueries(["applications"]);
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to import applications",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,18 +72,23 @@ export function ImportJobsDialog() {
         <DialogHeader>
           <DialogTitle>Import Job Applications</DialogTitle>
           <DialogDescription>
-            Enter a Google Sheets URL to import job applications. Make sure the sheet is publicly accessible or shared.
+            Enter a Google Sheets URL to import job applications. The sheet must be publicly accessible with columns for company, position, status, url, and notes.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <Input
-            placeholder="Google Sheets URL"
+            placeholder="https://docs.google.com/spreadsheets/d/..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
         </div>
         <DialogFooter>
-          <Button onClick={handleImport}>Import</Button>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleImport} disabled={isLoading}>
+            {isLoading ? "Importing..." : "Import"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
