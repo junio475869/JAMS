@@ -59,10 +59,44 @@ export default function JobApplyPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSave = () => {
-    // In a real app, this would save to database
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    try {
+      const response = await fetch('/api/applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          company: form.company,
+          position: form.position,
+          description: form.description,
+          status: form.status,
+          notes: form.notes,
+          url: '',
+          appliedDate: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save application');
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      
+      // Clear form after successful save
+      setForm({
+        company: "",
+        position: "",
+        location: "",
+        description: "",
+        requirements: "",
+        notes: "",
+        status: "draft"
+      });
+    } catch (error) {
+      console.error('Error saving application:', error);
+    }
   };
 
   return (
