@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
 import { Application, ApplicationStatus } from "@shared/schema";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 interface OtherApplicant {
   id: number;
@@ -31,15 +31,16 @@ export function ApplicationEditPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'edit' | 'others'>('edit');
-  const [selectedApplicant, setSelectedApplicant] = useState<OtherApplicant | null>(null);
-  
+  const [activeTab, setActiveTab] = useState<"edit" | "others">("edit");
+  const [selectedApplicant, setSelectedApplicant] =
+    useState<OtherApplicant | null>(null);
+
   const [formData, setFormData] = useState({
     company: "",
     position: "",
     status: "",
     url: "",
-    notes: ""
+    notes: "",
   });
 
   const { data: application, isLoading } = useQuery<Application>({
@@ -48,17 +49,19 @@ export function ApplicationEditPage() {
       const response = await fetch(`/api/applications/${id}`);
       if (!response.ok) throw new Error("Failed to fetch application");
       return response.json();
-    }
+    },
   });
 
   const { data: otherApplicants = [] } = useQuery<OtherApplicant[]>({
     queryKey: ["other-applicants", application?.position],
     enabled: !!application?.position,
     queryFn: async () => {
-      const response = await fetch(`/api/applications/others?position=${encodeURIComponent(application!.position)}`);
+      const response = await fetch(
+        `/api/applications/others?position=${encodeURIComponent(application!.position)}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch other applicants");
       return response.json();
-    }
+    },
   });
 
   useEffect(() => {
@@ -68,7 +71,7 @@ export function ApplicationEditPage() {
         position: application.position,
         status: application.status,
         url: application.url || "",
-        notes: application.notes || ""
+        notes: application.notes || "",
       });
     }
   }, [application]);
@@ -78,15 +81,18 @@ export function ApplicationEditPage() {
       const response = await fetch(`/api/applications/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to update application");
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applications"] });
-      toast({ title: "Success", description: "Application updated successfully" });
-    }
+      toast({
+        title: "Success",
+        description: "Application updated successfully",
+      });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -102,14 +108,14 @@ export function ApplicationEditPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex space-x-4 mb-6">
         <Button
-          variant={activeTab === 'edit' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('edit')}
+          variant={activeTab === "edit" ? "default" : "outline"}
+          onClick={() => setActiveTab("edit")}
         >
           My Application
         </Button>
         <Button
-          variant={activeTab === 'others' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('others')}
+          variant={activeTab === "others" ? "default" : "outline"}
+          onClick={() => setActiveTab("others")}
         >
           Other Applicants ({otherApplicants.length})
         </Button>
@@ -122,109 +128,138 @@ export function ApplicationEditPage() {
         <h1 className="text-2xl font-bold">Edit Application</h1>
       </div>
 
-      {activeTab === 'edit' ? (
+      {activeTab === "edit" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
-                <Input
-                  id="company"
-                  value={formData.company}
-                  onChange={e => setFormData(prev => ({ ...prev, company: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="position">Position</Label>
-                <Input
-                  id="position"
-                  value={formData.position}
-                  onChange={e => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                />
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company">Company</Label>
+                  <Input
+                    id="company"
+                    value={formData.company}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        company: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={value => setFormData(prev => ({ ...prev, status: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
-                    <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
-                    <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
-                    <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="position">Position</Label>
+                  <Input
+                    id="position"
+                    value={formData.position}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        position: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="url">Job URL</Label>
-                <Input
-                  id="url"
-                  value={formData.url}
-                  onChange={e => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, status: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ApplicationStatus.APPLIED}>
+                        Applied
+                      </SelectItem>
+                      <SelectItem value={ApplicationStatus.INTERVIEW}>
+                        Interview
+                      </SelectItem>
+                      <SelectItem value={ApplicationStatus.OFFER}>
+                        Offer
+                      </SelectItem>
+                      <SelectItem value={ApplicationStatus.REJECTED}>
+                        Rejected
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <textarea
-                  id="notes"
-                  className="w-full min-h-[100px] rounded-md border p-3"
-                  value={formData.notes}
-                  onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="url">Job URL</Label>
+                  <Input
+                    id="url"
+                    value={formData.url}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, url: e.target.value }))
+                    }
+                  />
+                </div>
 
-              <Button type="submit" className="w-full">
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        notes: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Interview Process</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <InterviewStepsDialog
-              isOpen={true}
-              onClose={() => {}}
-              applicationId={parseInt(id)}
-              onSave={async (steps) => {
-                try {
-                  await fetch(`/api/applications/${id}/interview-steps`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ steps }),
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["applications"] });
-                  toast({
-                    title: "Success",
-                    description: "Interview steps updated successfully",
-                  });
-                } catch (error) {
-                  toast({
-                    title: "Error",
-                    description: "Failed to update interview steps",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
+                <Button type="submit" className="w-full">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Interview Process</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InterviewStepsDialog
+                isOpen={true}
+                onClose={() => {}}
+                applicationId={parseInt(id)}
+                onSave={async (steps) => {
+                  try {
+                    await fetch(`/api/applications/${id}/interview-steps`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ steps }),
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ["applications"],
+                    });
+                    toast({
+                      title: "Success",
+                      description: "Interview steps updated successfully",
+                    });
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to update interview steps",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="md:col-span-1">
@@ -239,8 +274,8 @@ export function ApplicationEditPage() {
                     onClick={() => setSelectedApplicant(applicant)}
                     className={`p-3 rounded-lg cursor-pointer transition-colors ${
                       selectedApplicant?.id === applicant.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-muted'
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted"
                     }`}
                   >
                     <div className="font-medium">{applicant.username}</div>
@@ -271,8 +306,8 @@ export function ApplicationEditPage() {
                           <div
                             className={`px-3 py-1.5 rounded-full text-sm ${
                               step.completed
-                                ? 'bg-green-900/30 text-green-400'
-                                : 'bg-gray-700 text-gray-300'
+                                ? "bg-green-900/30 text-green-400"
+                                : "bg-gray-700 text-gray-300"
                             }`}
                           >
                             {step.stepName}
