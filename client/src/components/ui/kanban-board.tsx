@@ -21,7 +21,7 @@ interface KanbanBoardProps {
   onApplicationClick: (applicationId: number) => void;
 }
 
-export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardProps) {
+export default function KanbanBoard({ applications = [], onDrop, onApplicationClick }: KanbanBoardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
