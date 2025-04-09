@@ -31,7 +31,41 @@ import session from "express-session";
 import { db, pool } from "./db";
 
 // Placeholder type - needs to be defined elsewhere
-type GmailConnection = { id: number; userId: number; accessToken: string; refreshToken: string };
+async function getAllUserGmailData(userId: number) {
+  const connections = await db.select().from(gmailConnections).where(eq(gmailConnections.userId, userId));
+  
+  const allApplications = [];
+  const allDocuments = [];
+  
+  for (const connection of connections) {
+    // Fetch applications associated with this email
+    const apps = await db
+      .select()
+      .from(applications)
+      .where(and(
+        eq(applications.userId, userId),
+        eq(applications.sourceEmail, connection.email)
+      ));
+    
+    allApplications.push(...apps);
+    
+    // Fetch documents associated with this email
+    const docs = await db
+      .select()
+      .from(documents)
+      .where(and(
+        eq(documents.userId, userId),
+        eq(documents.sourceEmail, connection.email)
+      ));
+    
+    allDocuments.push(...docs);
+  }
+  
+  return {
+    applications: allApplications,
+    documents: allDocuments
+  };
+}
 type InsertGmailConnection = Omit<GmailConnection, 'id'>;
 
 export interface IStorage {

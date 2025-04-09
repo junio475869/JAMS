@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash, Edit } from "lucide-react";
+import { Plus, Trash, Settings, Users, Mail } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,158 +22,227 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-type StaticData = {
+type User = {
   id: number;
-  name: string;
-  type: string;
+  username: string;
+  email: string;
+  roles: string[];
+  gmailConnections: { email: string }[];
+};
+
+type SystemSetting = {
+  id: number;
+  key: string;
+  value: string;
 };
 
 export default function AdminPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newItemName, setNewItemName] = useState("");
-  const [selectedType, setSelectedType] = useState("position");
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
-  const { data: staticData, isLoading } = useQuery<StaticData[]>({
-    queryKey: ["/api/admin/static-data"],
+  const { data: users, isLoading: isLoadingUsers } = useQuery<User[]>({
+    queryKey: ["admin/users"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/static-data");
-      if (!response.ok) throw new Error("Failed to fetch static data");
+      const response = await fetch("/api/admin/users");
+      if (!response.ok) throw new Error("Failed to fetch users");
       return response.json();
     }
   });
 
-  const addMutation = useMutation({
-    mutationFn: async (newItem: { name: string; type: string }) => {
-      const response = await fetch("/api/admin/static-data", {
-        method: "POST",
+  const { data: settings, isLoading: isLoadingSettings } = useQuery<SystemSetting[]>({
+    queryKey: ["admin/settings"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/settings");
+      if (!response.ok) throw new Error("Failed to fetch settings");
+      return response.json();
+    }
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: number; data: Partial<User> }) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newItem),
+        body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to add item");
-      return response.json();
+      if (!response.ok) throw new Error("Failed to update user");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/static-data"] });
-      setIsAddDialogOpen(false);
-      setNewItemName("");
-      toast({
-        title: "Success",
-        description: "Item added successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/static-data/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete item");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/static-data"] });
-      toast({
-        title: "Success",
-        description: "Item deleted successfully",
-      });
-    },
-  });
-
-  const handleAdd = () => {
-    if (!newItemName.trim()) {
-      toast({
-        title: "Error",
-        description: "Name is required",
-        variant: "destructive",
-      });
-      return;
+      queryClient.invalidateQueries({ queryKey: ["admin/users"] });
+      toast({ title: "Success", description: "User updated successfully" });
     }
-    addMutation.mutate({ name: newItemName, type: selectedType });
-  };
+  });
 
-  if (isLoading) {
+  const updateSettingMutation = useMutation({
+    mutationFn: async ({ id, value }: { id: number; value: string }) => {
+      const response = await fetch(`/api/admin/settings/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value }),
+      });
+      if (!response.ok) throw new Error("Failed to update setting");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin/settings"] });
+      toast({ title: "Success", description: "Setting updated successfully" });
+    }
+  });
+
+  if (isLoadingUsers || isLoadingSettings) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Item</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <label className="text-sm font-medium">Type</label>
-                <select
-                  className="w-full mt-1 p-2 border rounded"
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                >
-                  <option value="position">Position</option>
-                  <option value="company">Company</option>
-                  <option value="skill">Skill</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                  placeholder="Enter name"
-                />
-              </div>
-              <Button onClick={handleAdd} className="w-full">
-                Add Item
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+      
+      <Tabs defaultValue="users">
+        <TabsList>
+          <TabsTrigger value="users">
+            <Users className="h-4 w-4 mr-2" />
+            Users
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </TabsTrigger>
+          <TabsTrigger value="emails">
+            <Mail className="h-4 w-4 mr-2" />
+            Email Connections
+          </TabsTrigger>
+        </TabsList>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {staticData?.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>{item.type}</TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteMutation.mutate(item.id)}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+        <TabsContent value="users" className="mt-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Username</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Roles</TableHead>
+                <TableHead>Gmail Connections</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users?.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.roles.join(", ")}</TableCell>
+                  <TableCell>
+                    {user.gmailConnections.map(conn => conn.email).join(", ")}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to reset this user's connections?")) {
+                          updateUserMutation.mutate({
+                            userId: user.id,
+                            data: { gmailConnections: [] }
+                          });
+                        }
+                      }}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Setting</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {settings?.map((setting) => (
+                <TableRow key={setting.id}>
+                  <TableCell>{setting.key}</TableCell>
+                  <TableCell>
+                    <Input
+                      value={setting.value}
+                      onChange={(e) => 
+                        updateSettingMutation.mutate({
+                          id: setting.id,
+                          value: e.target.value
+                        })
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        updateSettingMutation.mutate({
+                          id: setting.id,
+                          value: setting.value
+                        });
+                      }}
+                    >
+                      Save
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+
+        <TabsContent value="emails" className="mt-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Connected Emails</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users?.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>
+                    {user.gmailConnections.map(conn => conn.email).join(", ")}
+                  </TableCell>
+                  <TableCell>
+                    {user.gmailConnections.length > 0 ? "Connected" : "Not Connected"}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm("Remove all email connections?")) {
+                          updateUserMutation.mutate({
+                            userId: user.id,
+                            data: { gmailConnections: [] }
+                          });
+                        }
+                      }}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

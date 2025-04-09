@@ -935,6 +935,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
+      // Add validation of user existence
+      const user = await storage.getUserById(req.user!.id);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
       const result = await storage.cleanupApplications(req.user!.id);
       res.json({ removedCount: result });
     } catch (error) {

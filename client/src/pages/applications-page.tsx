@@ -52,6 +52,15 @@ export default function ApplicationsPage() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
+  const { data: calendarEvents } = useQuery({
+    queryKey: ["calendar-events"],
+    queryFn: async () => {
+      const response = await fetch("/api/calendar/events");
+      if (!response.ok) throw new Error("Failed to fetch calendar events");
+      return response.json();
+    }
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: ["applications", page, limit],
     queryFn: async () => {
