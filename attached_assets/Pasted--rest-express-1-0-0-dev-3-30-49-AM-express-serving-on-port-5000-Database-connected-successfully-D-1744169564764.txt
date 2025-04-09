@@ -1,0 +1,410 @@
+> rest-express@1.0.0 dev
+3:30:49 AM [express] serving on port 5000
+Database connected successfully
+Database tables created successfully
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Error: Connection terminated due to connection timeout
+    at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+Database connected successfully
+Database connected successfully
+Database connected successfully
+Database connected successfully
+3:31:10 AM [express] GET /api/user 200 in 102ms :: {"id":4,"username":"gembird1128-25","email":"gemb…
+3:31:10 AM [express] GET /api/applications 304 in 158ms :: [{"id":10,"userId":4,"company":"MicroSoft…
+3:31:11 AM [express] GET /api/applications 304 in 157ms :: [{"id":10,"userId":4,"company":"MicroSoft…
+3:31:11 AM [express] POST /api/firebase-auth 200 in 263ms :: {"id":4,"username":"gembird1128-25","em…
+3:31:11 AM [express] POST /api/firebase-auth 200 in 288ms :: {"id":4,"username":"gembird1128-25","em…
+Database connected successfully
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee1d2a02acab-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:11 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=L0k2yvtUWlP5LNqYTJT_PTbZ3ubwoAhPtmANsqwCBU4-1744169471-1.0.1.1-SH1KpzscJB4Dco_yMmrvX3UJOss0bAersd5Gv9gxOF4CIcNCkbV3VJwA8vCtimlbXUerEcxGfbgBDy2KSTH_hURltxQ9J5_.eOvTib0EYhA; path=/; expires=Wed, 09-Apr-25 04:01:11 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=lhBu3CdvscuINUavR8r5mv7yOW2NY.yzvsI_5lE0wQc-1744169471619-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_65daa286f4234f1ffed3177d54c5d8c0'
+  },
+  request_id: 'req_65daa286f4234f1ffed3177d54c5d8c0',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee1d190a62bd-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:11 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=yBU7xBK6d3EzMiCJwvVg2Bb.Ro6qKoNL8QD6WLQ2rls-1744169471-1.0.1.1-ns97Sr_ZAIYe1g6nOOLXb7E7w9W33uVPvYNDgJoJ5aKuNRIjg9wsBsb4BdrRT.r_vv2kid2OJcKFiws2A0JJ_A5dLQD258tsJYJ38jOjTDI; path=/; expires=Wed, 09-Apr-25 04:01:11 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=thZEpZjyp_QhezEhQUIv1lqSN6H_IW.xNF3lA8PRkj0-1744169471637-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_953e45da55fe2e76916f2ae699502d55'
+  },
+  request_id: 'req_953e45da55fe2e76916f2ae699502d55',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+3:31:11 AM [express] POST /api/ai/application-status-analysis 401 in 296ms
+3:31:11 AM [express] POST /api/ai/application-status-analysis 400 in 318ms :: {"error":"Failed to an…
+3:31:11 AM [express] POST /api/ai/application-status-analysis 400 in 323ms :: {"error":"Failed to an…
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee1d28f61417-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:11 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=nYK3X.BO7Y_NS6jG.10qOxiUzYahTBZieCDjfs494cQ-1744169471-1.0.1.1-87Q9MY2EisbZciePNUwGFNAtkv93YzTSl7XOy5nRXPKqxlrIC_wEdr4.CvFQCtis1YULV3.gtn1s5ahM.U.oRWwD2t5erwT2u__nZbtWXv4; path=/; expires=Wed, 09-Apr-25 04:01:11 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=UW1h3q10pGbBkPAa6ro40mcCoXBAclWZbGz.hRuUvfw-1744169471674-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_91944ea93bba54ee1e64e8b07a6d1a97'
+  },
+  request_id: 'req_91944ea93bba54ee1e64e8b07a6d1a97',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+3:31:11 AM [express] POST /api/ai/application-status-analysis 400 in 357ms :: {"error":"Failed to an…
+3:31:11 AM [express] POST /api/ai/application-status-analysis 401 in 35ms
+3:31:11 AM [express] POST /api/ai/application-status-analysis 401 in 39ms
+3:31:11 AM [express] POST /api/ai/application-status-analysis 401 in 39ms
+3:31:21 AM [express] GET /api/user 200 in 117ms :: {"id":4,"username":"gembird1128-25","email":"gemb…
+3:31:21 AM [express] GET /api/applications 304 in 157ms :: [{"id":10,"userId":4,"company":"MicroSoft…
+3:31:22 AM [express] GET /api/applications 304 in 156ms :: [{"id":10,"userId":4,"company":"MicroSoft…
+3:31:22 AM [express] POST /api/firebase-auth 200 in 236ms :: {"id":4,"username":"gembird1128-25","em…
+3:31:22 AM [express] POST /api/firebase-auth 200 in 268ms :: {"id":4,"username":"gembird1128-25","em…
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee61f80661b4-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:22 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=dQLX7Z5zfC2zPkCg1l6KKrKFnzP5xiWKFiiPz0wtg1c-1744169482-1.0.1.1-daEibUyfISWDt3l0fbog7G8q397sekTnFflAbUTmvDJ_VLoKTTEfPe84QRutg_oUfthfdjVeysQzjCS.3TjFJXyt96F2I0qsuBje3GP8o4U; path=/; expires=Wed, 09-Apr-25 04:01:22 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=vOosccRBwzc3Rg_AxLpQnzCTfNeAQ5a8G9j.mGgcVmw-1744169482629-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_24b4b57ef7a9790fb678015c433abc5a'
+  },
+  request_id: 'req_24b4b57ef7a9790fb678015c433abc5a',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee61fade9bf6-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:22 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=oyCeqJp3hvIcn.sq8J.cnGFYJUAgQ4VBpQGArKB8k3E-1744169482-1.0.1.1-iTDA1XVcj7pD29C7mditaP_NG_0FibIYohJaKRk4a8TdA2WGIPaHr6Yt1LSpZAPbL711MiNRaH3eHIFsK5AMBcnK85zSR6PtzmhfCwqzTGk; path=/; expires=Wed, 09-Apr-25 04:01:22 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=qo9fBkDJLDC6vqe17tc4hLh3PJT0Hjm8u5r8wBDDovk-1744169482643-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_e8b1d06af79c3ff5a243727cbe4a54cb'
+  },
+  request_id: 'req_e8b1d06af79c3ff5a243727cbe4a54cb',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee61fa27e273-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:22 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=XvUgmiOpce.yMs92VMhAtPdJt6b9eqPsU.UbiZ6fl6c-1744169482-1.0.1.1-6dTJQK7Z_97N.koxGe5OJjesp3LDthYOfrgUaxED5zlOfGxVtZjuFRltEkgOZC4SP1FfvRD31OLAHWAu0Tg6QyESrC6QwfAKm9ClOdPLgRk; path=/; expires=Wed, 09-Apr-25 04:01:22 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=_MrpZSqnEx3f1oZo8SMP96Jic_B.QiDHpSU1prRmFEY-1744169482645-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_f2bac64d15a3965683394577116c93cf'
+  },
+  request_id: 'req_f2bac64d15a3965683394577116c93cf',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee621c88115c-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:22 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=tnZYI_P1KOgeee_RygIkBurDYZCV1MGaS8qJS1VY3d0-1744169482-1.0.1.1-7RW6GoOfhTAqkC9wQYKKx45g_46m5neJohM56nO5pccqRsle1cydrfdrIaY98EOcSk9YaklriNk6AwX_.GU9nZmXt_LwhL0Y9p.kCwlvs.o; path=/; expires=Wed, 09-Apr-25 04:01:22 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=NrWY6A9vKmQPHUqF.9YJyKqJJic7P1n.rVwyAu4GRAU-1744169482652-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_45e57079d6ab22d6f4d8a26be4f4c06a'
+  },
+  request_id: 'req_45e57079d6ab22d6f4d8a26be4f4c06a',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee6208997b21-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:22 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=VKSKIX1O5PaqZUcWP2hjECgE14tjd9Odmu84NxrSIFg-1744169482-1.0.1.1-Uo84djeikTyhTRqhi8BuaDFX3syJMtxXOXc0v2nArB3vj5kKZq.9HBlyMJ8.lHvUrz9oZf_2ay_D7kH4FYfebjbJh_mVERUk4yLye531Iis; path=/; expires=Wed, 09-Apr-25 04:01:22 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=6sIy.u.6AG3SD9TLLXTZDhsb5FcmIhz3VDyYTvmhNi8-1744169482653-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_7d9332f1a9a9b9cd58f5839263d77696'
+  },
+  request_id: 'req_7d9332f1a9a9b9cd58f5839263d77696',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee621c7c1105-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:22 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=JtMnsTJPI1k2B7vP1lzsChBXFKUr7KWRvUAZRDIbpE0-1744169482-1.0.1.1-AUD2RRXOCd45ebXO63SmBtteX7FAVZnXyAtJlCzj2jr8Gg586oa..WHc.N9hyQF88nN1wXI2FKGRCgHKKX1mQxhIlyHvIqlF73Zn6R3HXdI; path=/; expires=Wed, 09-Apr-25 04:01:22 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=BWakc0JkcJR8L8getvnJmpB8swTl8iL7aehdLNoe4Us-1744169482661-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_8f63bde39da33adc3820862f6994a01c'
+  },
+  request_id: 'req_8f63bde39da33adc3820862f6994a01c',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+3:31:22 AM [express] POST /api/ai/application-status-analysis 400 in 287ms :: {"error":"Failed to an…
+3:31:22 AM [express] POST /api/ai/application-status-analysis 400 in 305ms :: {"error":"Failed to an…
+3:31:22 AM [express] POST /api/ai/application-status-analysis 400 in 303ms :: {"error":"Failed to an…
+3:31:22 AM [express] POST /api/ai/application-status-analysis 400 in 306ms :: {"error":"Failed to an…
+3:31:22 AM [express] POST /api/ai/application-status-analysis 400 in 312ms :: {"error":"Failed to an…
+3:31:22 AM [express] POST /api/ai/application-status-analysis 400 in 315ms :: {"error":"Failed to an…
+Error analyzing application status: AuthenticationError: 401 Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:76:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:448:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:512:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeApplicationStatus (/home/runner/workspace/server/ai.ts:442:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:500:29) {
+  status: 401,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '92d6ee656ec71105-ORD',
+    connection: 'keep-alive',
+    'content-length': '264',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Wed, 09 Apr 2025 03:31:23 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=1ALqSPGQ8mJPY4GtXh3TQclITXXw_jQSeI03gkqAKpE-1744169483-1.0.1.1-KUw1zL8jPW3j8l9j8HFk5jjmQoRZzKD7FI3CSoNS7t1h7VCOKAaL.m_2hQtvQU8768Es_FJOtOuW_wyo28BNCGbIKDiCO.YPvdnNq.bJHcg; path=/; expires=Wed, 09-Apr-25 04:01:23 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=BlMf5KAxThpFr4IN2ViEDEcE4LV4gqkyUTnUCZkHb0s-1744169483196-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_d8d4a8188f23c5eb3bff2c3b41e27d50'
+  },
+  request_id: 'req_d8d4a8188f23c5eb3bff2c3b41e27d50',
+  error: {
+    message: 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_api_key'
+  },
+  code: 'invalid_api_key',
+  param: null,
+  type: 'invalid_request_error'
+}
+3:31:23 AM [express] POST /api/ai/application-status-analysis 400 in 269ms :: {"error":"Failed to an…
+/home/runner/workspace/node_modules/pg-pool/index.js:45
+    Error.captureStackTrace(err)
+          ^
+
+error: column "feedback" does not exist
+    at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:104:19)
+    at async DatabaseStorage.getInterviewsByUserId (/home/runner/workspace/server/storage.ts:337:12)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:249:24) {
+  length: 109,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '112',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}
+
+Node.js v20.18.1
