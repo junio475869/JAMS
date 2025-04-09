@@ -46,7 +46,8 @@ async function createTables() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      CREATE TABLE IF NOT EXISTS interviews (
+      DROP TABLE IF EXISTS interviews;
+      CREATE TABLE interviews (
         id SERIAL PRIMARY KEY,
         application_id INTEGER REFERENCES applications(id),
         user_id INTEGER NOT NULL REFERENCES users(id),
