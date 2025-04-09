@@ -59,12 +59,12 @@ export function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
   const getNavItems = () => {
     let items = [...baseNavItems];
 
-    if (user?.role === UserRole.ADMIN) {
-      items = [...items, ...adminItems];
+    if (user?.role === UserRole.ADMIN || user?.role === UserRole.GROUP_LEADER) {
+      items = [...items, { icon: <Users className="h-5 w-5 mr-3" />, label: 'Team Management', path: '/team-management' }];
     }
 
-    if (user?.role === UserRole.GROUP_LEADER) {
-      items = [...items, { icon: <Users className="h-5 w-5 mr-3" />, label: 'Team Management', path: '/team-management' }];
+    if (user?.role === UserRole.ADMIN) {
+      items = [...items, { icon: <Settings className="h-5 w-5 mr-3" />, label: 'Admin', path: '/admin' }];
     }
 
     if ([UserRole.JOB_SEEKER, UserRole.JOB_BIDDER].includes(user?.role as any)) {

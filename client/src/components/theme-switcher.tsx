@@ -15,20 +15,25 @@ export function ThemeSwitcher() {
 
   const themes = [
     {
-      value: 'light',
-      label: 'Light',
+      value: 'light-modern',
+      label: 'Light Modern',
       icon: Sun,
     },
     {
-      value: 'dark',
-      label: 'Dark',
+      value: 'dark-blue',
+      label: 'Dark Blue',
       icon: Moon,
     },
     {
-      value: 'system',
-      label: 'System',
+      value: 'dark-gray',
+      label: 'Dark Gray',
       icon: Monitor,
     },
+    {
+      value: 'dark-purple',
+      label: 'Dark Purple',
+      icon: Monitor,
+    }
   ];
 
   return (

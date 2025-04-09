@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
-type Theme = 'dark-blue' | 'dark-gray' | 'dark-purple' | 'light';
+type Theme = 'dark-blue' | 'dark-gray' | 'dark-purple' | 'light-modern';
 type ThemeContextType = {
   theme: Theme;
   setTheme: (theme: Theme) => void;

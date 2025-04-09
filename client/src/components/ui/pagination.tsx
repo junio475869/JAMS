@@ -115,3 +115,10 @@ export {
   PaginationNext,
   PaginationPrevious,
 }
+
+export function Pagination({ currentPage, totalPages, onPageChange }: { currentPage: number; totalPages: number; onPageChange: (page: number) => void }) {
+  return (
+    <nav className="flex justify-center mt-4" aria-label="pagination">
+    </nav>
+  );
+}
