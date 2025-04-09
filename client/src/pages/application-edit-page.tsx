@@ -158,7 +158,54 @@ export function ApplicationEditPage() {
           </Card>
         </div>
       ) : (
-        // Other applicants content
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Other Applicants</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Other candidates who applied for this position
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {otherApplicants.map((applicant) => (
+                  <div key={applicant.id} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium">{applicant.username}</h3>
+                      <span className="text-sm text-muted-foreground">
+                        {applicant.steps.length} interview steps
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {applicant.steps.map((step, index) => (
+                        <div
+                          key={index}
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            step.completed
+                              ? "bg-green-500/10 text-green-500"
+                              : "bg-gray-500/10 text-gray-400"
+                          }`}
+                        >
+                          {step.stepName}
+                        </div>
+                      ))}
+                    </div>
+                    {applicant.feedback && (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {applicant.feedback}
+                      </p>
+                    )}
+                  </div>
+                ))}
+                {otherApplicants.length === 0 && (
+                  <p className="text-center text-muted-foreground py-4">
+                    No other applicants found for this position
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
       <div className="flex items-center gap-4 mb-6">
         <Button variant="outline" onClick={() => setLocation("/applications")}>
