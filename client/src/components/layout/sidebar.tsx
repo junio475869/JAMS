@@ -1,4 +1,7 @@
+
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { UserRole } from "@shared/schema";
 import {
   Search,
   LayoutDashboard,
@@ -9,7 +12,10 @@ import {
   MessageSquare,
   ChartBar,
   BotIcon,
-  SparklesIcon
+  SparklesIcon,
+  Settings,
+  Users,
+  Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -18,11 +24,11 @@ import { Button } from "@/components/ui/button";
 interface SidebarProps {
   isOpen: boolean;
   closeSidebar: () => void;
-  isAuthenticated: boolean; // Added to track authentication status
 }
 
-export function Sidebar({ isOpen, closeSidebar, isAuthenticated }: SidebarProps) {
+export function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
   const [location, setLocation] = useLocation();
+  const { user } = useAuth();
 
   const handleNavigation = (path: string) => {
     setLocation(path);
@@ -31,7 +37,7 @@ export function Sidebar({ isOpen, closeSidebar, isAuthenticated }: SidebarProps)
     }
   };
 
-  const navItems = [
+  const baseNavItems = [
     { icon: <LayoutDashboard className="h-5 w-5 mr-3" />, label: 'Dashboard', path: '/' },
     { icon: <ListChecks className="h-5 w-5 mr-3" />, label: 'Applications', path: '/applications' },
     { icon: <FileText className="h-5 w-5 mr-3" />, label: 'Documents', path: '/documents' },
@@ -41,12 +47,41 @@ export function Sidebar({ isOpen, closeSidebar, isAuthenticated }: SidebarProps)
     { icon: <ChartBar className="h-5 w-5 mr-3" />, label: 'Analytics', path: '/analytics' }
   ];
 
+  const adminItems = [
+    { icon: <Settings className="h-5 w-5 mr-3" />, label: 'Admin', path: '/admin' },
+    { icon: <Users className="h-5 w-5 mr-3" />, label: 'Team Management', path: '/team-management' }
+  ];
+
+  const jobSeekerItems = [
+    { icon: <Briefcase className="h-5 w-5 mr-3" />, label: 'Job Apply', path: '/job-apply' }
+  ];
+
+  const getNavItems = () => {
+    let items = [...baseNavItems];
+
+    if (user?.role === UserRole.ADMIN) {
+      items = [...items, ...adminItems];
+    }
+
+    if (user?.role === UserRole.GROUP_LEADER) {
+      items = [...items, { icon: <Users className="h-5 w-5 mr-3" />, label: 'Team Management', path: '/team-management' }];
+    }
+
+    if ([UserRole.JOB_SEEKER, UserRole.JOB_BIDDER].includes(user?.role as any)) {
+      items = [...items, ...jobSeekerItems];
+    }
+
+    return items;
+  };
+
+  const navItems = getNavItems();
+
   return (
     <aside className={cn(
-      "bg-gray-850 border-r border-gray-700 transition-all duration-300 ease-in-out z-20 fixed h-screen", // Added fixed height and border-right
+      "bg-gray-850 border-r border-gray-700 transition-all duration-300 ease-in-out z-20 fixed h-screen",
       isOpen 
         ? "w-64 md:relative md:w-64 md:translate-x-0" 
-        : "translate-x-[-100%] md:translate-x-0 md:relative md:w-64" //Improved transition
+        : "translate-x-[-100%] md:translate-x-0 md:relative md:w-64"
     )}>
       <div className="p-4">
         <div className="relative">
@@ -96,9 +131,6 @@ export function Sidebar({ isOpen, closeSidebar, isAuthenticated }: SidebarProps)
             <SparklesIcon className="h-4 w-4 mr-1" /> Get suggestions
           </Button>
         </div>
-      </div>
-      {/* Profile section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t"> {/*Added fixed profile section*/}
       </div>
     </aside>
   );
