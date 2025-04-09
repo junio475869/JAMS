@@ -65,7 +65,26 @@ export const insertApplicationSchema = createInsertSchema(applications).pick({
   appliedDate: true,
 });
 
-// Documents (Resumes, Cover Letters)
+// Interviews
+export const interviews = pgTable("interviews", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => applications.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  company: text("company").notNull(),
+  type: text("type").notNull(), // 'phone', 'technical', 'onsite', 'hr', 'panel'
+  date: timestamp("date"),
+  duration: integer("duration"), // in minutes
+  location: text("location"),
+  notes: text("notes"),
+  feedback: text("feedback"),
+  scheduledAt: timestamp("scheduled_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Documents
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -85,7 +104,7 @@ export const insertDocumentSchema = createInsertSchema(documents).pick({
   version: true,
 });
 
-// Interviews
+// Interview Steps
 export const interviewSteps = pgTable("interview_steps", {
   id: serial("id").primaryKey(),
   applicationId: integer("application_id").notNull().references(() => applications.id),
