@@ -31,7 +31,7 @@ import {
   InterviewQuestionDifficulty,
 } from "@shared/schema";
 import { db } from "./db";
-import { gmailService } from "./gmail-service"; // Added import
+import { gmailService } from "./gmail-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Sets up /api/register, /api/login, /api/logout, /api/user
@@ -803,7 +803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: new Date(date), // Ensure to handle the Date correctly
       };
       // Save the event to your database
-      await dbStorage.createTimelineEvent(newEvent);
+      await db.createTimelineEvent(newEvent);
       res.status(201).send({ message: "Event created successfully!" });
     } catch (error) {
       console.error("Error saving event:", error);
@@ -836,12 +836,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
-
-  const httpServer = createServer(app);
-  return httpServer;
-}
-export async function registerRoutes(app: Express): Promise<Server> {
-  // ... existing routes ...
 
   app.get("/api/applications/others", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
