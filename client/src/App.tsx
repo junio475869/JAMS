@@ -10,6 +10,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import DashboardPage from "@/pages/dashboard-page";
 import ApplicationsPage from "@/pages/applications-page";
+import ApplicationEditPage from "@/pages/application-edit-page";
 import DocumentsPage from "@/pages/documents-page";
 import ProfilePage from "@/pages/profile-page";
 import AnalyticsPage from "@/pages/analytics-page";
@@ -35,7 +36,10 @@ function App() {
                   <Switch>
                     <Route path="/" component={DashboardPage} />
                     <Route path="/applications" component={ApplicationsPage} />
-          <Route path="/applications/:id" component={ApplicationEditPage} />
+                    <Route
+                      path="/applications/:id"
+                      component={ApplicationEditPage}
+                    />
                     <Route path="/documents" component={DocumentsPage} />
                     <Route path="/analytics" component={AnalyticsPage} />
                     <Route path="/calendar" component={CalendarPage} />
