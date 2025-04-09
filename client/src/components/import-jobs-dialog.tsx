@@ -15,10 +15,15 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export default function ImportJobsDialog() {
   const [isOpen, setIsOpen] = useState(false);
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(() => localStorage.getItem("jobSheetUrl") || "");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const saveSheetUrl = (newUrl: string) => {
+    localStorage.setItem("jobSheetUrl", newUrl);
+    setUrl(newUrl);
+  };
 
   const handleImport = async () => {
     if (!url.includes("docs.google.com/spreadsheets")) {
@@ -87,7 +92,7 @@ export default function ImportJobsDialog() {
           <Input
             placeholder="https://docs.google.com/spreadsheets/d/..."
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => saveSheetUrl(e.target.value)}
           />
         </div>
         <DialogFooter>

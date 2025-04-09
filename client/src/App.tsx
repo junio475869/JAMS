@@ -47,30 +47,26 @@ function App() {
                     <Route path="/interview" component={InterviewPrepPage} />
                     <Route path="/profile" component={ProfilePage} />
                     <Route path="/chat" component={ChatPage} />
-                    <Route path="/job-apply" component={JobApplyPage} />
-                    <Route
-                      path="/team-management"
-                      component={TeamManagementPage}
-                    />
-                    {/* <Route path="/team-management">
+                    <Route path="/team-management">
                       {() => (
                         <RoleBasedRoute
+                          path="/team-management"
+                          component={TeamManagementPage}
                           allowedRoles={[UserRole.ADMIN, UserRole.GROUP_LEADER]}
-                          element={<TeamManagementPage />}
+                          fallbackPath="/dashboard"
                         />
                       )}
-                    </Route> */}
-                    {/* <Route path="/job-apply">
+                    </Route>
+                    <Route path="/job-apply">
                       {() => (
                         <RoleBasedRoute
-                          allowedRoles={[
-                            UserRole.JOB_SEEKER,
-                            UserRole.JOB_BIDDER,
-                          ]}
-                          element={<JobApplyPage />}
+                          path="/job-apply"
+                          component={JobApplyPage}
+                          allowedRoles={[UserRole.JOB_SEEKER, UserRole.JOB_BIDDER]}
+                          fallbackPath="/dashboard"
                         />
                       )}
-                    </Route> */}
+                    </Route>
                     <Route component={NotFound} />
                   </Switch>
                 </MainLayout>
