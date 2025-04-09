@@ -861,3 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch other applicants" });
     }
   });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
