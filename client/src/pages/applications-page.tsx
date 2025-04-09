@@ -337,7 +337,31 @@ export default function ApplicationsPage() {
             </DialogContent>
           </Dialog>
           <div className="flex space-x-2">
-            <ImportJobsDialog /> {/* Added Import Jobs Button */}
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/applications/cleanup', {
+                    method: 'DELETE'
+                  });
+                  const data = await response.json();
+                  toast({
+                    title: "Cleanup Complete",
+                    description: `Removed ${data.removedCount} invalid applications`
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["applications"] });
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to cleanup applications",
+                    variant: "destructive"
+                  });
+                }
+              }}
+            >
+              Cleanup
+            </Button>
+            <ImportJobsDialog />
           </div>
         </div>
       </div>
