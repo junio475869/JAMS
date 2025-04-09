@@ -236,6 +236,29 @@ export const InterviewType = {
 
 export type InterviewTypeType = typeof InterviewType[keyof typeof InterviewType];
 
+// Interview Feedback
+export const interviewFeedback = pgTable("interview_feedback", {
+  id: serial("id").primaryKey(),
+  interviewId: integer("interview_id").notNull().references(() => interviews.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  comments: text("comments").notNull(),
+  videoUrl: text("video_url"),
+  tags: text("tags").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertInterviewFeedbackSchema = createInsertSchema(interviewFeedback).pick({
+  interviewId: true,
+  userId: true,
+  comments: true,
+  videoUrl: true,
+  tags: true
+});
+
+export type InterviewFeedback = typeof interviewFeedback.$inferSelect;
+export type InsertInterviewFeedback = z.infer<typeof insertInterviewFeedbackSchema>;
+
 // Interview Questions
 export const interviewQuestions = pgTable("interview_questions", {
   id: serial("id").primaryKey(),

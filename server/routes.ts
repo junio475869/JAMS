@@ -807,6 +807,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Interview feedback endpoints
+  app.post("/api/interviews/:id/feedback", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const interviewId = parseInt(req.params.id);
+    if (isNaN(interviewId)) {
+      return res.status(400).json({ error: "Invalid interview ID" });
+    }
+
+    try {
+      const interview = await storage.getInterviewById(interviewId);
+      if (!interview || interview.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Interview not found" });
+      }
+
+      // Handle video upload
+      const videoUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+      const feedback = await storage.createInterviewFeedback({
+        interviewId,
+        userId: req.user!.id,
+        comments: req.body.comments,
+        videoUrl,
+        tags: JSON.parse(req.body.tags)
+      });
+
+      res.status(201).json(feedback);
+    } catch (error) {
+      res.status(400).json({ error: error.message || "Invalid request" });
+    }
+  });
+
   app.post("/api/events", async (req, res) => {
     const { title, description, date } = req.body;
     try {
