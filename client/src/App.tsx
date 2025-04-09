@@ -47,15 +47,20 @@ function App() {
                     <Route path="/interview" component={InterviewPrepPage} />
                     <Route path="/profile" component={ProfilePage} />
                     <Route path="/chat" component={ChatPage} />
-                    <Route path="/team-management">
+                    <Route path="/job-apply" component={JobApplyPage} />
+                    <Route
+                      path="/team-management"
+                      component={TeamManagementPage}
+                    />
+                    {/* <Route path="/team-management">
                       {() => (
                         <RoleBasedRoute
                           allowedRoles={[UserRole.ADMIN, UserRole.GROUP_LEADER]}
                           element={<TeamManagementPage />}
                         />
                       )}
-                    </Route>
-                    <Route path="/job-apply">
+                    </Route> */}
+                    {/* <Route path="/job-apply">
                       {() => (
                         <RoleBasedRoute
                           allowedRoles={[
@@ -65,7 +70,7 @@ function App() {
                           element={<JobApplyPage />}
                         />
                       )}
-                    </Route>
+                    </Route> */}
                     <Route component={NotFound} />
                   </Switch>
                 </MainLayout>
@@ -74,7 +79,7 @@ function App() {
           </Route>
         </Switch>
         <Toaster />
-      </AuthProvider>{" "}
+      </AuthProvider>
       {/* Closed AuthProvider wrapper */}
     </>
   );
