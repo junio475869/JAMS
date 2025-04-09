@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import ImportJobsDialog from "@/components/import-jobs-dialog";
 import {
   Select,
   SelectContent,
@@ -28,17 +29,12 @@ import {
 import { ApplicationStatus } from "@shared/schema";
 import { Application } from "@/types";
 
-// Placeholder component for the import dialog
-function ImportJobsDialog() {
-  return (
-    <Button>Import Jobs</Button>
-  );
-}
-
 export default function ApplicationsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isStepsDialogOpen, setIsStepsDialogOpen] = useState(false);
-  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<
+    number | null
+  >(null);
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState(ApplicationStatus.APPLIED);
@@ -162,8 +158,6 @@ export default function ApplicationsPage() {
       status: newStatus,
     });
   };
-
-
 
   // Filter applications based on search and status
   const filteredApplications =
@@ -316,10 +310,6 @@ export default function ApplicationsPage() {
           </Dialog>
           <div className="flex space-x-2">
             <ImportJobsDialog /> {/* Added Import Jobs Button */}
-            <Button className="inline-flex items-center">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Application
-            </Button>
           </div>
         </div>
       </div>

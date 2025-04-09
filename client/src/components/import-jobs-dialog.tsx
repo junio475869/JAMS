@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
-export function ImportJobsDialog() {
+export default function ImportJobsDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +58,10 @@ export function ImportJobsDialog() {
       console.error("Import error:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to import applications",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to import applications",
         variant: "destructive",
       });
     } finally {
@@ -76,7 +78,9 @@ export function ImportJobsDialog() {
         <DialogHeader>
           <DialogTitle>Import Job Applications</DialogTitle>
           <DialogDescription>
-            Enter a Google Sheets URL to import job applications. The sheet must be publicly accessible with columns for company, position, status, url, and notes.
+            Enter a Google Sheets URL to import job applications. The sheet must
+            be publicly accessible with columns for company, position, status,
+            url, and notes.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -87,7 +91,11 @@ export function ImportJobsDialog() {
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
           <Button onClick={handleImport} disabled={isLoading}>
