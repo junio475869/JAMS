@@ -18,6 +18,7 @@ const COLUMN_DEFINITIONS = [
 interface KanbanBoardProps {
   applications: Application[];
   onDrop: (applicationId: number, newStatus: string) => void;
+  onApplicationClick: (applicationId: number) => void;
 }
 
 export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardProps) {
@@ -139,6 +140,7 @@ export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardPr
                     application={application}
                     status={column.id as keyof typeof ApplicationStatus}
                     isUpdating={isUpdating}
+                    onClick={() => onApplicationClick(application.id)}
                   />
                 </div>
               ))}
