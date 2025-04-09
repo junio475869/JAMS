@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Plus, Save } from "lucide-react";
+import { ArrowLeft, Plus, Save, Pencil } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
 
@@ -29,12 +29,14 @@ export function ApplicationEditPage() {
   const [selectedApplicant, setSelectedApplicant] =
     useState<OtherApplicant | null>(null);
 
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     company: "",
     position: "",
     status: "",
     url: "",
     notes: "",
+    techStack: [] as string[],
   });
 
   const { data: application, isLoading } = useQuery<Application>({
@@ -108,41 +110,95 @@ export function ApplicationEditPage() {
         <h1 className="text-2xl font-bold">Edit Application</h1>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="mb-6">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Basic Information</CardTitle>
+          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
         </CardHeader>
         <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-muted-foreground">Company</Label>
+                <p className="font-medium">{formData.company}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Position</Label>
+                <p className="font-medium">{formData.position}</p>
+              </div>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Status</Label>
+              <p className="font-medium capitalize">{formData.status}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Job URL</Label>
+              <p className="font-medium">
+                {formData.url ? (
+                  <a href={formData.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                    {formData.url}
+                  </a>
+                ) : (
+                  "Not provided"
+                )}
+              </p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Tech Stack</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.techStack?.map((tech, index) => (
+                  <Badge key={index} variant="secondary">{tech}</Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Notes</Label>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {formData.notes || "No notes added"}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Basic Information</DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
-                <Input
-                  id="company"
-                  value={formData.company}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      company: e.target.value,
-                    }))
-                  }
-                />
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company">Company</Label>
+                  <Input
+                    id="company"
+                    value={formData.company}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        company: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="position">Position</Label>
+                  <Input
+                    id="position"
+                    value={formData.position}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        position: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="position">Position</Label>
-                <Input
-                  id="position"
-                  value={formData.position}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      position: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
@@ -155,22 +211,13 @@ export function ApplicationEditPage() {
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ApplicationStatus.APPLIED}>
-                      Applied
-                    </SelectItem>
-                    <SelectItem value={ApplicationStatus.INTERVIEW}>
-                      Interview
-                    </SelectItem>
-                    <SelectItem value={ApplicationStatus.OFFER}>
-                      Offer
-                    </SelectItem>
-                    <SelectItem value={ApplicationStatus.REJECTED}>
-                      Rejected
-                    </SelectItem>
+                    <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
+                    <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
+                    <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
+                    <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="url">Job URL</Label>
                 <Input
@@ -181,29 +228,46 @@ export function ApplicationEditPage() {
                   }
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="techStack">Tech Stack</Label>
+                <Input
+                  id="techStack"
+                  placeholder="Add technologies (comma-separated)"
+                  value={formData.techStack?.join(", ") || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      techStack: e.target.value.split(",").map(t => t.trim()).filter(Boolean),
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
+                  }
+                />
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    notes: e.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <Button type="submit" className="w-full">
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+            </DialogFooter>
           </form>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
