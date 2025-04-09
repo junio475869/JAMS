@@ -24,6 +24,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ApplicationStatus } from "@shared/schema";
+import { Application } from "@/types";
+
 
 export default function ApplicationsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -34,20 +36,36 @@ export default function ApplicationsPage() {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { data: applications = [], isLoading } = useQuery({
-    queryKey: ["/api/applications"],
+
+  // Fetch applications
+  const { data: applications = [], isLoading } = useQuery<Application[]>({
+    queryKey: ["applications"],
     queryFn: async () => {
       const response = await fetch("/api/applications");
       if (!response.ok) {
         throw new Error("Failed to fetch applications");
       }
       return response.json();
+    }
+  });
+
+  const queryClient = useQueryClient();
+
+  // Update application mutation
+  const updateApplicationMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error("Failed to update status");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
     },
   });
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
   const createApplicationMutation = useMutation({
     mutationFn: async (newApplication: any) => {
@@ -60,7 +78,7 @@ export default function ApplicationsPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
       setIsCreateDialogOpen(false);
       toast({
         title: "Success",
@@ -73,21 +91,6 @@ export default function ApplicationsPage() {
         description: error.message,
         variant: "destructive",
       });
-    },
-  });
-
-  const updateApplicationStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await fetch(`/api/applications/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) throw new Error("Failed to update status");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
     },
   });
 
@@ -125,7 +128,7 @@ export default function ApplicationsPage() {
     createApplicationMutation.mutate(newApplication, {
       onSuccess: () => {
         setIsCreateDialogOpen(false);
-        queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+        queryClient.invalidateQueries({ queryKey: ["applications"] });
         toast({
           title: "Success",
           description: "Application created successfully"
@@ -142,7 +145,7 @@ export default function ApplicationsPage() {
   };
 
   const handleDrop = async (applicationId: number, newStatus: string) => {
-    updateApplicationStatusMutation.mutate({
+    updateApplicationMutation.mutate({
       id: applicationId,
       status: newStatus,
     });
