@@ -840,7 +840,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/events", async (req, res) => {
+  app.post("/api/jobs/search", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+
+  try {
+    const { platform: platformId, params } = req.body;
+    const platform = JOB_PLATFORMS.find(p => p.id === platformId);
+    
+    if (!platform) {
+      return res.status(400).json({ error: "Invalid platform" });
+    }
+
+    const jobs = await searchJobs(platform, params);
+    res.json({ jobs });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/events", async (req, res) => {
     const { title, description, date } = req.body;
     try {
       const newEvent = {

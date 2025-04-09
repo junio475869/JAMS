@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,37 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckIcon, ExternalLinkIcon, SearchIcon } from "lucide-react";
 import Header from "@/components/layout/header";
 import { useToast } from "@/hooks/use-toast";
-
-// Job platforms configuration
-const PLATFORMS = [
-  {
-    id: "adzuna",
-    name: "Adzuna",
-    searchParams: ["what", "where", "country"],
-    baseUrl: "https://api.adzuna.com/v1/api/jobs",
-  },
-  {
-    id: "remotive",
-    name: "Remotive",
-    searchParams: ["search", "category"],
-    baseUrl: "https://remotive.com/api/remote-jobs",
-  },
-  {
-    id: "usajobs",
-    name: "USAJobs.gov",
-    searchParams: ["keyword", "location", "grade"],
-    baseUrl: "https://data.usajobs.gov/api/search",
-  },
-  {
-    id: "themuse",
-    name: "The Muse",
-    searchParams: ["category", "level", "location"],
-    baseUrl: "https://www.themuse.com/api/public/jobs",
-  },
-];
+import { JOB_PLATFORMS } from "@/config/job-platforms";
+import type { JobPlatform } from "@/config/job-platforms";
 
 interface JobListing {
   id: string;
@@ -46,11 +22,10 @@ interface JobListing {
   url: string;
   platform: string;
   salary?: string;
-  description?: string;
 }
 
 export default function JobApplyPage() {
-  const [activePlatform, setActivePlatform] = useState(PLATFORMS[0]);
+  const [activePlatform, setActivePlatform] = useState<JobPlatform>(JOB_PLATFORMS[0]);
   const [searchParams, setSearchParams] = useState<Record<string, string>>({});
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,11 +34,10 @@ export default function JobApplyPage() {
   const handleSearch = async () => {
     setIsLoading(true);
     try {
-      // In a real implementation, this would call your backend API that handles the different platform APIs
-      const response = await fetch(`/api/jobs/search`, {
-        method: 'POST',
+      const response = await fetch("/api/jobs/search", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           platform: activePlatform.id,
@@ -71,7 +45,10 @@ export default function JobApplyPage() {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to fetch jobs');
+      if (!response.ok) {
+        throw new Error("Failed to fetch jobs");
+      }
+
       const data = await response.json();
       setJobs(data.jobs);
     } catch (error) {
@@ -87,22 +64,23 @@ export default function JobApplyPage() {
 
   const handleApplyDone = async (job: JobListing) => {
     try {
-      const response = await fetch('/api/applications', {
-        method: 'POST',
+      const response = await fetch("/api/applications", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           company: job.company,
           position: job.title,
           url: job.url,
-          status: 'applied',
-          appliedDate: new Date().toISOString(),
-          description: job.description,
+          status: "applied",
+          notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || 'Not specified'}`,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to save application');
+      if (!response.ok) {
+        throw new Error("Failed to save application");
+      }
 
       toast({
         title: "Success",
@@ -127,9 +105,9 @@ export default function JobApplyPage() {
           </CardHeader>
           <CardContent>
             <Tabs
-              defaultValue={PLATFORMS[0].id}
+              defaultValue={JOB_PLATFORMS[0].id}
               onValueChange={(value) => {
-                const platform = PLATFORMS.find(p => p.id === value);
+                const platform = JOB_PLATFORMS.find(p => p.id === value);
                 if (platform) {
                   setActivePlatform(platform);
                   setSearchParams({});
@@ -138,28 +116,53 @@ export default function JobApplyPage() {
               }}
             >
               <TabsList className="mb-4">
-                {PLATFORMS.map((platform) => (
+                {JOB_PLATFORMS.map((platform) => (
                   <TabsTrigger key={platform.id} value={platform.id}>
                     {platform.name}
                   </TabsTrigger>
                 ))}
               </TabsList>
 
-              {PLATFORMS.map((platform) => (
+              {JOB_PLATFORMS.map((platform) => (
                 <TabsContent key={platform.id} value={platform.id}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     {platform.searchParams.map((param) => (
-                      <div key={param} className="space-y-2">
-                        <Label htmlFor={param}>{param.charAt(0).toUpperCase() + param.slice(1)}</Label>
-                        <Input
-                          id={param}
-                          value={searchParams[param] || ''}
-                          onChange={(e) => setSearchParams(prev => ({
-                            ...prev,
-                            [param]: e.target.value
-                          }))}
-                          placeholder={`Enter ${param}`}
-                        />
+                      <div key={param.name} className="space-y-2">
+                        <Label htmlFor={param.name}>{param.label}</Label>
+                        {param.type === "select" ? (
+                          <Select
+                            value={searchParams[param.name] || ""}
+                            onValueChange={(value) =>
+                              setSearchParams((prev) => ({
+                                ...prev,
+                                [param.name]: value,
+                              }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={`Select ${param.label}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {param.options?.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            id={param.name}
+                            value={searchParams[param.name] || ""}
+                            onChange={(e) =>
+                              setSearchParams((prev) => ({
+                                ...prev,
+                                [param.name]: e.target.value,
+                              }))
+                            }
+                            placeholder={`Enter ${param.label.toLowerCase()}`}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -194,7 +197,7 @@ export default function JobApplyPage() {
                     </TableCell>
                     <TableCell>{job.company}</TableCell>
                     <TableCell>{job.location}</TableCell>
-                    <TableCell>{job.salary || 'Not specified'}</TableCell>
+                    <TableCell>{job.salary || "Not specified"}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm" asChild>
@@ -214,7 +217,7 @@ export default function JobApplyPage() {
                 {jobs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      {isLoading ? 'Loading...' : 'No jobs found. Try searching with different criteria.'}
+                      {isLoading ? "Loading..." : "No jobs found. Try searching with different criteria."}
                     </TableCell>
                   </TableRow>
                 )}
