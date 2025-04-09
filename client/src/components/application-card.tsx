@@ -42,18 +42,41 @@ export function ApplicationCard({
       className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 cursor-pointer transition-colors"
       onClick={() => setLocation(`/applications/${application.id}`)}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <h4 className="font-medium text-white">{application.position}</h4>
-          <p className="text-sm mt-1 text-gray-400">{application.company}</p>
+      <div className="space-y-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <h4 className="font-medium text-white">{application.position}</h4>
+            <p className="text-sm mt-1 text-gray-400">{application.company}</p>
+          </div>
+          <span className="text-xs px-2 py-1 rounded-full bg-gray-700 text-gray-300">
+            {statusNames[status]}
+          </span>
         </div>
-        <span className="text-xs px-2 py-1 rounded-full bg-gray-700 text-gray-300">
-          {statusNames[status]}
-        </span>
-      </div>
-      <div className="mt-3 flex items-center text-xs text-gray-400">
-        <CalendarIcon className="h-3 w-3 mr-1" />
-        <span>Applied {formattedDate}</span>
+        {application.steps && application.steps.length > 0 && (
+          <div className="flex items-center gap-1 mt-2">
+            {application.steps.map((step, index) => (
+              <div 
+                key={step.id} 
+                className={`flex items-center ${index !== 0 ? 'ml-1' : ''}`}
+              >
+                {index !== 0 && <div className="w-2 h-[2px] bg-gray-600 mr-1" />}
+                <div 
+                  className={`text-xs px-2 py-1 rounded ${
+                    step.completed 
+                      ? 'bg-green-900/30 text-green-400' 
+                      : 'bg-gray-700 text-gray-300'
+                  }`}
+                >
+                  {step.stepName.split(' ')[0]}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="mt-3 flex items-center text-xs text-gray-400">
+          <CalendarIcon className="h-3 w-3 mr-1" />
+          <span>Applied {formattedDate}</span>
+        </div>
       </div>
     </div>
   );

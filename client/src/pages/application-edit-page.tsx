@@ -19,11 +19,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save } from "lucide-react";
 
+interface OtherApplicant {
+  id: number;
+  username: string;
+  steps: InterviewStep[];
+  feedback?: string;
+}
+
 export function ApplicationEditPage() {
   const [_, setLocation] = useLocation();
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'edit' | 'others'>('edit');
+  const [selectedApplicant, setSelectedApplicant] = useState<OtherApplicant | null>(null);
   
   const [formData, setFormData] = useState({
     company: "",
@@ -38,6 +47,16 @@ export function ApplicationEditPage() {
     queryFn: async () => {
       const response = await fetch(`/api/applications/${id}`);
       if (!response.ok) throw new Error("Failed to fetch application");
+      return response.json();
+    }
+  });
+
+  const { data: otherApplicants = [] } = useQuery<OtherApplicant[]>({
+    queryKey: ["other-applicants", application?.position],
+    enabled: !!application?.position,
+    queryFn: async () => {
+      const response = await fetch(`/api/applications/others?position=${encodeURIComponent(application!.position)}`);
+      if (!response.ok) throw new Error("Failed to fetch other applicants");
       return response.json();
     }
   });
@@ -81,6 +100,20 @@ export function ApplicationEditPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <div className="flex space-x-4 mb-6">
+        <Button
+          variant={activeTab === 'edit' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('edit')}
+        >
+          My Application
+        </Button>
+        <Button
+          variant={activeTab === 'others' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('others')}
+        >
+          Other Applicants ({otherApplicants.length})
+        </Button>
+      </div>
       <div className="flex items-center gap-4 mb-6">
         <Button variant="outline" onClick={() => setLocation("/applications")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -89,7 +122,8 @@ export function ApplicationEditPage() {
         <h1 className="text-2xl font-bold">Edit Application</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {activeTab === 'edit' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
@@ -191,6 +225,77 @@ export function ApplicationEditPage() {
           </CardContent>
         </Card>
       </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle>Other Applicants</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {otherApplicants.map((applicant) => (
+                  <div
+                    key={applicant.id}
+                    onClick={() => setSelectedApplicant(applicant)}
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      selectedApplicant?.id === applicant.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-muted'
+                    }`}
+                  >
+                    <div className="font-medium">{applicant.username}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {applicant.steps.length} steps
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {selectedApplicant && (
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>{selectedApplicant.username}'s Journey</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="font-medium">Interview Steps</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedApplicant.steps.map((step, index) => (
+                        <div key={step.id} className="flex items-center">
+                          {index !== 0 && (
+                            <div className="w-4 h-[2px] bg-gray-600 mx-2" />
+                          )}
+                          <div
+                            className={`px-3 py-1.5 rounded-full text-sm ${
+                              step.completed
+                                ? 'bg-green-900/30 text-green-400'
+                                : 'bg-gray-700 text-gray-300'
+                            }`}
+                          >
+                            {step.stepName}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedApplicant.feedback && (
+                    <div className="space-y-2">
+                      <h3 className="font-medium">Feedback</h3>
+                      <div className="bg-muted p-4 rounded-lg">
+                        {selectedApplicant.feedback}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 }

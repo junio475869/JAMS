@@ -840,3 +840,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+app.get("/api/applications/others", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const position = req.query.position as string;
+    if (!position) {
+      return res.status(400).json({ error: "Position is required" });
+    }
+
+    try {
+      const otherApplicants = await storage.getOtherApplicantsByPosition(
+        req.user!.id,
+        position
+      );
+      res.json(otherApplicants);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch other applicants" });
+    }
+  });
