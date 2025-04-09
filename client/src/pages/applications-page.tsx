@@ -44,6 +44,7 @@ export default function ApplicationsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | null>("all");
+  const { toast } = useToast();
 
   const queryClient = useQueryClient();
 
@@ -54,7 +55,9 @@ export default function ApplicationsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["applications", page, limit],
     queryFn: async () => {
-      const response = await fetch(`/api/applications?page=${page}&limit=${limit}`);
+      const response = await fetch(
+        `/api/applications?page=${page}&limit=${limit}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch applications");
       }
@@ -177,12 +180,13 @@ export default function ApplicationsPage() {
       const matchesFilter =
         filterStatus === "all" || app.status === filterStatus;
 
-
-      {/* Pagination Controls */}
+      {
+        /* Pagination Controls */
+      }
       <div className="flex justify-center mt-6 gap-2">
         <Button
           variant="outline"
-          onClick={() => setPage(p => Math.max(1, p - 1))}
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1 || isLoading}
         >
           Previous
@@ -192,12 +196,12 @@ export default function ApplicationsPage() {
         </span>
         <Button
           variant="outline"
-          onClick={() => setPage(p => p + 1)}
+          onClick={() => setPage((p) => p + 1)}
           disabled={page >= totalPages || isLoading}
         >
           Next
         </Button>
-      </div>
+      </div>;
 
       return matchesSearch && matchesFilter;
     });
@@ -337,24 +341,24 @@ export default function ApplicationsPage() {
             </DialogContent>
           </Dialog>
           <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={async () => {
                 try {
-                  const response = await fetch('/api/applications/cleanup', {
-                    method: 'DELETE'
+                  const response = await fetch("/api/applications/cleanup", {
+                    method: "DELETE",
                   });
                   const data = await response.json();
                   toast({
                     title: "Cleanup Complete",
-                    description: `Removed ${data.removedCount} invalid applications`
+                    description: `Removed ${data.removedCount} invalid applications`,
                   });
                   queryClient.invalidateQueries({ queryKey: ["applications"] });
                 } catch (error) {
                   toast({
                     title: "Error",
                     description: "Failed to cleanup applications",
-                    variant: "destructive"
+                    variant: "destructive",
                   });
                 }
               }}
