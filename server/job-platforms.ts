@@ -1,6 +1,8 @@
 
 import fetch from "node-fetch";
-import { JobPlatform } from "../client/src/config/job-platforms";
+import { JobPlatform, JOB_PLATFORMS } from "../client/src/config/job-platforms";
+
+export { JOB_PLATFORMS };
 
 export async function searchJobs(platform: JobPlatform, params: Record<string, string>) {
   const headers: Record<string, string> = {
