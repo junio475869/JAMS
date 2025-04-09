@@ -157,6 +157,17 @@ export default function ApplicationsPage() {
     });
   };
 
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedApplication) {
+      updateApplicationMutation.mutate({
+        id: selectedApplication.id,
+        status
+      });
+      setIsEditDialogOpen(false);
+    }
+  };
+
   // Filter applications based on search and status
   const filteredApplications =
     applications &&
@@ -317,130 +328,120 @@ export default function ApplicationsPage() {
         </div>
       ) : (
         <>
-          <KanbanBoard 
-            applications={filteredApplications} 
+          <KanbanBoard
+            applications={filteredApplications}
             onDrop={handleDrop}
             onApplicationClick={(applicationId) => {
-              const app = applications.find(a => a.id === applicationId);
+              const app = applications.find((a) => a.id === applicationId);
               if (app) {
                 setSelectedApplication(app);
+                setSelectedApplicationId(applicationId);
                 setIsEditDialogOpen(true);
               }
-            }} 
+            }}
           />
 
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Edit Application</DialogTitle>
                 <DialogDescription>
                   Update the details of your job application
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                if (selectedApplication) {
-                  updateApplicationMutation.mutate({
-                    id: selectedApplication.id,
-                    data: {
-                      company,
-                      position,
-                      status,
-                      url,
-                      notes
-                    }
-                  });
-                  setIsEditDialogOpen(false);
-                }
-              }}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="company">Company</Label>
-                    <Input
-                      id="company"
-                      defaultValue={selectedApplication?.company || ""}
-                      onChange={(e) => setCompany(e.target.value)}
-                    />
+              <div className="flex flex-col gap-6">
+                <form onSubmit={handleEditSubmit}>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="company">Company</Label>
+                      <Input
+                        id="company"
+                        defaultValue={selectedApplication?.company || ""}
+                        onChange={(e) => setCompany(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="position">Position</Label>
+                      <Input
+                        id="position"
+                        defaultValue={selectedApplication?.position || ""}
+                        onChange={(e) => setPosition(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select
+                        defaultValue={selectedApplication?.status || ApplicationStatus.APPLIED}
+                        onValueChange={(value) => setStatus(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
+                          <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
+                          <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
+                          <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="url">Job Posting URL</Label>
+                      <Input
+                        id="url"
+                        defaultValue={selectedApplication?.url || ""}
+                        onChange={(e) => setUrl(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="notes">Notes</Label>
+                      <textarea
+                        id="notes"
+                        defaultValue={selectedApplication?.notes || ""}
+                        className="min-h-[100px] rounded-md border bg-background p-3"
+                        onChange={(e) => setNotes(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="position">Position</Label>
-                    <Input
-                      id="position"
-                      defaultValue={selectedApplication?.position || ""}
-                      onChange={(e) => setPosition(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      defaultValue={selectedApplication?.status || ApplicationStatus.APPLIED}
-                      onValueChange={(value) => setStatus(value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
-                        <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
-                        <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
-                        <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="url">Job Posting URL</Label>
-                    <Input
-                      id="url"
-                      defaultValue={selectedApplication?.url || ""}
-                      onChange={(e) => setUrl(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <textarea
-                      id="notes"
-                      defaultValue={selectedApplication?.notes || ""}
-                      className="min-h-[100px] rounded-md border bg-background p-3"
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Save Changes</Button>
+                  </DialogFooter>
+                </form>
+
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Interview Steps</h3>
+                  <InterviewStepsDialog
+                    isOpen={true}
+                    onClose={() => {}}
+                    applicationId={selectedApplicationId!}
+                    onSave={async (steps) => {
+                      try {
+                        await fetch(`/api/applications/${selectedApplicationId}/interview-steps`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ steps }),
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["applications"] });
+                        toast({
+                          title: "Success",
+                          description: "Interview steps updated successfully",
+                        });
+                      } catch (error) {
+                        toast({
+                          title: "Error",
+                          description: "Failed to update interview steps",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  />
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">Save Changes</Button>
-                </DialogFooter>
-              </form>
+              </div>
             </DialogContent>
           </Dialog>
-          
-          <InterviewStepsDialog
-            isOpen={isStepsDialogOpen}
-            onClose={() => setIsStepsDialogOpen(false)}
-            applicationId={selectedApplicationId!}
-            onSave={async (steps) => {
-              try {
-                await fetch(`/api/applications/${selectedApplicationId}/interview-steps`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ steps })
-                });
-                queryClient.invalidateQueries({ queryKey: ["applications"] });
-                setIsStepsDialogOpen(false);
-                toast({
-                  title: "Success",
-                  description: "Interview steps updated successfully",
-                });
-              } catch (error) {
-                toast({
-                  title: "Error",
-                  description: "Failed to update interview steps",
-                  variant: "destructive",
-                });
-              }
-            }}
-          />
         </>
       )}
     </div>
