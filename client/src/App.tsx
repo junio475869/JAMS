@@ -35,6 +35,7 @@ function App() {
                   <Switch>
                     <Route path="/" component={DashboardPage} />
                     <Route path="/applications" component={ApplicationsPage} />
+          <Route path="/applications/:id" component={ApplicationEditPage} />
                     <Route path="/documents" component={DocumentsPage} />
                     <Route path="/analytics" component={AnalyticsPage} />
                     <Route path="/calendar" component={CalendarPage} />
