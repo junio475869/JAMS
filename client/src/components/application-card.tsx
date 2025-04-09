@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
+import { useLocation } from "wouter";
 import { Application, ApplicationStatus } from "@shared/schema";
 import { CalendarIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,22 +15,30 @@ const statusNames = {
   applied: "Applied",
   interview: "Interview",
   offer: "Offer",
-  rejected: "Rejected"
+  rejected: "Rejected",
 };
 
-export function ApplicationCard({ application, status, isUpdating, onClick }: ApplicationCardProps) {
+export function ApplicationCard({
+  application,
+  status,
+  isUpdating,
+  onClick,
+}: ApplicationCardProps) {
   if (isUpdating) {
     return <Skeleton className="h-[140px] w-full bg-gray-750 rounded-lg" />;
   }
+  const [location, setLocation] = useLocation();
 
   const formattedDate = application.appliedDate
-    ? (application.appliedDate instanceof Date 
-        ? formatDistanceToNow(application.appliedDate, { addSuffix: true })
-        : formatDistanceToNow(new Date(application.appliedDate), { addSuffix: true }))
+    ? application.appliedDate instanceof Date
+      ? formatDistanceToNow(application.appliedDate, { addSuffix: true })
+      : formatDistanceToNow(new Date(application.appliedDate), {
+          addSuffix: true,
+        })
     : "recently";
 
   return (
-    <div 
+    <div
       className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 cursor-pointer transition-colors"
       onClick={() => setLocation(`/applications/${application.id}`)}
     >
