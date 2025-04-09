@@ -840,7 +840,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
-app.get("/api/applications/others", async (req, res) => {
+export async function registerRoutes(app: Express): Promise<Server> {
+  // ... existing routes ...
+
+  app.get("/api/applications/others", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const position = req.query.position as string;
