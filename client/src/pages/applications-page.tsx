@@ -54,7 +54,7 @@ export default function ApplicationsPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
       setIsCreateDialogOpen(false);
       toast({
         title: "Success",
@@ -81,7 +81,7 @@ export default function ApplicationsPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
     },
   });
 
@@ -89,7 +89,7 @@ export default function ApplicationsPage() {
     event.preventDefault();
     setError(null);
     setSuccess(null);
-    
+
     if (!company || !position)
       return setError("Company and position are required.");
     if (url && !url.startsWith("http"))
@@ -102,19 +102,25 @@ export default function ApplicationsPage() {
   };
 
   const handleDrop = async (applicationId: number, newStatus: string) => {
-    updateApplicationStatusMutation.mutate({ id: applicationId, status: newStatus });
+    updateApplicationStatusMutation.mutate({
+      id: applicationId,
+      status: newStatus,
+    });
   };
 
   // Filter applications based on search and status
-  const filteredApplications = applications?.filter(app => {
-    const matchesSearch = !searchQuery || 
-      app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.position.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilter = !filterStatus || app.status === filterStatus;
-    
-    return matchesSearch && matchesFilter;
-  });
+  const filteredApplications =
+    applications &&
+    applications?.filter((app) => {
+      const matchesSearch =
+        !searchQuery ||
+        app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.position.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesFilter = !filterStatus || app.status === filterStatus;
+
+      return matchesSearch && matchesFilter;
+    });
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -140,7 +146,10 @@ export default function ApplicationsPage() {
               />
             </div>
           </div>
-          <Select value={filterStatus || ""} onValueChange={(value) => setFilterStatus(value || null)}>
+          <Select
+            value={filterStatus || ""}
+            onValueChange={(value) => setFilterStatus(value || null)}
+          >
             <SelectTrigger className="w-[180px] mb-2 sm:mb-0">
               <SlidersHorizontal className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Filter by status" />
@@ -148,9 +157,13 @@ export default function ApplicationsPage() {
             <SelectContent>
               <SelectItem value="">All Status</SelectItem>
               <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
-              <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
+              <SelectItem value={ApplicationStatus.INTERVIEW}>
+                Interview
+              </SelectItem>
               <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
-              <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
+              <SelectItem value={ApplicationStatus.REJECTED}>
+                Rejected
+              </SelectItem>
             </SelectContent>
           </Select>
           <Dialog
