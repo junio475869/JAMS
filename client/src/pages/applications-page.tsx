@@ -122,7 +122,7 @@ export default function ApplicationsPage() {
         app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
         app.position.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesFilter = !filterStatus || app.status === filterStatus;
+      const matchesFilter = filterStatus === 'all' || app.status === filterStatus;
 
       return matchesSearch && matchesFilter;
     });
@@ -160,7 +160,7 @@ export default function ApplicationsPage() {
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
               <SelectItem value={ApplicationStatus.INTERVIEW}>
                 Interview
