@@ -8,72 +8,11 @@ import { Filter, SortAsc } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Define column configurations that won't change between renders
 const COLUMN_DEFINITIONS = [
   { id: ApplicationStatus.APPLIED, title: "Applied", color: "bg-blue-500" },
   { id: ApplicationStatus.INTERVIEW, title: "Interview", color: "bg-purple-500" },
   { id: ApplicationStatus.OFFER, title: "Offer", color: "bg-green-500" },
   { id: ApplicationStatus.REJECTED, title: "Rejected", color: "bg-red-500" },
-];
-
-// Demo applications for demo mode
-const DEMO_APPLICATIONS = [
-  {
-    id: 1,
-    userId: 0,
-    company: "Tech Innovations Inc.",
-    position: "Senior Frontend Developer",
-    status: "applied",
-    url: "https://techinnovations.example.com/careers",
-    description: "Senior frontend developer position focusing on React and TypeScript",
-    notes: "Applied through company website. Used resume v2.0.",
-    appliedDate: new Date(),
-    lastActivity: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 2,
-    userId: 0,
-    company: "Global Solutions Ltd.",
-    position: "Full Stack Engineer",
-    status: "interview",
-    url: "https://globalsolutions.example.com/jobs",
-    description: "Full stack role working with Node.js and React",
-    notes: "First interview scheduled for next week. Research company products.",
-    appliedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    lastActivity: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 3,
-    userId: 0,
-    company: "Startup Ventures",
-    position: "React Developer",
-    status: "offer",
-    url: "https://startupventures.example.com/careers",
-    description: "React frontend role for a growing startup",
-    notes: "Received offer! Need to review contract details.",
-    appliedDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    lastActivity: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 4,
-    userId: 0,
-    company: "Enterprise Solutions",
-    position: "UI/UX Developer",
-    status: "rejected",
-    url: "https://enterprise.example.com/jobs",
-    description: "UI/UX developer with React experience",
-    notes: "Rejected after second interview. Follow up for feedback.",
-    appliedDate: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000),
-    lastActivity: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
 ];
 
 interface KanbanBoardProps {
@@ -82,31 +21,20 @@ interface KanbanBoardProps {
 }
 
 export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardProps) {
-  // Define all hooks at the top of the component
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  
+
+  // Compute columns with applications
   const columns = useMemo(() => {
     return COLUMN_DEFINITIONS.map(column => ({
       ...column,
-      applications: applications.filter(app => app.status === column.id)
+      applications: applications?.filter(app => app.status === column.id) || []
     }));
   }, [applications]);
 
   useEffect(() => {
-    // Set loading state once applications are available
     setIsLoading(false);
-  }, [applications]);
-  
-  // Handle loading state
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-    return COLUMN_DEFINITIONS.map(column => ({
-      ...column,
-      applications: applications.filter(app => app.status === column.id)
-    }));
-  }, [applications]);
+  }, []);
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, applicationId: number) => {
@@ -120,7 +48,7 @@ export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardPr
   const handleDrop = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     const applicationId = parseInt(e.dataTransfer.getData('applicationId'));
-    
+
     if (!isNaN(applicationId)) {
       const application = applications.find(app => app.id === applicationId);
       if (application && application.status !== columnId) {
@@ -129,7 +57,6 @@ export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardPr
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div>
@@ -168,7 +95,6 @@ export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardPr
     );
   }
 
-  // Regular render
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
