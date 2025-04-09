@@ -33,11 +33,16 @@ export default function ApplicationsPage() {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  // const { data: applications, isLoading } = useQuery{
-  //   queryKey: ["/api/applications"],
-  //     queryFn: async () =>
-  //       (await fetch("/api/applications")).json()
-  // };
+  const { data: applications = [], isLoading } = useQuery({
+    queryKey: ["/api/applications"],
+    queryFn: async () => {
+      const response = await fetch("/api/applications");
+      if (!response.ok) {
+        throw new Error("Failed to fetch applications");
+      }
+      return response.json();
+    }
+  });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -260,7 +265,17 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Kanban Board */}
-      <KanbanBoard />
+      {isLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-[200px] w-full" />
+          <Skeleton className="h-[200px] w-full" />
+        </div>
+      ) : (
+        <KanbanBoard 
+          applications={applications}
+          onDrop={handleDrop}
+        />
+      )}
     </div>
   );
 }
