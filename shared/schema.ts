@@ -86,21 +86,26 @@ export const insertDocumentSchema = createInsertSchema(documents).pick({
 });
 
 // Interviews
-export const interviews = pgTable("interviews", {
+export const interviewSteps = pgTable("interview_steps", {
   id: serial("id").primaryKey(),
   applicationId: integer("application_id").notNull().references(() => applications.id),
-  userId: integer("user_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
-  company: text("company").notNull(),
-  type: text("type").notNull(), // 'phone', 'technical', 'onsite'
-  date: timestamp("date").notNull(),
-  duration: integer("duration").notNull(), // minutes
-  location: text("location"),
-  notes: text("notes"),
+  stepName: text("step_name").notNull(),
+  sequence: integer("sequence").notNull(),
+  interviewerName: text("interviewer_name"),
+  interviewerLinkedIn: text("interviewer_linkedin"),
+  meetingUrl: text("meeting_url"),
+  date: timestamp("date"),
+  duration: integer("duration"), // minutes
+  comments: text("comments"),
   completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
+
+export const insertInterviewStepSchema = createInsertSchema(interviewSteps);
+
+export type InterviewStep = typeof interviewSteps.$inferSelect;
+export type InsertInterviewStep = z.infer<typeof insertInterviewStepSchema>;
 
 export const insertInterviewSchema = createInsertSchema(interviews).pick({
   applicationId: true,

@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import KanbanBoard from "@/components/ui/kanban-board";
+import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
 import { Plus, SlidersHorizontal, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,8 @@ import { Application } from "@/types";
 
 export default function ApplicationsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isStepsDialogOpen, setIsStepsDialogOpen] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState(ApplicationStatus.APPLIED);
@@ -311,7 +314,43 @@ export default function ApplicationsPage() {
           <Skeleton className="h-[200px] w-full" />
         </div>
       ) : (
-        <KanbanBoard applications={filteredApplications} onDrop={handleDrop} />
+        <>
+          <KanbanBoard 
+            applications={filteredApplications} 
+            onDrop={handleDrop}
+            onApplicationClick={(applicationId) => {
+              setSelectedApplicationId(applicationId);
+              setIsStepsDialogOpen(true);
+            }} 
+          />
+          
+          <InterviewStepsDialog
+            isOpen={isStepsDialogOpen}
+            onClose={() => setIsStepsDialogOpen(false)}
+            applicationId={selectedApplicationId!}
+            onSave={async (steps) => {
+              try {
+                await fetch(`/api/applications/${selectedApplicationId}/interview-steps`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ steps })
+                });
+                queryClient.invalidateQueries({ queryKey: ["applications"] });
+                setIsStepsDialogOpen(false);
+                toast({
+                  title: "Success",
+                  description: "Interview steps updated successfully",
+                });
+              } catch (error) {
+                toast({
+                  title: "Error",
+                  description: "Failed to update interview steps",
+                  variant: "destructive",
+                });
+              }
+            }}
+          />
+        </>
       )}
     </div>
   );
