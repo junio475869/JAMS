@@ -1,10 +1,10 @@
+
 import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 import { ButtonProps, buttonVariants } from "@/components/ui/button"
 
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
+const PaginationRoot = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
     role="navigation"
     aria-label="pagination"
@@ -12,7 +12,7 @@ const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
     {...props}
   />
 )
-Pagination.displayName = "Pagination"
+PaginationRoot.displayName = "Pagination"
 
 const PaginationContent = React.forwardRef<
   HTMLUListElement,
@@ -106,6 +106,50 @@ const PaginationEllipsis = ({
 )
 PaginationEllipsis.displayName = "PaginationEllipsis"
 
+interface CustomPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const Pagination = ({ currentPage, totalPages, onPageChange }: CustomPaginationProps) => {
+  return (
+    <PaginationRoot className="my-4">
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            onClick={() => onPageChange(currentPage - 1)}
+            className={cn(currentPage <= 1 && "pointer-events-none opacity-50")}
+          />
+        </PaginationItem>
+        {currentPage > 1 && (
+          <PaginationItem>
+            <PaginationLink onClick={() => onPageChange(1)}>1</PaginationLink>
+          </PaginationItem>
+        )}
+        {currentPage > 2 && <PaginationEllipsis />}
+        <PaginationItem>
+          <PaginationLink isActive>{currentPage}</PaginationLink>
+        </PaginationItem>
+        {currentPage < totalPages - 1 && <PaginationEllipsis />}
+        {currentPage < totalPages && (
+          <PaginationItem>
+            <PaginationLink onClick={() => onPageChange(totalPages)}>
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        )}
+        <PaginationItem>
+          <PaginationNext
+            onClick={() => onPageChange(currentPage + 1)}
+            className={cn(currentPage >= totalPages && "pointer-events-none opacity-50")}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </PaginationRoot>
+  )
+}
+
 export {
   Pagination,
   PaginationContent,
@@ -114,11 +158,4 @@ export {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-}
-
-export function Pagination({ currentPage, totalPages, onPageChange }: { currentPage: number; totalPages: number; onPageChange: (page: number) => void }) {
-  return (
-    <nav className="flex justify-center mt-4" aria-label="pagination">
-    </nav>
-  );
 }
