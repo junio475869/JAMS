@@ -863,14 +863,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rows = text.split('\n').map(row => row.split(','));
       
       // Skip header row
-      const applications = rows.slice(1).map(row => ({
-        company: row[0]?.replace(/['"]+/g, ''),
-        position: row[1]?.replace(/['"]+/g, ''),
-        status: row[2]?.replace(/['"]+/g, '') || 'applied',
-        url: row[3]?.replace(/['"]+/g, ''),
-        notes: row[4]?.replace(/['"]+/g, ''),
-        userId: req.user!.id
-      }));
+      const applications = rows.slice(1).map(row => {
+        const date = row[0]?.replace(/['"]+/g, '');
+        const skills = row[2]?.replace(/['"]+/g, '').split(',').map(s => s.trim());
+        return {
+          company: row[3]?.replace(/['"]+/g, ''),
+          position: row[4]?.replace(/['"]+/g, ''),
+          url: row[5]?.replace(/['"]+/g, ''),
+          notes: `Skills: ${skills.join(', ')}\nProfile: ${row[6]?.replace(/['"]+/g, '')}`,
+          appliedDate: date ? new Date(date) : new Date(),
+          status: 'applied',
+          userId: req.user!.id
+        };
+      });
 
       // Insert applications
       const createdApplications = await Promise.all(

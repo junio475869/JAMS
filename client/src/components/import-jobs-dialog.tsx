@@ -79,8 +79,8 @@ export default function ImportJobsDialog() {
           <DialogTitle>Import Job Applications</DialogTitle>
           <DialogDescription>
             Enter a Google Sheets URL to import job applications. The sheet must
-            be publicly accessible with columns for company, position, status,
-            url, and notes.
+            be publicly accessible with columns for date, count, skills, company,
+            position, url, profile and other details.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
