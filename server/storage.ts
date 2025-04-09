@@ -226,12 +226,22 @@ export class DatabaseStorage implements IStorage {
     return application;
   }
 
-  async getApplicationsByUserId(userId: number): Promise<Application[]> {
+  async getApplicationsByUserIdPaginated(userId: number, limit: number, offset: number): Promise<Application[]> {
     return await db
       .select()
       .from(applications)
       .where(eq(applications.userId, userId))
-      .orderBy(desc(applications.updatedAt));
+      .orderBy(desc(applications.updatedAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getApplicationsCountByUserId(userId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(applications)
+      .where(eq(applications.userId, userId));
+    return Number(result.count);
   }
 
   async createApplication(application: InsertApplication): Promise<Application> {

@@ -48,16 +48,22 @@ export default function ApplicationsPage() {
   const queryClient = useQueryClient();
 
   // Fetch applications
-  const { data: applications = [], isLoading } = useQuery<Application[]>({
-    queryKey: ["applications"],
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["applications", page, limit],
     queryFn: async () => {
-      const response = await fetch("/api/applications");
+      const response = await fetch(`/api/applications?page=${page}&limit=${limit}`);
       if (!response.ok) {
         throw new Error("Failed to fetch applications");
       }
       return response.json();
     },
   });
+
+  const applications = data?.applications || [];
+  const totalPages = data?.totalPages || 1;
 
   // Update application mutation
   const updateApplicationMutation = useMutation({
@@ -170,6 +176,28 @@ export default function ApplicationsPage() {
 
       const matchesFilter =
         filterStatus === "all" || app.status === filterStatus;
+
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-6 gap-2">
+        <Button
+          variant="outline"
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+          disabled={page === 1 || isLoading}
+        >
+          Previous
+        </Button>
+        <span className="py-2 px-4">
+          Page {page} of {totalPages}
+        </span>
+        <Button
+          variant="outline"
+          onClick={() => setPage(p => p + 1)}
+          disabled={page >= totalPages || isLoading}
+        >
+          Next
+        </Button>
+      </div>
 
       return matchesSearch && matchesFilter;
     });

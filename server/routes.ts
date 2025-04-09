@@ -44,8 +44,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/applications", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const applications = await storage.getApplicationsByUserId(req.user!.id);
-    res.json(applications);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
+
+    const [applications, total] = await Promise.all([
+      storage.getApplicationsByUserIdPaginated(req.user!.id, limit, offset),
+      storage.getApplicationsCountByUserId(req.user!.id)
+    ]);
+
+    res.json({
+      applications,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      totalItems: total
+    });
   });
 
   app.post("/api/applications", async (req, res) => {
