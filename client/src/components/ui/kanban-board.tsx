@@ -32,32 +32,62 @@ interface KanbanBoardProps {
   onApplicationClick: (applicationId: number) => void;
 }
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 20;
 
-export default function KanbanBoard({ applications = [], onDrop, onApplicationClick }: KanbanBoardProps) {
+export default function KanbanBoard({ onDrop, onApplicationClick }: KanbanBoardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [columnPages, setColumnPages] = useState<Record<string, number>>({});
+  const [columnData, setColumnData] = useState<Record<string, { 
+    applications: Application[],
+    totalPages: number,
+    totalItems: number 
+  }>>({});
+
+  const fetchColumnData = async (columnId: string, page: number) => {
+    try {
+      const response = await fetch(
+        `/api/applications?status=${columnId}&page=${page}&limit=${ITEMS_PER_PAGE}`
+      );
+      const data = await response.json();
+      setColumnData(prev => ({
+        ...prev,
+        [columnId]: {
+          applications: data.applications,
+          totalPages: data.totalPages,
+          totalItems: data.totalItems
+        }
+      }));
+    } catch (error) {
+      console.error(`Error fetching ${columnId} applications:`, error);
+    }
+  };
+
+  useEffect(() => {
+    COLUMN_DEFINITIONS.forEach(column => {
+      fetchColumnData(column.id, getColumnPage(column.id));
+    });
+    setIsLoading(false);
+  }, []);
 
   // Initialize or get current page for a column
   const getColumnPage = (columnId: string) => columnPages[columnId] || 1;
 
-  // Compute columns with paginated applications
-  const columns = useMemo(() => {
-    return COLUMN_DEFINITIONS.map(column => {
-      const filteredApps = applications?.filter(app => app.status === column.id) || [];
-      const currentPage = getColumnPage(column.id);
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      const paginatedApps = filteredApps.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  // Handle page change for a column
+  const handlePageChange = async (columnId: string, newPage: number) => {
+    setColumnPages(prev => ({
+      ...prev,
+      [columnId]: newPage
+    }));
+    await fetchColumnData(columnId, newPage);
+  };
 
-      return {
-        ...column,
-        applications: paginatedApps,
-        totalApps: filteredApps.length,
-        totalPages: Math.ceil(filteredApps.length / ITEMS_PER_PAGE)
-      };
-    });
-  }, [applications, columnPages]);
+  const columns = COLUMN_DEFINITIONS.map(column => ({
+    ...column,
+    applications: columnData[column.id]?.applications || [],
+    totalPages: columnData[column.id]?.totalPages || 1,
+    totalItems: columnData[column.id]?.totalItems || 0
+  }));
 
   // Handle page change for a column
   const handlePageChange = (columnId: string, newPage: number) => {
@@ -184,13 +214,18 @@ export default function KanbanBoard({ applications = [], onDrop, onApplicationCl
                 </div>
               )}
             </div>
-            {column.totalPages > 1 && (
-              <Pagination
-                currentPage={getColumnPage(column.id)}
-                totalPages={column.totalPages}
-                onPageChange={(page) => handlePageChange(column.id, page)}
-              />
-            )}
+            <div className="mt-4">
+              <div className="text-sm text-gray-500 mb-2">
+                Showing {columnData[column.id]?.applications.length || 0} of {columnData[column.id]?.totalItems || 0}
+              </div>
+              {columnData[column.id]?.totalPages > 1 && (
+                <Pagination
+                  currentPage={getColumnPage(column.id)}
+                  totalPages={columnData[column.id]?.totalPages || 1}
+                  onPageChange={(page) => handlePageChange(column.id, page)}
+                />
+              )}
+            </div>
           </div>
         ))}
       </div>

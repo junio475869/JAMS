@@ -47,26 +47,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = parseInt(req.query.limit as string) || 20;
     const status = req.query.status as string;
     const offset = (page - 1) * limit;
 
-    const [applications, total] = await Promise.all([
-      storage.getApplicationsByUserIdPaginated(
-        req.user!.id,
-        limit,
-        offset,
-        status,
-      ),
-      storage.getApplicationsCountByUserId(req.user!.id, status),
-    ]);
+    try {
+      const [applications, total] = await Promise.all([
+        storage.getApplicationsByUserIdPaginated(
+          req.user!.id,
+          limit,
+          offset,
+          status,
+        ),
+        storage.getApplicationsCountByUserId(req.user!.id, status),
+      ]);
 
-    res.json({
-      applications,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      totalItems: total,
-    });
+      res.json({
+        applications,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+        totalItems: total,
+        itemsPerPage: limit,
+      });
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+      res.status(500).json({ error: "Failed to fetch applications" });
+    }
   });
 
   app.post("/api/applications", async (req, res) => {
