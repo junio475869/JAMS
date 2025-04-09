@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export const jobPlatformSchema = z.object({
@@ -7,13 +6,15 @@ export const jobPlatformSchema = z.object({
   baseUrl: z.string(),
   apiKeyRequired: z.boolean(),
   apiKeyName: z.string().optional(),
-  searchParams: z.array(z.object({
-    name: z.string(),
-    label: z.string(),
-    type: z.string(),
-    required: z.boolean(),
-    options: z.array(z.string()).optional()
-  }))
+  searchParams: z.array(
+    z.object({
+      name: z.string(),
+      label: z.string(),
+      type: z.string(),
+      required: z.boolean(),
+      options: z.array(z.string()).optional(),
+    }),
+  ),
 });
 
 export type JobPlatform = z.infer<typeof jobPlatformSchema>;
@@ -28,18 +29,30 @@ export const JOB_PLATFORMS: JobPlatform[] = [
     searchParams: [
       { name: "what", label: "Keywords", type: "text", required: true },
       { name: "where", label: "Location", type: "text", required: false },
-      { name: "country", label: "Country", type: "select", required: true, options: ["us", "uk", "au", "de", "fr"] }
-    ]
+      {
+        name: "country",
+        label: "Country",
+        type: "select",
+        required: true,
+        options: ["us", "uk", "au", "de", "fr"],
+      },
+    ],
   },
   {
     id: "remotive",
     name: "Remotive",
-    baseUrl: "https://remotive.com/api/remote-jobs",
+    baseUrl: "https://remotive.io/api/remote-jobs",
     apiKeyRequired: false,
     searchParams: [
       { name: "search", label: "Search", type: "text", required: true },
-      { name: "category", label: "Category", type: "select", required: false, options: ["software-dev", "design", "marketing", "sales"] }
-    ]
+      {
+        name: "category",
+        label: "Category",
+        type: "select",
+        required: false,
+        options: ["software-dev", "design", "marketing", "sales"],
+      },
+    ],
   },
   {
     id: "usajobs",
@@ -50,7 +63,13 @@ export const JOB_PLATFORMS: JobPlatform[] = [
     searchParams: [
       { name: "keyword", label: "Keywords", type: "text", required: true },
       { name: "location", label: "Location", type: "text", required: false },
-      { name: "grade", label: "Grade Level", type: "select", required: false, options: ["5", "7", "9", "11", "12", "13", "14", "15"] }
-    ]
-  }
+      {
+        name: "grade",
+        label: "Grade Level",
+        type: "select",
+        required: false,
+        options: ["5", "7", "9", "11", "12", "13", "14", "15"],
+      },
+    ],
+  },
 ];

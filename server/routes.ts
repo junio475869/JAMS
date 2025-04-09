@@ -32,6 +32,8 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { gmailService } from "./gmail-service";
+import { searchJobs } from "./job-platforms";
+import { JOB_PLATFORMS } from "../client/src/config/job-platforms";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Sets up /api/register, /api/login, /api/logout, /api/user
@@ -50,15 +52,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const offset = (page - 1) * limit;
 
     const [applications, total] = await Promise.all([
-      storage.getApplicationsByUserIdPaginated(req.user!.id, limit, offset, status),
-      storage.getApplicationsCountByUserId(req.user!.id, status)
+      storage.getApplicationsByUserIdPaginated(
+        req.user!.id,
+        limit,
+        offset,
+        status,
+      ),
+      storage.getApplicationsCountByUserId(req.user!.id, status),
     ]);
 
     res.json({
       applications,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
-      totalItems: total
+      totalItems: total,
     });
   });
 
@@ -831,7 +838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         comments: req.body.comments,
         videoUrl,
-        tags: JSON.parse(req.body.tags)
+        tags: JSON.parse(req.body.tags),
       });
 
       res.status(201).json(feedback);
@@ -841,24 +848,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/jobs/search", async (req, res) => {
-  if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.isAuthenticated()) return res.sendStatus(401);
 
-  try {
-    const { platform: platformId, params } = req.body;
-    const platform = JOB_PLATFORMS.find(p => p.id === platformId);
-    
-    if (!platform) {
-      return res.status(400).json({ error: "Invalid platform" });
+    try {
+      const { platform: platformId, params } = req.body;
+      const platform = JOB_PLATFORMS.find((p) => p.id === platformId);
+
+      if (!platform) {
+        return res.status(400).json({ error: "Invalid platform" });
+      }
+
+      const jobs = await searchJobs(platform, params);
+      res.json({ jobs });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
+  });
 
-    const jobs = await searchJobs(platform, params);
-    res.json({ jobs });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post("/api/events", async (req, res) => {
+  app.post("/api/events", async (req, res) => {
     const { title, description, date } = req.body;
     try {
       const newEvent = {
@@ -911,50 +918,58 @@ app.post("/api/events", async (req, res) => {
       }
 
       // Extract sheet ID from URL
-      const match = url.match(/\/d\/(.*?)\/|$/)
+      const match = url.match(/\/d\/(.*?)\/|$/);
       if (!match) {
         return res.status(400).json({ error: "Invalid Google Sheets URL" });
       }
 
       const sheetId = match[1];
-      const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
-      
+      const response = await fetch(
+        `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`,
+      );
+
       if (!response.ok) {
         return res.status(400).json({ error: "Failed to fetch sheet data" });
       }
 
       const text = await response.text();
-      const rows = text.split('\n').map(row => row.split(','));
-      
+      const rows = text.split("\n").map((row) => row.split(","));
+
       // Skip header row and validate data
       const validApplications = [];
-      const existingApplications = await storage.getApplicationsByUserId(req.user!.id);
-      
+      const existingApplications = await storage.getApplicationsByUserId(
+        req.user!.id,
+      );
+
       for (const row of rows.slice(1)) {
-        const date = row[0]?.replace(/['"]+/g, '');
-        const skills = row[2]?.replace(/['"]+/g, '').split(',').map(s => s.trim());
-        const company = row[3]?.replace(/['"]+/g, '');
-        const position = row[4]?.replace(/['"]+/g, '');
-        const url = row[5]?.replace(/['"]+/g, '');
-        
+        const date = row[0]?.replace(/['"]+/g, "");
+        const skills = row[2]
+          ?.replace(/['"]+/g, "")
+          .split(",")
+          .map((s) => s.trim());
+        const company = row[3]?.replace(/['"]+/g, "");
+        const position = row[4]?.replace(/['"]+/g, "");
+        const url = row[5]?.replace(/['"]+/g, "");
+
         // Basic validation
         if (!company || !position) continue;
-        
+
         // Check for duplicates
-        const isDuplicate = existingApplications.some(app => 
-          app.company.toLowerCase() === company.toLowerCase() && 
-          app.position.toLowerCase() === position.toLowerCase()
+        const isDuplicate = existingApplications.some(
+          (app) =>
+            app.company.toLowerCase() === company.toLowerCase() &&
+            app.position.toLowerCase() === position.toLowerCase(),
         );
-        
+
         if (!isDuplicate) {
           validApplications.push({
             company,
             position,
             url,
-            notes: `Skills: ${skills.join(', ')}\nProfile: ${row[6]?.replace(/['"]+/g, '')}`,
+            notes: `Skills: ${skills.join(", ")}\nProfile: ${row[6]?.replace(/['"]+/g, "")}`,
             appliedDate: date ? new Date(date) : new Date(),
-            status: 'applied',
-            userId: req.user!.id
+            status: "applied",
+            userId: req.user!.id,
           });
         }
       }
@@ -962,18 +977,18 @@ app.post("/api/events", async (req, res) => {
       // Insert valid applications in batches
       const batchSize = 5;
       const createdApplications = [];
-      
+
       for (let i = 0; i < validApplications.length; i += batchSize) {
         const batch = validApplications.slice(i, i + batchSize);
         const results = await Promise.all(
-          batch.map(app => storage.createApplication(app))
+          batch.map((app) => storage.createApplication(app)),
         );
         createdApplications.push(...results);
       }
 
-      res.json({ 
+      res.json({
         count: createdApplications.length,
-        skipped: rows.length - 1 - validApplications.length 
+        skipped: rows.length - 1 - validApplications.length,
       });
     } catch (error) {
       console.error("Import error:", error);
@@ -1011,7 +1026,7 @@ app.post("/api/events", async (req, res) => {
     try {
       const otherApplicants = await storage.getOtherApplicantsByPosition(
         req.user!.id,
-        position
+        position,
       );
       res.json(otherApplicants);
     } catch (error) {

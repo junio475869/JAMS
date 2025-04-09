@@ -1,10 +1,12 @@
-
 import fetch from "node-fetch";
 import { JobPlatform, JOB_PLATFORMS } from "../client/src/config/job-platforms";
 
 export { JOB_PLATFORMS };
 
-export async function searchJobs(platform: JobPlatform, params: Record<string, string>) {
+export async function searchJobs(
+  platform: JobPlatform,
+  params: Record<string, string>,
+) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -18,8 +20,14 @@ export async function searchJobs(platform: JobPlatform, params: Record<string, s
   }
 
   const queryParams = new URLSearchParams(params);
-  const response = await fetch(`${platform.baseUrl}?${queryParams}`, { headers });
-  
+  // const response = await fetch(`${platform.baseUrl}?${queryParams}`, {
+  //   headers,
+  // });
+  const response = await fetch(`${platform.baseUrl}`);
+  console.log(
+    `Fetching jobs from ${platform.name} with params: ${queryParams.toString()}`,
+  );
+  console.log(response);
   if (!response.ok) {
     throw new Error(`Failed to fetch jobs from ${platform.name}`);
   }
@@ -36,9 +44,11 @@ function normalizeJobData(platformId: string, data: any) {
         title: job.title,
         company: job.company.display_name,
         location: job.location.display_name,
-        salary: job.salary_min ? `${job.salary_min}-${job.salary_max}` : "Not specified",
+        salary: job.salary_min
+          ? `${job.salary_min}-${job.salary_max}`
+          : "Not specified",
         url: job.redirect_url,
-        platform: "Adzuna"
+        platform: "Adzuna",
       }));
 
     case "remotive":
@@ -49,7 +59,7 @@ function normalizeJobData(platformId: string, data: any) {
         location: job.candidate_required_location,
         salary: job.salary || "Not specified",
         url: job.url,
-        platform: "Remotive"
+        platform: "Remotive",
       }));
 
     case "usajobs":
@@ -60,7 +70,7 @@ function normalizeJobData(platformId: string, data: any) {
         location: job.MatchedObjectDescriptor.PositionLocationDisplay,
         salary: `${job.MatchedObjectDescriptor.PositionRemuneration[0].MinimumRange}-${job.MatchedObjectDescriptor.PositionRemuneration[0].MaximumRange}`,
         url: job.MatchedObjectDescriptor.PositionURI,
-        platform: "USAJobs"
+        platform: "USAJobs",
       }));
 
     default:
