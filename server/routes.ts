@@ -938,6 +938,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.cleanupApplications(req.user!.id);
       res.json({ removedCount: result });
     } catch (error) {
+      console.error("Cleanup error:", error);
       res.status(500).json({ error: "Failed to cleanup applications" });
     }
   });

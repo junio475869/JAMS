@@ -280,19 +280,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cleanupApplications(userId: number): Promise<number> {
-    // Remove applications with empty required fields
+    // Remove applications with empty or invalid required fields
     const result = await db.delete(applications)
       .where(
         and(
           eq(applications.userId, userId),
           or(
-            eq(applications.company, ""),
-            eq(applications.position, ""),
+            sql`${applications.company} = ''`,
+            sql`${applications.position} = ''`,
             sql`${applications.company} IS NULL`,
             sql`${applications.position} IS NULL`
           )
         )
-      ).returning();
+      )
+      .returning();
 
     return result.length;
   }
