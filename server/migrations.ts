@@ -48,16 +48,19 @@ async function createTables() {
 
       CREATE TABLE IF NOT EXISTS interviews (
         id SERIAL PRIMARY KEY,
-        application_id INTEGER NOT NULL REFERENCES applications(id),
+        application_id INTEGER REFERENCES applications(id),
         user_id INTEGER NOT NULL REFERENCES users(id),
         title TEXT NOT NULL,
         company TEXT NOT NULL,
         type TEXT NOT NULL,
-        date TIMESTAMP NOT NULL,
-        duration INTEGER NOT NULL,
+        date TIMESTAMP,
+        duration INTEGER,
         location TEXT,
         notes TEXT,
-        completed BOOLEAN NOT NULL DEFAULT false,
+        scheduled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP,
+        completed BOOLEAN DEFAULT false,
+        feedback TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );

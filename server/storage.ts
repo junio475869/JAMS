@@ -338,7 +338,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(interviews)
       .where(eq(interviews.userId, userId))
-      .orderBy(desc(interviews.date));
+      .orderBy(desc(interviews.scheduledAt));
   }
 
   async getInterviewsByApplicationId(applicationId: number): Promise<Interview[]> {

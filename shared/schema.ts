@@ -77,8 +77,9 @@ export const interviews = pgTable("interviews", {
   duration: integer("duration"), // in minutes
   location: text("location"),
   notes: text("notes"),
-  scheduledAt: timestamp("scheduled_at"),
+  scheduledAt: timestamp("scheduled_at").defaultNow(),
   completedAt: timestamp("completed_at"),
+  completed: boolean("completed").default(false),
   feedback: text("feedback").default(''),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
