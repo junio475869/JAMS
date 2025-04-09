@@ -18,7 +18,7 @@ export function RoleBasedRoute({
   fallbackPath = "/auth",
 }: RoleBasedRouteProps) {
   const { user, isLoading } = useAuth();
-
+  console.log(user);
   if (isLoading) {
     return (
       <Route path={path}>
@@ -45,7 +45,8 @@ export function RoleBasedRoute({
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
           <p className="text-muted-foreground text-center mb-6">
-            You don't have permission to access this page. This area is restricted to
+            You don't have permission to access this page. This area is
+            restricted to
             {allowedRoles.length === 1
               ? ` ${allowedRoles[0]} users only.`
               : ` users with one of these roles: ${allowedRoles.join(", ")}.`}
