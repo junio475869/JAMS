@@ -877,10 +877,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
 
-      // Insert applications
-      const createdApplications = await Promise.all(
-        applications.map(app => storage.createApplication(app))
-      );
+      // Insert applications in batches to prevent connection exhaustion
+      const batchSize = 5;
+      const createdApplications = [];
+      
+      for (let i = 0; i < applications.length; i += batchSize) {
+        const batch = applications.slice(i, i + batchSize);
+        const results = await Promise.all(
+          batch.map(app => storage.createApplication(app))
+        );
+        createdApplications.push(...results);
+      }
 
       res.json({ count: createdApplications.length });
     } catch (error) {
