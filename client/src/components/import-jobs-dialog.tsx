@@ -42,7 +42,8 @@ export function ImportJobsDialog() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const error = await response.text();
+        throw new Error(error);
       }
 
       const data = await response.json();
@@ -51,8 +52,10 @@ export function ImportJobsDialog() {
         description: `Imported ${data.count} applications successfully`,
       });
       setIsOpen(false);
+      // Refresh applications list
       queryClient.invalidateQueries(["applications"]);
     } catch (error) {
+      console.error("Import error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to import applications",
@@ -83,7 +86,7 @@ export function ImportJobsDialog() {
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
             Cancel
           </Button>
           <Button onClick={handleImport} disabled={isLoading}>
