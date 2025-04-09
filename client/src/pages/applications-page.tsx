@@ -27,7 +27,6 @@ import {
 import { ApplicationStatus } from "@shared/schema";
 import { Application } from "@/types";
 
-
 export default function ApplicationsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [company, setCompany] = useState("");
@@ -38,7 +37,7 @@ export default function ApplicationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>("all");
   const queryClient = useQueryClient();
 
   // Fetch applications
@@ -50,7 +49,7 @@ export default function ApplicationsPage() {
         throw new Error("Failed to fetch applications");
       }
       return response.json();
-    }
+    },
   });
 
   // Update application mutation
@@ -105,15 +104,15 @@ export default function ApplicationsPage() {
       toast({
         title: "Validation Error",
         description: "Company and position are required.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
     if (url && !url.startsWith("http")) {
       toast({
-        title: "Validation Error", 
+        title: "Validation Error",
         description: "URL must start with http or https.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -121,7 +120,7 @@ export default function ApplicationsPage() {
       toast({
         title: "Validation Error",
         description: "Notes must be less than 500 characters.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -133,16 +132,16 @@ export default function ApplicationsPage() {
         queryClient.invalidateQueries({ queryKey: ["applications"] });
         toast({
           title: "Success",
-          description: "Application created successfully"
+          description: "Application created successfully",
         });
       },
       onError: (error) => {
         toast({
           title: "Error",
           description: error.message || "Failed to create application",
-          variant: "destructive"
+          variant: "destructive",
         });
-      }
+      },
     });
   };
 
@@ -312,10 +311,7 @@ export default function ApplicationsPage() {
           <Skeleton className="h-[200px] w-full" />
         </div>
       ) : (
-        <KanbanBoard 
-          applications={filteredApplications} 
-          onDrop={handleDrop}
-        />
+        <KanbanBoard applications={filteredApplications} onDrop={handleDrop} />
       )}
     </div>
   );
