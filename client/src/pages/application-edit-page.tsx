@@ -120,87 +120,74 @@ export function ApplicationEditPage() {
         <h1 className="text-2xl font-bold">Edit Application</h1>
       </div>
 
-      <div className="flex space-x-4 mb-6">
-        <Button
-          variant={activeTab === "edit" ? "default" : "outline"}
-          onClick={() => setActiveTab("edit")}
-        >
-          Interview Process
-        </Button>
-        <Button
-          variant={activeTab === "others" ? "default" : "outline"}
-          onClick={() => setActiveTab("others")}
-        >
-          Other Applicants ({otherApplicants.length})
-        </Button>
-      </div>
-
-      <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CardTitle>Basic Information</CardTitle>
-            <Badge variant={
-              formData.status === 'applied' ? 'default' :
-              formData.status === 'interview' ? 'warning' :
-              formData.status === 'offer' ? 'success' :
-              'destructive'
-            }>
-              {formData.status?.charAt(0).toUpperCase() + formData.status?.slice(1)}
-            </Badge>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-          >
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-muted-foreground">Company</Label>
-                <p className="font-medium">{formData.company}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Position</Label>
-                <p className="font-medium">
-                  {formData.url ? (
-                    <a
-                      href={formData.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      {formData.position}
-                    </a>
-                  ) : (
-                    formData.position
-                  )}
-                </p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Tech Stack</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {formData.techStack?.map((tech, index) => (
-                    <Badge key={index} variant="secondary">
-                      {tech}
-                    </Badge>
-                  ))}
+      {activeTab === "edit" && (
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CardTitle>Basic Information</CardTitle>
+              <Badge variant={
+                formData.status === 'applied' ? 'default' :
+                formData.status === 'interview' ? 'warning' :
+                formData.status === 'offer' ? 'success' :
+                'destructive'
+              }>
+                {formData.status?.charAt(0).toUpperCase() + formData.status?.slice(1)}
+              </Badge>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Company</Label>
+                  <p className="font-medium">{formData.company}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Position</Label>
+                  <p className="font-medium">
+                    {formData.url ? (
+                      <a
+                        href={formData.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        {formData.position}
+                      </a>
+                    ) : (
+                      formData.position
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Tech Stack</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.techStack?.map((tech, index) => (
+                      <Badge key={index} variant="secondary">
+                        {tech}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
+              <div>
+                <Label className="text-muted-foreground">Notes</Label>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {formData.notes || "No notes added"}
+                </p>
+              </div>
             </div>
-            <div>
-              <Label className="text-muted-foreground">Notes</Label>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {formData.notes || "No notes added"}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent className="sm:max-w-[500px]">
@@ -360,6 +347,7 @@ export function ApplicationEditPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {isAddingStep && (
         <InterviewStepsDialog
@@ -392,20 +380,6 @@ export function ApplicationEditPage() {
           }}
         />
       )}
-      <div className="flex space-x-4 mb-6">
-        <Button
-          variant={activeTab === "edit" ? "default" : "outline"}
-          onClick={() => setActiveTab("edit")}
-        >
-          Interview Process
-        </Button>
-        <Button
-          variant={activeTab === "others" ? "default" : "outline"}
-          onClick={() => setActiveTab("others")}
-        >
-          Other Applicants ({otherApplicants.length})
-        </Button>
-      </div>
 
       {activeTab === "edit" ? null : (
         <div className="space-y-4">
