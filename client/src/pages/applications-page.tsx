@@ -36,6 +36,8 @@ export default function ApplicationsPage() {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
   // Fetch applications
   const { data: applications = [], isLoading } = useQuery<Application[]>({
