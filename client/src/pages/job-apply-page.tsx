@@ -1,65 +1,91 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { CheckIcon, CopyIcon, SaveIcon, LaptopIcon } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { CheckIcon, ExternalLinkIcon, SearchIcon } from "lucide-react";
 import Header from "@/components/layout/header";
+import { useToast } from "@/hooks/use-toast";
 
-// Job platforms
-const JOB_PLATFORMS = [
-  { id: "indeed", name: "Indeed", url: "https://www.indeed.com" },
-  { id: "linkedin", name: "LinkedIn", url: "https://www.linkedin.com/jobs" },
-  { id: "glassdoor", name: "Glassdoor", url: "https://www.glassdoor.com" },
-  { id: "ziprecruiter", name: "ZipRecruiter", url: "https://www.ziprecruiter.com" },
-  { id: "dice", name: "Dice", url: "https://www.dice.com" },
-  { id: "monster", name: "Monster", url: "https://www.monster.com" },
+// Job platforms configuration
+const PLATFORMS = [
+  {
+    id: "adzuna",
+    name: "Adzuna",
+    searchParams: ["what", "where", "country"],
+    baseUrl: "https://api.adzuna.com/v1/api/jobs",
+  },
+  {
+    id: "remotive",
+    name: "Remotive",
+    searchParams: ["search", "category"],
+    baseUrl: "https://remotive.com/api/remote-jobs",
+  },
+  {
+    id: "usajobs",
+    name: "USAJobs.gov",
+    searchParams: ["keyword", "location", "grade"],
+    baseUrl: "https://data.usajobs.gov/api/search",
+  },
+  {
+    id: "themuse",
+    name: "The Muse",
+    searchParams: ["category", "level", "location"],
+    baseUrl: "https://www.themuse.com/api/public/jobs",
+  },
 ];
 
+interface JobListing {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  url: string;
+  platform: string;
+  salary?: string;
+  description?: string;
+}
+
 export default function JobApplyPage() {
-  const [activeTab, setActiveTab] = useState("indeed");
-  const [selectedPlatform, setSelectedPlatform] = useState(JOB_PLATFORMS[0]);
-  const [form, setForm] = useState({
-    company: "",
-    position: "",
-    location: "",
-    description: "",
-    requirements: "",
-    notes: "",
-    status: "draft",
-  });
-  const [copied, setCopied] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [activePlatform, setActivePlatform] = useState(PLATFORMS[0]);
+  const [searchParams, setSearchParams] = useState<Record<string, string>>({});
+  const [jobs, setJobs] = useState<JobListing[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+  const handleSearch = async () => {
+    setIsLoading(true);
+    try {
+      // In a real implementation, this would call your backend API that handles the different platform APIs
+      const response = await fetch(`/api/jobs/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          platform: activePlatform.id,
+          params: searchParams,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch jobs');
+      const data = await response.json();
+      setJobs(data.jobs);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch job listings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setForm({ ...form, [name]: value });
-  };
-
-  const handlePlatformChange = (platform: string) => {
-    setActiveTab(platform);
-    const newPlatform = JOB_PLATFORMS.find(p => p.id === platform);
-    if (newPlatform) setSelectedPlatform(newPlatform);
-  };
-
-  const handleCopy = () => {
-    // In a real app, this would copy form data to clipboard in a formatted way
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleSave = async () => {
+  const handleApplyDone = async (job: JobListing) => {
     try {
       const response = await fetch('/api/applications', {
         method: 'POST',
@@ -67,35 +93,27 @@ export default function JobApplyPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          company: form.company,
-          position: form.position,
-          description: form.description,
-          status: form.status,
-          notes: form.notes,
-          url: '',
+          company: job.company,
+          position: job.title,
+          url: job.url,
+          status: 'applied',
           appliedDate: new Date().toISOString(),
+          description: job.description,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to save application');
-      }
+      if (!response.ok) throw new Error('Failed to save application');
 
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-      
-      // Clear form after successful save
-      setForm({
-        company: "",
-        position: "",
-        location: "",
-        description: "",
-        requirements: "",
-        notes: "",
-        status: "draft"
+      toast({
+        title: "Success",
+        description: "Application saved successfully",
       });
     } catch (error) {
-      console.error('Error saving application:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save application",
+        variant: "destructive",
+      });
     }
   };
 
@@ -103,179 +121,107 @@ export default function JobApplyPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="container mx-auto py-8 px-4">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Left side - Application form */}
-          <div className="w-full md:w-1/2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold flex items-center">
-                  <LaptopIcon className="mr-2 h-6 w-6" />
-                  Job Application Form
-                </CardTitle>
-                <CardDescription>
-                  Enter details about the job you're applying for
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company</Label>
-                    <Input
-                      id="company"
-                      name="company"
-                      value={form.company}
-                      onChange={handleInputChange}
-                      placeholder="Company name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Position</Label>
-                    <Input
-                      id="position"
-                      name="position"
-                      value={form.position}
-                      onChange={handleInputChange}
-                      placeholder="Job title"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    value={form.location}
-                    onChange={handleInputChange}
-                    placeholder="City, State or Remote"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Job Description</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={form.description}
-                    onChange={handleInputChange}
-                    placeholder="Copy and paste the job description here"
-                    className="min-h-[100px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="requirements">Requirements</Label>
-                  <Textarea
-                    id="requirements"
-                    name="requirements"
-                    value={form.requirements}
-                    onChange={handleInputChange}
-                    placeholder="Copy and paste the job requirements here"
-                    className="min-h-[100px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Personal Notes</Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    value={form.notes}
-                    onChange={handleInputChange}
-                    placeholder="Any personal notes about this application"
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="status">Application Status</Label>
-                  <Select
-                    defaultValue={form.status}
-                    onValueChange={(value) => handleSelectChange("status", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="ready">Ready to Apply</SelectItem>
-                      <SelectItem value="applied">Applied</SelectItem>
-                      <SelectItem value="inProgress">In Progress</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="pt-4 flex space-x-2 justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={handleCopy}
-                    className="w-[140px]"
-                  >
-                    {copied ? (
-                      <>
-                        <CheckIcon className="mr-1 h-4 w-4" /> Copied
-                      </>
-                    ) : (
-                      <>
-                        <CopyIcon className="mr-1 h-4 w-4" /> Copy Details
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={handleSave}
-                    className="w-[140px]"
-                  >
-                    {saved ? (
-                      <>
-                        <CheckIcon className="mr-1 h-4 w-4" /> Saved
-                      </>
-                    ) : (
-                      <>
-                        <SaveIcon className="mr-1 h-4 w-4" /> Save
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right side - Job portal iframe */}
-          <div className="w-full md:w-1/2 space-y-6">
-            <Card className="h-full flex flex-col">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-2xl font-bold">
-                  Job Portals
-                </CardTitle>
-                <CardDescription>
-                  Browse and find jobs on popular platforms
-                </CardDescription>
-              </CardHeader>
-              <Tabs defaultValue="indeed" value={activeTab} onValueChange={handlePlatformChange} className="w-full">
-                <TabsList className="w-full overflow-x-auto flex-wrap justify-start h-auto py-1 px-1">
-                  {JOB_PLATFORMS.map((platform) => (
-                    <TabsTrigger key={platform.id} value={platform.id} className="flex-shrink-0">
-                      {platform.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                
-                {JOB_PLATFORMS.map((platform) => (
-                  <TabsContent key={platform.id} value={platform.id} className="flex-grow">
-                    <div className="rounded-md border bg-card overflow-hidden h-[700px]">
-                      <iframe
-                        src={platform.url}
-                        title={platform.name}
-                        className="w-full h-full"
-                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                      ></iframe>
-                    </div>
-                  </TabsContent>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">Job Search</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs
+              defaultValue={PLATFORMS[0].id}
+              onValueChange={(value) => {
+                const platform = PLATFORMS.find(p => p.id === value);
+                if (platform) {
+                  setActivePlatform(platform);
+                  setSearchParams({});
+                  setJobs([]);
+                }
+              }}
+            >
+              <TabsList className="mb-4">
+                {PLATFORMS.map((platform) => (
+                  <TabsTrigger key={platform.id} value={platform.id}>
+                    {platform.name}
+                  </TabsTrigger>
                 ))}
-              </Tabs>
-            </Card>
-          </div>
-        </div>
+              </TabsList>
+
+              {PLATFORMS.map((platform) => (
+                <TabsContent key={platform.id} value={platform.id}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    {platform.searchParams.map((param) => (
+                      <div key={param} className="space-y-2">
+                        <Label htmlFor={param}>{param.charAt(0).toUpperCase() + param.slice(1)}</Label>
+                        <Input
+                          id={param}
+                          value={searchParams[param] || ''}
+                          onChange={(e) => setSearchParams(prev => ({
+                            ...prev,
+                            [param]: e.target.value
+                          }))}
+                          placeholder={`Enter ${param}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-end mb-6">
+                    <Button onClick={handleSearch} disabled={isLoading}>
+                      <SearchIcon className="h-4 w-4 mr-2" />
+                      Search Jobs
+                    </Button>
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Salary</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {jobs.map((job) => (
+                  <TableRow key={job.id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <span>{job.title}</span>
+                        <Badge variant="secondary">{job.platform}</Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell>{job.company}</TableCell>
+                    <TableCell>{job.location}</TableCell>
+                    <TableCell>{job.salary || 'Not specified'}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={job.url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLinkIcon className="h-4 w-4 mr-1" />
+                            Apply
+                          </a>
+                        </Button>
+                        <Button size="sm" onClick={() => handleApplyDone(job)}>
+                          <CheckIcon className="h-4 w-4 mr-1" />
+                          Done
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {jobs.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      {isLoading ? 'Loading...' : 'No jobs found. Try searching with different criteria.'}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
