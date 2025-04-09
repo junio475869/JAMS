@@ -84,35 +84,17 @@ interface KanbanBoardProps {
 export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  
+  const isDemoMode = localStorage.getItem("demoMode") === "true";
+
   useEffect(() => {
-    // In a real app, we would get applications from the context
-    // For now, we're using demo applications for simplicity
-    if (isDemoMode) {
-      setApplications(DEMO_APPLICATIONS);
-      setIsLoading(false);
-    } else {
-      // For non-demo mode, we would get applications from the API
-      // This is simplified for now
-      setApplications([]);
-      setIsLoading(false);
-    }
-  }, [isDemoMode]);
+    // Set loading state once applications are available
+    setIsLoading(false);
+  }, [applications]);
   
-  // Mock update function for demo mode
-  const updateApplication = (id: number, data: any) => {
-    if (isDemoMode) {
-      setIsUpdating(true);
-      setTimeout(() => {
-        setApplications(prevApplications => 
-          prevApplications.map(app => 
-            app.id === id ? { ...app, ...data } : app
-          )
-        );
-        setIsUpdating(false);
-      }, 500);
-    }
-  };
+  // Handle loading state
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
   
   // Compute columns only when applications change
   const columns = useMemo(() => {
