@@ -875,37 +875,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const text = await response.text();
       const rows = text.split('\n').map(row => row.split(','));
       
-      // Skip header row
-      const applications = rows.slice(1).map(row => {
+      // Skip header row and validate data
+      const validApplications = [];
+      const existingApplications = await storage.getApplicationsByUserId(req.user!.id);
+      
+      for (const row of rows.slice(1)) {
         const date = row[0]?.replace(/['"]+/g, '');
         const skills = row[2]?.replace(/['"]+/g, '').split(',').map(s => s.trim());
-        return {
-          company: row[3]?.replace(/['"]+/g, ''),
-          position: row[4]?.replace(/['"]+/g, ''),
-          url: row[5]?.replace(/['"]+/g, ''),
-          notes: `Skills: ${skills.join(', ')}\nProfile: ${row[6]?.replace(/['"]+/g, '')}`,
-          appliedDate: date ? new Date(date) : new Date(),
-          status: 'applied',
-          userId: req.user!.id
-        };
-      });
+        const company = row[3]?.replace(/['"]+/g, '');
+        const position = row[4]?.replace(/['"]+/g, '');
+        const url = row[5]?.replace(/['"]+/g, '');
+        
+        // Basic validation
+        if (!company || !position) continue;
+        
+        // Check for duplicates
+        const isDuplicate = existingApplications.some(app => 
+          app.company.toLowerCase() === company.toLowerCase() && 
+          app.position.toLowerCase() === position.toLowerCase()
+        );
+        
+        if (!isDuplicate) {
+          validApplications.push({
+            company,
+            position,
+            url,
+            notes: `Skills: ${skills.join(', ')}\nProfile: ${row[6]?.replace(/['"]+/g, '')}`,
+            appliedDate: date ? new Date(date) : new Date(),
+            status: 'applied',
+            userId: req.user!.id
+          });
+        }
+      }
 
-      // Insert applications in batches to prevent connection exhaustion
+      // Insert valid applications in batches
       const batchSize = 5;
       const createdApplications = [];
       
-      for (let i = 0; i < applications.length; i += batchSize) {
-        const batch = applications.slice(i, i + batchSize);
+      for (let i = 0; i < validApplications.length; i += batchSize) {
+        const batch = validApplications.slice(i, i + batchSize);
         const results = await Promise.all(
           batch.map(app => storage.createApplication(app))
         );
         createdApplications.push(...results);
       }
 
-      res.json({ count: createdApplications.length });
+      res.json({ 
+        count: createdApplications.length,
+        skipped: rows.length - 1 - validApplications.length 
+      });
     } catch (error) {
       console.error("Import error:", error);
       res.status(500).json({ error: "Failed to import applications" });
+    }
+  });
+
+  // Cleanup incorrect applications
+  app.delete("/api/applications/cleanup", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const result = await storage.cleanupApplications(req.user!.id);
+      res.json({ removedCount: result });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to cleanup applications" });
     }
   });
 

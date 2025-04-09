@@ -25,7 +25,7 @@ import {
   type InsertInterviewAssistance,
   ApplicationStatus
 } from "@shared/schema";
-import { eq, and, desc, count, asc } from "drizzle-orm";
+import { eq, and, desc, count, asc, or, sql } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -52,6 +52,7 @@ export interface IStorage {
   createApplication(application: InsertApplication): Promise<Application>;
   updateApplication(id: number, application: Partial<Application>): Promise<Application>;
   deleteApplication(id: number): Promise<void>;
+  cleanupApplications(userId: number): Promise<number>;
 
   // Documents
   getDocumentById(id: number): Promise<Document | undefined>;
@@ -276,6 +277,24 @@ export class DatabaseStorage implements IStorage {
 
     // Then delete the application
     await db.delete(applications).where(eq(applications.id, id));
+  }
+
+  async cleanupApplications(userId: number): Promise<number> {
+    // Remove applications with empty required fields
+    const result = await db.delete(applications)
+      .where(
+        and(
+          eq(applications.userId, userId),
+          or(
+            eq(applications.company, ""),
+            eq(applications.position, ""),
+            sql`${applications.company} IS NULL`,
+            sql`${applications.position} IS NULL`
+          )
+        )
+      ).returning();
+
+    return result.length;
   }
 
   // Document methods
