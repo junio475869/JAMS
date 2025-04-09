@@ -31,7 +31,7 @@ export function ApplicationCard({ application, status, isUpdating, onClick }: Ap
   return (
     <div 
       className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 cursor-pointer transition-colors"
-      onClick={() => window.location.href = `/applications/${application.id}`}
+      onClick={() => setLocation(`/applications/${application.id}`)}
     >
       <div className="flex items-start justify-between">
         <div>
