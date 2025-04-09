@@ -62,7 +62,11 @@ function App() {
                         <RoleBasedRoute
                           path="/job-apply"
                           component={JobApplyPage}
-                          allowedRoles={[UserRole.JOB_SEEKER, UserRole.JOB_BIDDER]}
+                          allowedRoles={[
+                            UserRole.ADMIN,
+                            UserRole.JOB_SEEKER,
+                            UserRole.JOB_BIDDER,
+                          ]}
                           fallbackPath="/dashboard"
                         />
                       )}
