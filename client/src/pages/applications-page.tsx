@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import KanbanBoard from "@/components/ui/kanban-board";
 import { Plus, SlidersHorizontal, Search } from "lucide-react";
@@ -312,7 +312,10 @@ export default function ApplicationsPage() {
           <Skeleton className="h-[200px] w-full" />
         </div>
       ) : (
-        <KanbanBoard applications={applications} onDrop={handleDrop} />
+        <KanbanBoard 
+          applications={filteredApplications} 
+          onDrop={handleDrop}
+        />
       )}
     </div>
   );
