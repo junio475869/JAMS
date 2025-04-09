@@ -114,9 +114,11 @@ export const interviewSteps = pgTable("interview_steps", {
   interviewerName: text("interviewer_name"),
   interviewerLinkedIn: text("interviewer_linkedin"),
   meetingUrl: text("meeting_url"),
-  date: timestamp("date"),
+  scheduledDate: timestamp("scheduled_date"),
   duration: integer("duration"), // minutes
   comments: text("comments"),
+  feedback: text("feedback"),
+  interviewer: integer("interviewer").references(() => users.id),
   completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
