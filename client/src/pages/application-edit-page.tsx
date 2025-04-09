@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save } from "lucide-react";
 
-export default function ApplicationEditPage() {
+export function ApplicationEditPage() {
   const [_, setLocation] = useLocation();
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
@@ -194,3 +194,5 @@ export default function ApplicationEditPage() {
     </div>
   );
 }
+
+export default ApplicationEditPage;
