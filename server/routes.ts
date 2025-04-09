@@ -837,6 +837,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/applications/import", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ error: "URL is required" });
+      }
+
+      // Extract sheet ID from URL
+      const match = url.match(/\/d\/(.*?)\/|$/)
+      if (!match) {
+        return res.status(400).json({ error: "Invalid Google Sheets URL" });
+      }
+
+      const sheetId = match[1];
+      const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
+      
+      if (!response.ok) {
+        return res.status(400).json({ error: "Failed to fetch sheet data" });
+      }
+
+      const text = await response.text();
+      const rows = text.split('\n').map(row => row.split(','));
+      
+      // Skip header row
+      const applications = rows.slice(1).map(row => ({
+        company: row[0]?.replace(/['"]+/g, ''),
+        position: row[1]?.replace(/['"]+/g, ''),
+        status: row[2]?.replace(/['"]+/g, '') || 'applied',
+        url: row[3]?.replace(/['"]+/g, ''),
+        notes: row[4]?.replace(/['"]+/g, ''),
+        userId: req.user!.id
+      }));
+
+      // Insert applications
+      const createdApplications = await Promise.all(
+        applications.map(app => storage.createApplication(app))
+      );
+
+      res.json({ count: createdApplications.length });
+    } catch (error) {
+      console.error("Import error:", error);
+      res.status(500).json({ error: "Failed to import applications" });
+    }
+  });
+
   app.get("/api/applications/others", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
