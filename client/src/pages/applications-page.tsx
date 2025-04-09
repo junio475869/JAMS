@@ -37,34 +37,83 @@ export default function ApplicationsPage() {
   //     queryFn: async () =>
   //       (await fetch("/api/applications")).json()
   // };
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+
+  const createApplicationMutation = useMutation({
+    mutationFn: async (newApplication: any) => {
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newApplication),
+      });
+      if (!response.ok) throw new Error("Failed to create application");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      setIsCreateDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Application created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateApplicationStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error("Failed to update status");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+    },
+  });
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log(event);
     setError(null);
     setSuccess(null);
+    
     if (!company || !position)
       return setError("Company and position are required.");
     if (url && !url.startsWith("http"))
       return setError("URL must start with http or https.");
     if (notes.length > 500)
       return setError("Notes must be less than 500 characters.");
-    const newApplication = { company, position, status, url, notes }; // Add additional fields as necessary
-    try {
-      const response = await fetch("/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newApplication),
-      });
-      if (response.ok) {
-        alert("Application added successfully!");
-        // Optionally reset form or redirect
-      } else {
-        alert("Failed to add application.");
-      }
-    } catch (error) {
-      console.error("Error adding application:", error);
-    }
+
+    const newApplication = { company, position, status, url, notes };
+    createApplicationMutation.mutate(newApplication);
   };
+
+  const handleDrop = async (applicationId: number, newStatus: string) => {
+    updateApplicationStatusMutation.mutate({ id: applicationId, status: newStatus });
+  };
+
+  // Filter applications based on search and status
+  const filteredApplications = applications?.filter(app => {
+    const matchesSearch = !searchQuery || 
+      app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.position.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesFilter = !filterStatus || app.status === filterStatus;
+    
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -85,13 +134,24 @@ export default function ApplicationsPage() {
                 type="search"
                 placeholder="Search applications..."
                 className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
-          <Button variant="outline" className="mb-2 sm:mb-0">
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
+          <Select value={filterStatus || ""} onValueChange={(value) => setFilterStatus(value || null)}>
+            <SelectTrigger className="w-[180px] mb-2 sm:mb-0">
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
+              <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
+              <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
+              <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
+            </SelectContent>
+          </Select>
           <Dialog
             open={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
