@@ -53,8 +53,6 @@ export default function ApplicationsPage() {
     }
   });
 
-  const queryClient = useQueryClient();
-
   // Update application mutation
   const updateApplicationMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
