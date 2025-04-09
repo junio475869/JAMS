@@ -82,9 +82,16 @@ interface KanbanBoardProps {
 }
 
 export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardProps) {
+  // Define all hooks at the top of the component
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const isDemoMode = localStorage.getItem("demoMode") === "true";
+  
+  const columns = useMemo(() => {
+    return COLUMN_DEFINITIONS.map(column => ({
+      ...column,
+      applications: applications.filter(app => app.status === column.id)
+    }));
+  }, [applications]);
 
   useEffect(() => {
     // Set loading state once applications are available
@@ -95,9 +102,6 @@ export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardPr
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  
-  // Compute columns only when applications change
-  const columns = useMemo(() => {
     return COLUMN_DEFINITIONS.map(column => ({
       ...column,
       applications: applications.filter(app => app.status === column.id)
