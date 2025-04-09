@@ -97,6 +97,9 @@ export function Sidebar({ isOpen, closeSidebar, isAuthenticated }: SidebarProps)
           </Button>
         </div>
       </div>
+      {/* Profile section */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t"> {/*Added fixed profile section*/}
+      </div>
     </aside>
   );
 }
