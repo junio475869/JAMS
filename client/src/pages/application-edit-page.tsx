@@ -18,6 +18,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Plus, Save, Pencil } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 export function ApplicationEditPage() {
   const [_, setLocation] = useLocation();
@@ -112,46 +122,49 @@ export function ApplicationEditPage() {
 
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Basic Information</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+          <CardTitle>Basic Information {formData.status}</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditing(true)}
+          >
             <Pencil className="h-4 w-4 mr-2" />
             Edit
           </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label className="text-muted-foreground">Company</Label>
                 <p className="font-medium">{formData.company}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground">Position</Label>
-                <p className="font-medium">{formData.position}</p>
+                <p className="font-medium">
+                  {formData.url ? (
+                    <a
+                      href={formData.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      {formData.position}
+                    </a>
+                  ) : (
+                    formData.position
+                  )}
+                </p>
               </div>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Status</Label>
-              <p className="font-medium capitalize">{formData.status}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Job URL</Label>
-              <p className="font-medium">
-                {formData.url ? (
-                  <a href={formData.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                    {formData.url}
-                  </a>
-                ) : (
-                  "Not provided"
-                )}
-              </p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Tech Stack</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.techStack?.map((tech, index) => (
-                  <Badge key={index} variant="secondary">{tech}</Badge>
-                ))}
+              <div>
+                <Label className="text-muted-foreground">Tech Stack</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.techStack?.map((tech, index) => (
+                    <Badge key={index} variant="secondary">
+                      {tech}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
             <div>
@@ -211,10 +224,18 @@ export function ApplicationEditPage() {
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
-                    <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
-                    <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
-                    <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
+                    <SelectItem value={ApplicationStatus.APPLIED}>
+                      Applied
+                    </SelectItem>
+                    <SelectItem value={ApplicationStatus.INTERVIEW}>
+                      Interview
+                    </SelectItem>
+                    <SelectItem value={ApplicationStatus.OFFER}>
+                      Offer
+                    </SelectItem>
+                    <SelectItem value={ApplicationStatus.REJECTED}>
+                      Rejected
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -237,7 +258,10 @@ export function ApplicationEditPage() {
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      techStack: e.target.value.split(",").map(t => t.trim()).filter(Boolean),
+                      techStack: e.target.value
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean),
                     }))
                   }
                 />
@@ -257,7 +281,11 @@ export function ApplicationEditPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditing(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit">
@@ -282,15 +310,20 @@ export function ApplicationEditPage() {
             {application?.steps?.map((step, index) => (
               <div key={step.id} className="relative">
                 <div className="absolute -left-[25px] w-4 h-4 rounded-full bg-gray-800 border-2 border-gray-700" />
-                <div className={`ml-4 p-4 rounded-lg ${step.completed ? 'bg-green-900/30' : 'bg-gray-800'}`}>
+                <div
+                  className={`ml-4 p-4 rounded-lg ${step.completed ? "bg-green-900/30" : "bg-gray-800"}`}
+                >
                   <h3 className="font-medium">{step.stepName}</h3>
                   {step.scheduledDate && (
                     <p className="text-sm text-gray-400">
-                      Scheduled: {new Date(step.scheduledDate).toLocaleDateString()}
+                      Scheduled:{" "}
+                      {new Date(step.scheduledDate).toLocaleDateString()}
                     </p>
                   )}
                   {step.comments && (
-                    <p className="text-sm text-gray-400 mt-2">{step.comments}</p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      {step.comments}
+                    </p>
                   )}
                 </div>
               </div>
@@ -357,7 +390,10 @@ export function ApplicationEditPage() {
             <CardContent>
               <div className="space-y-6">
                 {otherApplicants.map((applicant) => (
-                  <div key={applicant.id} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                  <div
+                    key={applicant.id}
+                    className="border-b border-border pb-4 last:border-0 last:pb-0"
+                  >
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-medium">{applicant.username}</h3>
                       <span className="text-sm text-muted-foreground">
