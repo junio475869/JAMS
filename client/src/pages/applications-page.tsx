@@ -41,7 +41,7 @@ export default function ApplicationsPage() {
         throw new Error("Failed to fetch applications");
       }
       return response.json();
-    }
+    },
   });
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -122,7 +122,8 @@ export default function ApplicationsPage() {
         app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
         app.position.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesFilter = filterStatus === 'all' || app.status === filterStatus;
+      const matchesFilter =
+        filterStatus === "all" || app.status === filterStatus;
 
       return matchesSearch && matchesFilter;
     });
@@ -271,10 +272,7 @@ export default function ApplicationsPage() {
           <Skeleton className="h-[200px] w-full" />
         </div>
       ) : (
-        <KanbanBoard 
-          applications={applications}
-          onDrop={handleDrop}
-        />
+        <KanbanBoard applications={applications} onDrop={handleDrop} />
       )}
     </div>
   );
