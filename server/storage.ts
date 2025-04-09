@@ -125,6 +125,11 @@ export interface IStorage {
   sessionStore: any;
   getGmailConnectionsByUserId(userId: number): Promise<GmailConnection[]>;
   saveGmailConnection(connection: InsertGmailConnection): Promise<GmailConnection>;
+
+  // Static Data methods
+  getStaticData(): Promise<any[]>;
+  createStaticData(data: { name: string; type: string }): Promise<any>;
+  deleteStaticData(id: number): Promise<void>;
 }
 
 const PostgresSessionStore = connectPg(session);
@@ -901,6 +906,23 @@ export class DatabaseStorage implements IStorage {
   async saveGmailConnection(connection: InsertGmailConnection): Promise<GmailConnection> {
     // Implement Gmail connection saving logic here. This is a placeholder.
     return {id: 1, ...connection};
+  }
+
+  async getStaticData(): Promise<any[]> {
+    // Placeholder for static data table - replace with your actual table name
+    const staticData = db.select().from(staticData);
+    return staticData;
+  }
+
+  async createStaticData({ name, type }: { name: string; type: string }): Promise<any> {
+    // Placeholder for static data table - replace with your actual table name
+    const [newItem] = await db.insert(staticData).values({ name, type }).returning();
+    return newItem;
+  }
+
+  async deleteStaticData(id: number): Promise<void> {
+    // Placeholder for static data table - replace with your actual table name
+    await db.delete(staticData).where(eq(staticData.id, id));
   }
 }
 

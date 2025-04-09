@@ -96,15 +96,49 @@ export default function ApplicationsPage() {
     setError(null);
     setSuccess(null);
 
-    if (!company || !position)
-      return setError("Company and position are required.");
-    if (url && !url.startsWith("http"))
-      return setError("URL must start with http or https.");
-    if (notes.length > 500)
-      return setError("Notes must be less than 500 characters.");
+    if (!company || !position) {
+      toast({
+        title: "Validation Error",
+        description: "Company and position are required.",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (url && !url.startsWith("http")) {
+      toast({
+        title: "Validation Error", 
+        description: "URL must start with http or https.",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (notes.length > 500) {
+      toast({
+        title: "Validation Error",
+        description: "Notes must be less than 500 characters.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const newApplication = { company, position, status, url, notes };
-    createApplicationMutation.mutate(newApplication);
+    createApplicationMutation.mutate(newApplication, {
+      onSuccess: () => {
+        setIsCreateDialogOpen(false);
+        queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+        toast({
+          title: "Success",
+          description: "Application created successfully"
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create application",
+          variant: "destructive"
+        });
+      }
+    });
   };
 
   const handleDrop = async (applicationId: number, newStatus: string) => {
