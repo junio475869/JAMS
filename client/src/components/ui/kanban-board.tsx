@@ -7,6 +7,7 @@ import ApplicationCard from "@/components/application-card";
 import { Filter, SortAsc } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 
 const COLUMN_DEFINITIONS = [
   { id: ApplicationStatus.APPLIED, title: "Applied", color: "bg-blue-500" },
@@ -21,17 +22,40 @@ interface KanbanBoardProps {
   onApplicationClick: (applicationId: number) => void;
 }
 
+const ITEMS_PER_PAGE = 5;
+
 export default function KanbanBoard({ applications = [], onDrop, onApplicationClick }: KanbanBoardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [columnPages, setColumnPages] = useState<Record<string, number>>({});
 
-  // Compute columns with applications
+  // Initialize or get current page for a column
+  const getColumnPage = (columnId: string) => columnPages[columnId] || 1;
+
+  // Compute columns with paginated applications
   const columns = useMemo(() => {
-    return COLUMN_DEFINITIONS.map(column => ({
-      ...column,
-      applications: applications?.filter(app => app.status === column.id) || []
+    return COLUMN_DEFINITIONS.map(column => {
+      const filteredApps = applications?.filter(app => app.status === column.id) || [];
+      const currentPage = getColumnPage(column.id);
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedApps = filteredApps.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+      return {
+        ...column,
+        applications: paginatedApps,
+        totalApps: filteredApps.length,
+        totalPages: Math.ceil(filteredApps.length / ITEMS_PER_PAGE)
+      };
+    });
+  }, [applications, columnPages]);
+
+  // Handle page change for a column
+  const handlePageChange = (columnId: string, newPage: number) => {
+    setColumnPages(prev => ({
+      ...prev,
+      [columnId]: newPage
     }));
-  }, [applications]);
+  };
 
   useEffect(() => {
     setIsLoading(false);
@@ -125,7 +149,7 @@ export default function KanbanBoard({ applications = [], onDrop, onApplicationCl
                   <h3 className="font-medium text-white">{column.title}</h3>
                 </div>
                 <span className="text-sm bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">
-                  {column.applications.length}
+                  {column.totalApps}
                 </span>
               </div>
             </div>
@@ -150,6 +174,13 @@ export default function KanbanBoard({ applications = [], onDrop, onApplicationCl
                 </div>
               )}
             </div>
+            {column.totalPages > 1 && (
+              <Pagination
+                currentPage={getColumnPage(column.id)}
+                totalPages={column.totalPages}
+                onPageChange={(page) => handlePageChange(column.id, page)}
+              />
+            )}
           </div>
         ))}
       </div>
