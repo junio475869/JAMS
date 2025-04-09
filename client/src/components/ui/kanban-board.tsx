@@ -81,10 +81,9 @@ interface KanbanBoardProps {
   onDrop: (applicationId: number, newStatus: string) => void;
 }
 
-export default function KanbanBoard({ applications, onDrop }: KanbanBoardProps) {
+export default function KanbanBoard({ applications = [], onDrop }: KanbanBoardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const isDemoMode = localStorage.getItem("demoMode") === "true";
   
   useEffect(() => {
     // In a real app, we would get applications from the context
