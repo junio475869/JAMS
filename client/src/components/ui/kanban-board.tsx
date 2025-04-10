@@ -228,7 +228,7 @@ export default function KanbanBoard({
             </div>
             <div className="mt-4">
               <div className="text-sm text-gray-500 mb-2">
-                Showing {columnData[column.id]?.applications.length || 0} of{" "}
+                Showing {columnData[column.id]?.applications?.length || 0} of{" "}
                 {columnData[column.id]?.totalItems || 0}
               </div>
               {columnData[column.id]?.totalPages > 1 && (
