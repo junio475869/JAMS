@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+export type JobPlatform = {
+  id: string;
+  name: string;
+  baseUrl: string;
+  apiKeyRequired: boolean;
+  apiKeyName?: string;
+  searchParams: {
+    name: string;
+    label: string;
+    type: "text" | "select";
+    options?: string[];
+  }[];
+};
+
 export const jobPlatformSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -16,8 +30,6 @@ export const jobPlatformSchema = z.object({
     }),
   ),
 });
-
-export type JobPlatform = z.infer<typeof jobPlatformSchema>;
 
 export const JOB_PLATFORMS: JobPlatform[] = [
   {
@@ -72,16 +84,29 @@ export const JOB_PLATFORMS: JobPlatform[] = [
   {
     id: "remotive",
     name: "Remotive",
-    baseUrl: "https://remotive.io/api/remote-jobs",
+    baseUrl: "https://remotive.com/api/remote-jobs",
     apiKeyRequired: false,
     searchParams: [
-      { name: "search", label: "Search", type: "text", required: true },
       {
         name: "category",
         label: "Category",
         type: "select",
-        required: false,
-        options: ["software-dev", "design", "marketing", "sales"],
+        options: ["software-dev", "customer-service", "design", "marketing", "sales", "product"],
+      },
+      {
+        name: "company_name",
+        label: "Company",
+        type: "text",
+      },
+      {
+        name: "search",
+        label: "Search",
+        type: "text",
+      },
+      {
+        name: "limit",
+        label: "Limit Results",
+        type: "text",
       },
     ],
   },

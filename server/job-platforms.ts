@@ -38,6 +38,20 @@ export async function searchJobs(
 
 function normalizeJobData(platformId: string, data: any) {
   switch (platformId) {
+    case "remotive":
+      return data.jobs.map((job: any) => ({
+        id: job.id.toString(),
+        title: job.title,
+        company: job.company_name,
+        location: job.candidate_required_location || "Remote",
+        url: job.url,
+        salary: job.salary,
+        jobType: job.job_type,
+        publicationDate: job.publication_date,
+        description: job.description,
+        platform: "Remotive",
+      }));
+
     case "remoteok":
       return data.map((job: any) => ({
         id: job.id,

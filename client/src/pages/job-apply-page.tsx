@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckIcon, ExternalLinkIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, ExternalLinkIcon, SearchIcon, ArrowUpDown } from "lucide-react";
 import Header from "@/components/layout/header";
 import { useToast } from "@/hooks/use-toast";
 import { JOB_PLATFORMS } from "@/config/job-platforms";
@@ -22,6 +22,9 @@ interface JobListing {
   url: string;
   platform: string;
   salary?: string;
+  jobType?: string;
+  publicationDate?: string;
+  description?: string;
 }
 
 export default function JobApplyPage() {
@@ -29,6 +32,11 @@ export default function JobApplyPage() {
   const [searchParams, setSearchParams] = useState<Record<string, string>>({});
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [sortField, setSortField] = useState<string>("publicationDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [filterText, setFilterText] = useState("");
+  const jobsPerPage = 10;
   const { toast } = useToast();
 
   const handleSearch = async () => {
@@ -41,7 +49,10 @@ export default function JobApplyPage() {
         },
         body: JSON.stringify({
           platform: activePlatform.id,
-          params: searchParams,
+          params: {
+            ...searchParams,
+            limit: 100, // Get more results for client-side pagination
+          },
         }),
       });
 
@@ -51,6 +62,7 @@ export default function JobApplyPage() {
 
       const data = await response.json();
       setJobs(data.jobs);
+      setPage(1); // Reset to first page on new search
     } catch (error) {
       toast({
         title: "Error",
@@ -59,6 +71,41 @@ export default function JobApplyPage() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Sort and filter jobs
+  const filteredAndSortedJobs = jobs
+    .filter(job => {
+      if (!filterText) return true;
+      const searchLower = filterText.toLowerCase();
+      return (
+        job.title.toLowerCase().includes(searchLower) ||
+        job.company.toLowerCase().includes(searchLower) ||
+        job.location.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      const aValue = a[sortField as keyof JobListing] || "";
+      const bValue = b[sortField as keyof JobListing] || "";
+      return sortOrder === "asc" 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAndSortedJobs.length / jobsPerPage);
+  const paginatedJobs = filteredAndSortedJobs.slice(
+    (page - 1) * jobsPerPage,
+    page * jobsPerPage
+  );
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("desc");
     }
   };
 
@@ -74,7 +121,7 @@ export default function JobApplyPage() {
           position: job.title,
           url: job.url,
           status: "applied",
-          notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || 'Not specified'}`,
+          notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || 'Not specified'}\nJob Type: ${job.jobType || 'Not specified'}`,
         }),
       });
 
@@ -166,7 +213,13 @@ export default function JobApplyPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex justify-end mb-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <Input
+                      placeholder="Filter results..."
+                      value={filterText}
+                      onChange={(e) => setFilterText(e.target.value)}
+                      className="max-w-sm"
+                    />
                     <Button onClick={handleSearch} disabled={isLoading}>
                       <SearchIcon className="h-4 w-4 mr-2" />
                       Search Jobs
@@ -179,15 +232,29 @@ export default function JobApplyPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Salary</TableHead>
+                  <TableHead onClick={() => handleSort("title")} className="cursor-pointer">
+                    Position <ArrowUpDown className="h-4 w-4 inline-block" />
+                  </TableHead>
+                  <TableHead onClick={() => handleSort("company")} className="cursor-pointer">
+                    Company <ArrowUpDown className="h-4 w-4 inline-block" />
+                  </TableHead>
+                  <TableHead onClick={() => handleSort("location")} className="cursor-pointer">
+                    Location <ArrowUpDown className="h-4 w-4 inline-block" />
+                  </TableHead>
+                  <TableHead onClick={() => handleSort("salary")} className="cursor-pointer">
+                    Salary <ArrowUpDown className="h-4 w-4 inline-block" />
+                  </TableHead>
+                  <TableHead onClick={() => handleSort("jobType")} className="cursor-pointer">
+                    Type <ArrowUpDown className="h-4 w-4 inline-block" />
+                  </TableHead>
+                  <TableHead onClick={() => handleSort("publicationDate")} className="cursor-pointer">
+                    Posted <ArrowUpDown className="h-4 w-4 inline-block" />
+                  </TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {jobs.map((job) => (
+                {paginatedJobs.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -198,6 +265,12 @@ export default function JobApplyPage() {
                     <TableCell>{job.company}</TableCell>
                     <TableCell>{job.location}</TableCell>
                     <TableCell>{job.salary || "Not specified"}</TableCell>
+                    <TableCell>{job.jobType || "Not specified"}</TableCell>
+                    <TableCell>
+                      {job.publicationDate 
+                        ? new Date(job.publicationDate).toLocaleDateString()
+                        : "Not specified"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm" asChild>
@@ -214,15 +287,37 @@ export default function JobApplyPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {jobs.length === 0 && (
+                {paginatedJobs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       {isLoading ? "Loading..." : "No jobs found. Try searching with different criteria."}
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+
+            {filteredAndSortedJobs.length > 0 && (
+              <div className="flex justify-center mt-6 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <span className="py-2 px-4">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
