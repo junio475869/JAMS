@@ -17,88 +17,12 @@ const COLUMN_DEFINITIONS = [
   { id: ApplicationStatus.REJECTED, title: "Rejected", color: "bg-rose-500" },
 ];
 
-interface FetchParams {
-  status: string;
-  page: number;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-const fetchApplications = async ({ status, page, search, sortBy, sortOrder }: FetchParams) => {
-  const params = new URLSearchParams({
-    status,
-    page: page.toString(),
-    limit: ITEMS_PER_PAGE.toString(),
-    ...(search && { search }),
-    ...(sortBy && { sortBy }),
-    ...(sortOrder && { sortOrder })
-  });
-
-  const response = await fetch(`/api/applications?${params}`);
-  const data = await response.json();
-  return {
-    applications: data.applications,
-    totalPages: data.totalPages,
-    totalItems: data.totalItems,
-  };
-};
+const ITEMS_PER_PAGE = 20;
 
 interface KanbanBoardProps {
-  onApplicationClick: (id: number) => void;
-  onDrop?: (applicationId: number, newStatus: string) => void;
-}
-
-export default function KanbanBoard({ onApplicationClick, onDrop }: KanbanBoardProps) {
-  const [columnPages, setColumnPages] = useState<Record<string, number>>({});
-  const [columnData, setColumnData] = useState<Record<string, any>>({});
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortConfig, setSortConfig] = useState({
-    field: 'updatedAt',
-    order: 'desc' as 'asc' | 'desc'
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  const getColumnPage = (columnId: string) => columnPages[columnId] || 1;
-
-  const fetchColumnData = async (columnId: string, page: number) => {
-    try {
-      const data = await fetchApplications({
-        status: columnId,
-        page,
-        search: searchQuery,
-        sortBy: sortConfig.field,
-        sortOrder: sortConfig.order
-      });
-      setColumnData(prev => ({
-        ...prev,
-        [columnId]: data
-      }));
-    } catch (error) {
-      console.error('Error fetching column data:', error);
-    }
-  };
-
-  useEffect(() => {
-    COLUMN_DEFINITIONS.forEach(column => {
-      fetchColumnData(column.id, getColumnPage(column.id));
-    });
-  }, [searchQuery, sortConfig]);
-
-  const handleSort = (field: string) => {
-    setSortConfig(prev => ({
-      field,
-      order: prev.field === field && prev.order === 'desc' ? 'asc' : 'desc'
-    }));
-  };
-
-interface KanbanBoardProps {
-  applications: Application[];
   onDrop: (applicationId: number, newStatus: string) => void;
   onApplicationClick: (applicationId: number) => void;
 }
-
-const ITEMS_PER_PAGE = 20;
 
 export default function KanbanBoard({
   onDrop,
@@ -117,12 +41,24 @@ export default function KanbanBoard({
       }
     >
   >({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState({
+    field: 'updatedAt',
+    order: 'desc' as 'asc' | 'desc'
+  });
 
   const fetchColumnData = async (columnId: string, page: number) => {
     try {
-      const response = await fetch(
-        `/api/applications?status=${columnId}&page=${page}&limit=${ITEMS_PER_PAGE}`,
-      );
+      const params = new URLSearchParams({
+        status: columnId,
+        page: page.toString(),
+        limit: ITEMS_PER_PAGE.toString(),
+        ...(searchQuery && { search: searchQuery }),
+        ...(sortConfig.field && { sortBy: sortConfig.field }),
+        ...(sortConfig.order && { sortOrder: sortConfig.order })
+      });
+
+      const response = await fetch(`/api/applications?${params}`);
       const data = await response.json();
       setColumnData((prev) => ({
         ...prev,
@@ -142,12 +78,10 @@ export default function KanbanBoard({
       fetchColumnData(column.id, getColumnPage(column.id));
     });
     setIsLoading(false);
-  }, []);
+  }, [searchQuery, sortConfig]);
 
-  // Initialize or get current page for a column
   const getColumnPage = (columnId: string) => columnPages[columnId] || 1;
 
-  // Handle page change for a column
   const handlePageChange = async (columnId: string, newPage: number) => {
     setColumnPages((prev) => ({
       ...prev,
@@ -156,18 +90,13 @@ export default function KanbanBoard({
     await fetchColumnData(columnId, newPage);
   };
 
-  const columns = COLUMN_DEFINITIONS.map((column) => ({
-    ...column,
-    applications: columnData[column.id]?.applications || [],
-    totalPages: columnData[column.id]?.totalPages || 1,
-    totalItems: columnData[column.id]?.totalItems || 0,
-  }));
+  const handleSort = (field: string) => {
+    setSortConfig(prev => ({
+      field,
+      order: prev.field === field && prev.order === 'desc' ? 'asc' : 'desc'
+    }));
+  };
 
-  useEffect(() => {
-    setIsLoading(false);
-  }, []);
-
-  // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, applicationId: number) => {
     e.dataTransfer.setData("applicationId", applicationId.toString());
   };
@@ -179,12 +108,8 @@ export default function KanbanBoard({
   const handleDrop = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     const applicationId = parseInt(e.dataTransfer.getData("applicationId"));
-
     if (!isNaN(applicationId)) {
-      const application = applications.find((app) => app.id === applicationId);
-      if (application && application.status !== columnId) {
-        onDrop(applicationId, columnId);
-      }
+      onDrop(applicationId, columnId);
     }
   };
 
@@ -212,14 +137,10 @@ export default function KanbanBoard({
               <div className="p-4 border-b border-gray-700 bg-gray-750 rounded-t-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <span
-                      className={`h-3 w-3 ${column.color} rounded-full mr-2`}
-                    ></span>
+                    <span className={`h-3 w-3 ${column.color} rounded-full mr-2`}></span>
                     <h3 className="font-medium text-white">{column.title}</h3>
                   </div>
-                  <span className="text-sm bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">
-                    0
-                  </span>
+                  <span className="text-sm bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">0</span>
                 </div>
               </div>
               <div className="flex-1 p-3 space-y-3 overflow-y-auto">
@@ -248,7 +169,7 @@ export default function KanbanBoard({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-2">
-        {columns.map((column) => (
+        {COLUMN_DEFINITIONS.map((column) => (
           <div
             key={column.id}
             className="kanban-column bg-gray-800 rounded-lg border border-gray-700 h-full flex flex-col"
@@ -258,18 +179,16 @@ export default function KanbanBoard({
             <div className="p-4 border-b border-gray-700 bg-gray-750 rounded-t-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <span
-                    className={`h-3 w-3 ${column.color} rounded-full mr-2`}
-                  ></span>
+                  <span className={`h-3 w-3 ${column.color} rounded-full mr-2`}></span>
                   <h3 className="font-medium text-white">{column.title}</h3>
                 </div>
                 <span className="text-sm bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">
-                  {column.totalApps}
+                  {columnData[column.id]?.totalItems || 0}
                 </span>
               </div>
             </div>
             <div className="flex-1 p-3 space-y-3 overflow-y-auto scrollbar-hide">
-              {column.applications.map((application) => (
+              {columnData[column.id]?.applications.map((application) => (
                 <div
                   key={application.id}
                   draggable
@@ -283,7 +202,7 @@ export default function KanbanBoard({
                   />
                 </div>
               ))}
-              {column.applications.length === 0 && (
+              {(!columnData[column.id]?.applications || columnData[column.id]?.applications.length === 0) && (
                 <div className="h-24 border border-dashed border-gray-700 rounded-lg flex items-center justify-center text-gray-500 text-sm">
                   No applications yet
                 </div>
