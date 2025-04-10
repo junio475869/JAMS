@@ -334,7 +334,7 @@ export default function JobApplyPage() {
                           <span>•</span>
                           <span>{selectedJob?.location}</span>
                         </div>
-                      </DialogHeader>
+                      </DialogDescription>
                     </DialogHeader>
                     <div className="max-h-[400px] overflow-y-auto">
                       <div dangerouslySetInnerHTML={{ __html: selectedJob?.description || '' }} />
