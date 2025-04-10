@@ -270,18 +270,67 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(applications.updatedAt));
   }
 
-  async getApplicationsByUserIdPaginated(userId: number, limit: number, offset: number, status?: string): Promise<Application[]> {
+  async getApplicationsByUserIdPaginated(
+    userId: number, 
+    limit: number, 
+    offset: number, 
+    status?: string,
+    search?: string,
+    sortBy: string = 'updatedAt',
+    sortOrder: string = 'desc'
+  ): Promise<Application[]> {
     let query = db
       .select()
       .from(applications)
-      .where(eq(applications.userId, userId))
-      .orderBy(desc(applications.updatedAt))
-      .limit(limit)
-      .offset(offset);
+      .where(eq(applications.userId, userId));
+
     if (status) {
       query = query.where(eq(applications.status, status));
     }
-    return await query;
+
+    if (search) {
+      query = query.where(
+        or(
+          sql`LOWER(${applications.company}) LIKE LOWER(${'%' + search + '%'})`,
+          sql`LOWER(${applications.position}) LIKE LOWER(${'%' + search + '%'})`,
+        )
+      );
+    }
+
+    // Dynamic sorting
+    const column = applications[sortBy as keyof typeof applications];
+    if (column) {
+      query = query.orderBy(sortOrder === 'desc' ? desc(column) : asc(column));
+    }
+
+    return await query.limit(limit).offset(offset);
+  }
+
+  async getApplicationsCountByUserId(
+    userId: number, 
+    status?: string,
+    search?: string
+  ): Promise<number> {
+    let query = db
+      .select({ count: count() })
+      .from(applications)
+      .where(eq(applications.userId, userId));
+
+    if (status) {
+      query = query.where(eq(applications.status, status));
+    }
+
+    if (search) {
+      query = query.where(
+        or(
+          sql`LOWER(${applications.company}) LIKE LOWER(${'%' + search + '%'})`,
+          sql`LOWER(${applications.position}) LIKE LOWER(${'%' + search + '%'})`,
+        )
+      );
+    }
+
+    const [result] = await query;
+    return Number(result.count);
   }
 
   async getApplicationsCountByUserId(userId: number): Promise<number> {

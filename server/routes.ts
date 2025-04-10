@@ -49,6 +49,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const status = req.query.status as string;
+    const search = req.query.search as string;
+    const sortBy = req.query.sortBy as string || 'updatedAt';
+    const sortOrder = (req.query.sortOrder as string || 'desc').toLowerCase();
     const offset = (page - 1) * limit;
 
     try {
@@ -58,8 +61,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           limit,
           offset,
           status,
+          search,
+          sortBy,
+          sortOrder,
         ),
-        storage.getApplicationsCountByUserId(req.user!.id, status),
+        storage.getApplicationsCountByUserId(req.user!.id, status, search),
       ]);
 
       res.json({

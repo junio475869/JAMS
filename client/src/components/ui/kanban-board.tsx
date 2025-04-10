@@ -17,10 +17,25 @@ const COLUMN_DEFINITIONS = [
   { id: ApplicationStatus.REJECTED, title: "Rejected", color: "bg-rose-500" },
 ];
 
-const fetchApplications = async (columnId: string, page: number) => {
-  const response = await fetch(
-    `/api/applications?status=${columnId}&page=${page}&limit=${ITEMS_PER_PAGE}`,
-  );
+interface FetchParams {
+  status: string;
+  page: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+const fetchApplications = async ({ status, page, search, sortBy, sortOrder }: FetchParams) => {
+  const params = new URLSearchParams({
+    status,
+    page: page.toString(),
+    limit: ITEMS_PER_PAGE.toString(),
+    ...(search && { search }),
+    ...(sortBy && { sortBy }),
+    ...(sortOrder && { sortOrder })
+  });
+
+  const response = await fetch(`/api/applications?${params}`);
   const data = await response.json();
   return {
     applications: data.applications,
@@ -28,6 +43,54 @@ const fetchApplications = async (columnId: string, page: number) => {
     totalItems: data.totalItems,
   };
 };
+
+interface KanbanBoardProps {
+  onApplicationClick: (id: number) => void;
+  onDrop?: (applicationId: number, newStatus: string) => void;
+}
+
+export default function KanbanBoard({ onApplicationClick, onDrop }: KanbanBoardProps) {
+  const [columnPages, setColumnPages] = useState<Record<string, number>>({});
+  const [columnData, setColumnData] = useState<Record<string, any>>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState({
+    field: 'updatedAt',
+    order: 'desc' as 'asc' | 'desc'
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  const getColumnPage = (columnId: string) => columnPages[columnId] || 1;
+
+  const fetchColumnData = async (columnId: string, page: number) => {
+    try {
+      const data = await fetchApplications({
+        status: columnId,
+        page,
+        search: searchQuery,
+        sortBy: sortConfig.field,
+        sortOrder: sortConfig.order
+      });
+      setColumnData(prev => ({
+        ...prev,
+        [columnId]: data
+      }));
+    } catch (error) {
+      console.error('Error fetching column data:', error);
+    }
+  };
+
+  useEffect(() => {
+    COLUMN_DEFINITIONS.forEach(column => {
+      fetchColumnData(column.id, getColumnPage(column.id));
+    });
+  }, [searchQuery, sortConfig]);
+
+  const handleSort = (field: string) => {
+    setSortConfig(prev => ({
+      field,
+      order: prev.field === field && prev.order === 'desc' ? 'asc' : 'desc'
+    }));
+  };
 
 interface KanbanBoardProps {
   applications: Application[];
