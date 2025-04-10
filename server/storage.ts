@@ -33,10 +33,10 @@ import { db, pool } from "./db";
 // Placeholder type - needs to be defined elsewhere
 async function getAllUserGmailData(userId: number) {
   const connections = await db.select().from(gmailConnections).where(eq(gmailConnections.userId, userId));
-  
+
   const allApplications = [];
   const allDocuments = [];
-  
+
   for (const connection of connections) {
     // Fetch applications associated with this email
     const apps = await db
@@ -46,9 +46,9 @@ async function getAllUserGmailData(userId: number) {
         eq(applications.userId, userId),
         eq(applications.sourceEmail, connection.email)
       ));
-    
+
     allApplications.push(...apps);
-    
+
     // Fetch documents associated with this email
     const docs = await db
       .select()
@@ -57,10 +57,10 @@ async function getAllUserGmailData(userId: number) {
         eq(documents.userId, userId),
         eq(documents.sourceEmail, connection.email)
       ));
-    
+
     allDocuments.push(...docs);
   }
-  
+
   return {
     applications: allApplications,
     documents: allDocuments
@@ -82,7 +82,8 @@ export interface IStorage {
 
   // Applications
   getApplicationById(id: number): Promise<Application | undefined>;
-  getApplicationsByUserId(userId: number): Promise<Application[]>;
+  getApplicationsByUserId(userId: number, status?: string): Promise<Application[]>;
+  getApplicationsByUserIdPaginated(userId: number, limit: number, offset: number, status?: string): Promise<Application[]>;
   createApplication(application: InsertApplication): Promise<Application>;
   updateApplication(id: number, application: Partial<Application>): Promise<Application>;
   deleteApplication(id: number): Promise<void>;
@@ -261,14 +262,26 @@ export class DatabaseStorage implements IStorage {
     return application;
   }
 
-  async getApplicationsByUserIdPaginated(userId: number, limit: number, offset: number): Promise<Application[]> {
-    return await db
+  async getApplicationsByUserId(userId: number, status?: string): Promise<Application[]> {
+    let query = db.select().from(applications).where(eq(applications.userId, userId));
+    if (status) {
+      query = query.where(eq(applications.status, status));
+    }
+    return await query.orderBy(desc(applications.updatedAt));
+  }
+
+  async getApplicationsByUserIdPaginated(userId: number, limit: number, offset: number, status?: string): Promise<Application[]> {
+    let query = db
       .select()
       .from(applications)
       .where(eq(applications.userId, userId))
       .orderBy(desc(applications.updatedAt))
       .limit(limit)
       .offset(offset);
+    if (status) {
+      query = query.where(eq(applications.status, status));
+    }
+    return await query;
   }
 
   async getApplicationsCountByUserId(userId: number): Promise<number> {

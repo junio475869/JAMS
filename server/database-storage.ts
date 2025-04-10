@@ -105,12 +105,33 @@ export class DatabaseStorage implements IStorage {
     return application;
   }
 
-  async getApplicationsByUserId(userId: number): Promise<Application[]> {
-    return await db
+  async getApplicationsByUserId(userId: number, status?: string): Promise<Application[]> {
+    let query = db
       .select()
       .from(applications)
-      .where(eq(applications.userId, userId))
-      .orderBy(desc(applications.updatedAt));
+      .where(eq(applications.userId, userId));
+    
+    if (status) {
+      query = query.where(eq(applications.status, status));
+    }
+    
+    return await query.orderBy(desc(applications.updatedAt));
+  }
+
+  async getApplicationsByUserIdPaginated(userId: number, limit: number, offset: number, status?: string): Promise<Application[]> {
+    let query = db
+      .select()
+      .from(applications)
+      .where(eq(applications.userId, userId));
+    
+    if (status) {
+      query = query.where(eq(applications.status, status));
+    }
+    
+    return await query
+      .orderBy(desc(applications.updatedAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async createApplication(
