@@ -20,6 +20,7 @@ import InterviewPrepPage from "@/pages/interview-prep-page";
 import TeamManagementPage from "@/pages/team-management-page";
 import JobApplyPage from "@/pages/job-apply-page";
 import ChatPage from "@/pages/chat-page";
+import AdminPage from "./pages/admin-page";
 
 function App() {
   return (
@@ -67,6 +68,16 @@ function App() {
                             UserRole.JOB_SEEKER,
                             UserRole.JOB_BIDDER,
                           ]}
+                          fallbackPath="/dashboard"
+                        />
+                      )}
+                    </Route>
+                    <Route path="/admin">
+                      {() => (
+                        <RoleBasedRoute
+                          path="/admin"
+                          component={AdminPage}
+                          allowedRoles={[UserRole.ADMIN]}
                           fallbackPath="/dashboard"
                         />
                       )}

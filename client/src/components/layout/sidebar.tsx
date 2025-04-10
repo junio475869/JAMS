@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import {
 import {
   LayoutDashboard,
   FileText,
+  Briefcase,
   Calendar,
   Mail,
   LineChart,
@@ -29,6 +29,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { UserRole } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -47,7 +48,7 @@ export function Sidebar({
   const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
 
-  const navigationItems = [
+  const baseNavItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/applications", label: "Applications", icon: ListChecks },
     { href: "/job-apply", label: "Apply for Jobs", icon: Laptop },
@@ -59,6 +60,40 @@ export function Sidebar({
     { href: "/chat", label: "Chat", icon: MessagesSquare },
     { href: "/profile", label: "Profile", icon: UserCircle },
   ];
+
+  const adminItems = [
+    { href: "/admin", label: "Admin", icon: Settings },
+    { href: "/team-management", label: "Team Management", icon: Users },
+  ];
+
+  const jobSeekerItems = [
+    { href: "/job-apply", label: "Job Apply", icon: Briefcase },
+  ];
+
+  const getNavItems = () => {
+    let items = [...baseNavItems];
+
+    if (user?.role === UserRole.ADMIN || user?.role === UserRole.GROUP_LEADER) {
+      items = [
+        ...items,
+        { href: "/team-management", label: "Team Management", icon: Users },
+      ];
+    }
+
+    if (user?.role === UserRole.ADMIN) {
+      items = [...items, { href: "/admin", label: "Admin", icon: Settings }];
+    }
+
+    if (
+      [UserRole.JOB_SEEKER, UserRole.JOB_BIDDER].includes(user?.role as any)
+    ) {
+      items = [...items, ...jobSeekerItems];
+    }
+
+    return items;
+  };
+
+  const navigationItems = getNavItems();
 
   const handleLogout = () => {
     if (localStorage.getItem("demoMode") === "true") {
@@ -73,7 +108,7 @@ export function Sidebar({
     <aside
       className={cn(
         "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-all duration-300",
-        sidebarCollapsed ? "w-20" : "w-64",
+        sidebarCollapsed ? "w-16" : "w-60",
         isMobileMenuOpen
           ? "translate-x-0"
           : "-translate-x-full md:translate-x-0",
@@ -113,19 +148,23 @@ export function Sidebar({
                 key={item.href}
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start",
+                  "w-full",
                   isActive
                     ? "bg-primary/10 text-primary hover:bg-primary/20"
                     : "text-muted-foreground hover:bg-accent",
-                  sidebarCollapsed ? "px-2" : "px-4",
+                  sidebarCollapsed
+                    ? "px-2 justify-center"
+                    : "px-4 justify-start",
                 )}
                 onClick={() => {
                   setLocation(item.href);
                   setIsMobileMenuOpen(false);
                 }}
               >
-                <item.icon className="h-5 w-5" />
-                {!sidebarCollapsed && <span className="ml-2">{item.label}</span>}
+                <item.icon
+                  className={cn("h-5 w-5", sidebarCollapsed ? "m-auto" : "")}
+                />
+                {!sidebarCollapsed && <span>{item.label}</span>}
               </Button>
             );
           })}
@@ -145,7 +184,9 @@ export function Sidebar({
             >
               <div className="flex items-center">
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                  {user?.fullName?.charAt(0) || user?.username?.charAt(0) || "U"}
+                  {user?.fullName?.charAt(0) ||
+                    user?.username?.charAt(0) ||
+                    "U"}
                 </div>
                 {!sidebarCollapsed && (
                   <div className="ml-3 text-left">
@@ -182,3 +223,5 @@ export function Sidebar({
     </aside>
   );
 }
+
+export default Sidebar;
