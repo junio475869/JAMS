@@ -1,139 +1,184 @@
 
+import React from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
-import { UserRole } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import {
-  Search,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   LayoutDashboard,
-  ListChecks,
   FileText,
   Calendar,
   Mail,
-  MessageSquare,
-  ChartBar,
-  BotIcon,
-  SparklesIcon,
-  Settings,
+  LineChart,
+  ListChecks,
+  UserCircle,
+  LogOut,
   Users,
-  Briefcase
+  Laptop,
+  MessagesSquare,
+  ChevronLeft,
+  ChevronRight,
+  Settings,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
-  isOpen: boolean;
-  closeSidebar: () => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (value: boolean) => void;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (value: boolean) => void;
 }
 
-export function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
+export function Sidebar({
+  sidebarCollapsed,
+  setSidebarCollapsed,
+  isMobileMenuOpen,
+  setIsMobileMenuOpen,
+}: SidebarProps) {
   const [location, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
 
-  const handleNavigation = (path: string) => {
-    setLocation(path);
-    if (window.innerWidth < 768) {
-      closeSidebar();
+  const navigationItems = [
+    { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/applications", label: "Applications", icon: ListChecks },
+    { href: "/job-apply", label: "Apply for Jobs", icon: Laptop },
+    { href: "/documents", label: "Documents", icon: FileText },
+    { href: "/interview", label: "Interview Prep", icon: MessagesSquare },
+    { href: "/calendar", label: "Calendar", icon: Calendar },
+    { href: "/email", label: "Email", icon: Mail },
+    { href: "/analytics", label: "Analytics", icon: LineChart },
+    { href: "/chat", label: "Chat", icon: MessagesSquare },
+    { href: "/profile", label: "Profile", icon: UserCircle },
+  ];
+
+  const handleLogout = () => {
+    if (localStorage.getItem("demoMode") === "true") {
+      localStorage.removeItem("demoMode");
+      window.location.href = "/auth";
+    } else {
+      logoutMutation.mutate();
     }
   };
-
-  const baseNavItems = [
-    { icon: <LayoutDashboard className="h-5 w-5 mr-3" />, label: 'Dashboard', path: '/' },
-    { icon: <ListChecks className="h-5 w-5 mr-3" />, label: 'Applications', path: '/applications' },
-    { icon: <FileText className="h-5 w-5 mr-3" />, label: 'Documents', path: '/documents' },
-    { icon: <Calendar className="h-5 w-5 mr-3" />, label: 'Calendar', path: '/calendar' },
-    { icon: <Mail className="h-5 w-5 mr-3" />, label: 'Email', path: '/email' },
-    { icon: <MessageSquare className="h-5 w-5 mr-3" />, label: 'Interview Prep', path: '/interview' },
-    { icon: <ChartBar className="h-5 w-5 mr-3" />, label: 'Analytics', path: '/analytics' }
-  ];
-
-  const adminItems = [
-    { icon: <Settings className="h-5 w-5 mr-3" />, label: 'Admin', path: '/admin' },
-    { icon: <Users className="h-5 w-5 mr-3" />, label: 'Team Management', path: '/team-management' }
-  ];
-
-  const jobSeekerItems = [
-    { icon: <Briefcase className="h-5 w-5 mr-3" />, label: 'Job Apply', path: '/job-apply' }
-  ];
-
-  const getNavItems = () => {
-    let items = [...baseNavItems];
-
-    if (user?.role === UserRole.ADMIN || user?.role === UserRole.GROUP_LEADER) {
-      items = [...items, { icon: <Users className="h-5 w-5 mr-3" />, label: 'Team Management', path: '/team-management' }];
-    }
-
-    if (user?.role === UserRole.ADMIN) {
-      items = [...items, { icon: <Settings className="h-5 w-5 mr-3" />, label: 'Admin', path: '/admin' }];
-    }
-
-    if ([UserRole.JOB_SEEKER, UserRole.JOB_BIDDER].includes(user?.role as any)) {
-      items = [...items, ...jobSeekerItems];
-    }
-
-    return items;
-  };
-
-  const navItems = getNavItems();
 
   return (
-    <aside className={cn(
-      "bg-gray-850 border-r border-gray-700 transition-all duration-300 ease-in-out z-20 fixed h-screen",
-      isOpen 
-        ? "w-64 md:relative md:w-64 md:translate-x-0" 
-        : "translate-x-[-100%] md:translate-x-0 md:relative md:w-64"
-    )}>
-      <div className="p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-          <Input 
-            type="text" 
-            placeholder="Search applications..." 
-            className="pl-10 bg-gray-800 border-gray-700 text-gray-200 placeholder:text-gray-500 focus:ring-primary-500"
-          />
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-all duration-300",
+        sidebarCollapsed ? "w-20" : "w-64",
+        isMobileMenuOpen
+          ? "translate-x-0"
+          : "-translate-x-full md:translate-x-0",
+      )}
+    >
+      {/* Sidebar Header */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+        {!sidebarCollapsed && (
+          <div className="flex items-center">
+            <span className="font-bold text-xl">JAMS</span>
+          </div>
+        )}
+        <div className="flex items-center space-x-2">
+          <ThemeSwitcher />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hidden md:flex"
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
         </div>
       </div>
 
-      <nav className="flex-1 px-2 py-2 space-y-1">
-        {navItems.map((item) => (
-          <button 
-            key={item.path}
-            onClick={() => handleNavigation(item.path)}
-            className={cn(
-              "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md",
-              location === item.path
-                ? "bg-primary-700 text-white"
-                : "text-gray-300 hover:bg-gray-750 hover:text-white"
-            )}
-          >
-            {item.icon}
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      {/* Navigation */}
+      <ScrollArea className="flex-1 py-4">
+        <nav className="space-y-1 px-2">
+          {navigationItems.map((item) => {
+            const isActive = location === item.href;
+            return (
+              <Button
+                key={item.href}
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start",
+                  isActive
+                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                    : "text-muted-foreground hover:bg-accent",
+                  sidebarCollapsed ? "px-2" : "px-4",
+                )}
+                onClick={() => {
+                  setLocation(item.href);
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <item.icon className="h-5 w-5" />
+                {!sidebarCollapsed && <span className="ml-2">{item.label}</span>}
+              </Button>
+            );
+          })}
+        </nav>
+      </ScrollArea>
 
-      <div className="p-4 border-t border-gray-700">
-        <div className="bg-gray-800 rounded-lg p-3">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <BotIcon className="text-primary-500 h-5 w-5" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-white">AI Assistant</h3>
-              <p className="text-xs text-gray-400">Optimize your job search</p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3 w-full bg-gray-750 hover:bg-gray-700 text-gray-300 border-gray-700"
-          >
-            <SparklesIcon className="h-4 w-4 mr-1" /> Get suggestions
-          </Button>
-        </div>
+      {/* User Profile */}
+      <div className="border-t border-border p-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                sidebarCollapsed ? "px-2" : "px-4",
+              )}
+            >
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                  {user?.fullName?.charAt(0) || user?.username?.charAt(0) || "U"}
+                </div>
+                {!sidebarCollapsed && (
+                  <div className="ml-3 text-left">
+                    <p className="text-sm font-medium">
+                      {user?.fullName || user?.username}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setLocation("/profile")}>
+              <UserCircle className="h-4 w-4 mr-2" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setLocation("/settings")}>
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );
 }
-
-export default Sidebar;
