@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +35,7 @@ export default function JobApplyPage() {
   const [sortField, setSortField] = useState<string>("publicationDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterText, setFilterText] = useState("");
+  const [selectedJob, setSelectedJob] = useState<JobListing | null>(null); // Added state for selected job
   const jobsPerPage = 10;
   const { toast } = useToast();
 
@@ -257,10 +257,12 @@ export default function JobApplyPage() {
                 {paginatedJobs.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <span>{job.title}</span>
-                        <Badge variant="secondary">{job.platform}</Badge>
-                      </div>
+                      <button 
+                        className="text-left hover:text-primary"
+                        onClick={() => setSelectedJob(job)}
+                      >
+                        {job.title}
+                      </button>
                     </TableCell>
                     <TableCell>{job.company}</TableCell>
                     <TableCell>{job.location}</TableCell>
