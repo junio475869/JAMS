@@ -37,6 +37,7 @@ async function createTables() {
         job_source TEXT,
         platform TEXT,
         platform_job_id TEXT,
+        source_identifier TEXT UNIQUE,
         publication_date TIMESTAMP,
         applied_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

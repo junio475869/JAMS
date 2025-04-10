@@ -319,7 +319,18 @@ export function ApplicationEditPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="relative pl-4 border-l-2 border-gray-700 space-y-6">
+            <div className="relative pl-4 border-l-2 border-gray-700 space-y-6 timeline-container">
+              <style jsx>{`
+                .timeline-container::before {
+                  content: '';
+                  position: absolute;
+                  left: -1px;
+                  top: 0;
+                  height: 100%;
+                  width: 2px;
+                  background: linear-gradient(to bottom, #374151 0%, #374151 100%);
+                }
+              `}</style>
               {application?.steps?.length === 0 && (
                 <p className="text-muted-foreground text-sm">No interview steps added yet</p>
               )}

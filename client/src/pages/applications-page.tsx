@@ -1,401 +1,141 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Plus, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ApplicationStatus } from "@shared/schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import KanbanBoard from "@/components/ui/kanban-board";
-import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
-import { Plus, SlidersHorizontal, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ImportJobsDialog from "@/components/import-jobs-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ApplicationStatus } from "@shared/schema";
-import { Application } from "@/types";
+
 
 export default function ApplicationsPage() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isStepsDialogOpen, setIsStepsDialogOpen] = useState(false);
-  const [selectedApplicationId, setSelectedApplicationId] = useState<
-    number | null
-  >(null);
-  const [company, setCompany] = useState("");
-  const [position, setPosition] = useState("");
-  const [status, setStatus] = useState(ApplicationStatus.APPLIED);
-  const [url, setUrl] = useState("");
-  const [notes, setNotes] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [_, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState(ApplicationStatus.APPLIED);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string | null>("all");
   const { toast } = useToast();
-
   const queryClient = useQueryClient();
 
-  // Fetch applications
-  const [page, setPage] = useState(1);
-  const limit = 10;
-
-  const { data: calendarEvents } = useQuery({
-    queryKey: ["calendar-events"],
-    queryFn: async () => {
-      const response = await fetch("/api/calendar/events");
-      if (!response.ok) throw new Error("Failed to fetch calendar events");
-      return response.json();
-    }
-  });
-
   const { data, isLoading } = useQuery({
-    queryKey: ["applications", page, limit],
+    queryKey: ["applications"],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/applications?page=${page}&limit=${limit}`,
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch applications");
-      }
+      const response = await fetch("/api/applications");
+      if (!response.ok) throw new Error("Failed to fetch applications");
       return response.json();
     },
   });
 
   const applications = data?.applications || [];
-  const totalPages = data?.totalPages || 1;
 
-  // Update application mutation
-  const updateApplicationMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await fetch(`/api/applications/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) throw new Error("Failed to update status");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["applications"] });
-    },
-  });
+  const filteredApplications = applications.filter(app => 
+    app.status === activeTab &&
+    (app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     app.position.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
-  const createApplicationMutation = useMutation({
-    mutationFn: async (newApplication: any) => {
-      const response = await fetch("/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newApplication),
+  const handleDeleteApplications = async () => {
+    try {
+      const response = await fetch("/api/applications/cleanup", {
+        method: "DELETE",
       });
-      if (!response.ok) throw new Error("Failed to create application");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["applications"] });
-      setIsCreateDialogOpen(false);
+      const data = await response.json();
       toast({
-        title: "Success",
-        description: "Application created successfully",
+        title: "Cleanup Complete",
+        description: `Removed ${data.removedCount} invalid applications`,
       });
-    },
-    onError: (error: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to cleanup applications",
         variant: "destructive",
       });
-    },
-  });
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!company || !position) {
-      toast({
-        title: "Validation Error",
-        description: "Company and position are required.",
-        variant: "destructive",
-      });
-      return;
     }
-    if (url && !url.startsWith("http")) {
-      toast({
-        title: "Validation Error",
-        description: "URL must start with http or https.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (notes.length > 500) {
-      toast({
-        title: "Validation Error",
-        description: "Notes must be less than 500 characters.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newApplication = { company, position, status, url, notes };
-    createApplicationMutation.mutate(newApplication, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-        queryClient.invalidateQueries({ queryKey: ["applications"] });
-        toast({
-          title: "Success",
-          description: "Application created successfully",
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to create application",
-          variant: "destructive",
-        });
-      },
-    });
   };
-
-  const handleDrop = async (applicationId: number, newStatus: string) => {
-    updateApplicationMutation.mutate({
-      id: applicationId,
-      status: newStatus,
-    });
-  };
-
-  // Filter applications based on search and status
-  const filteredApplications =
-    applications &&
-    applications?.filter((app) => {
-      const matchesSearch =
-        !searchQuery ||
-        app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.position.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesFilter =
-        filterStatus === "all" || app.status === filterStatus;
-
-      {
-        /* Pagination Controls */
-      }
-      <div className="flex justify-center mt-6 gap-2">
-        <Button
-          variant="outline"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1 || isLoading}
-        >
-          Previous
-        </Button>
-        <span className="py-2 px-4">
-          Page {page} of {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={page >= totalPages || isLoading}
-        >
-          Next
-        </Button>
-      </div>;
-
-      return matchesSearch && matchesFilter;
-    });
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Applications</h1>
-          <p className="text-muted-foreground mt-1">
-            Track and manage all your job applications
-          </p>
+          <p className="text-muted-foreground">Track your job applications</p>
         </div>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search applications..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-64"
+          />
+          <Button onClick={() => setLocation("/applications/new")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Application
+          </Button>
+          <Button variant="outline" onClick={handleDeleteApplications}>Cleanup</Button>
+          <ImportJobsDialog />
 
-        <div className="mt-4 md:mt-0 flex flex-col sm:flex-row sm:space-x-3">
-          <div className="relative mb-2 sm:mb-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search applications..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-          <Select
-            value={filterStatus || ""}
-            onValueChange={(value) => setFilterStatus(value || null)}
-          >
-            <SelectTrigger className="w-[180px] mb-2 sm:mb-0">
-              <SlidersHorizontal className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
-              <SelectItem value={ApplicationStatus.INTERVIEW}>
-                Interview
-              </SelectItem>
-              <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
-              <SelectItem value={ApplicationStatus.REJECTED}>
-                Rejected
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Application
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <form onSubmit={handleSubmit}>
-                <DialogHeader>
-                  <DialogTitle>Add New Application</DialogTitle>
-                  <DialogDescription>
-                    Fill out the details for your new job application.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="company">Company</Label>
-                    <Input
-                      id="company"
-                      placeholder="Enter company name"
-                      onChange={(e) => setCompany(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="position">Position</Label>
-                    <Input
-                      id="position"
-                      placeholder="Enter job position"
-                      onChange={(e) => setPosition(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      defaultValue={ApplicationStatus.APPLIED}
-                      onChange={(e) => setStatus(e.target.value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ApplicationStatus.APPLIED}>
-                          Applied
-                        </SelectItem>
-                        <SelectItem value={ApplicationStatus.INTERVIEW}>
-                          Interview
-                        </SelectItem>
-                        <SelectItem value={ApplicationStatus.OFFER}>
-                          Offer
-                        </SelectItem>
-                        <SelectItem value={ApplicationStatus.REJECTED}>
-                          Rejected
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="url">Job Posting URL</Label>
-                    <Input
-                      id="url"
-                      placeholder="Enter job posting URL"
-                      onChange={(e) => setUrl(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <textarea
-                      id="notes"
-                      placeholder="Enter any notes about this application"
-                      className="min-h-[100px] rounded-md border bg-background p-3"
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsCreateDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">Save Application</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              onClick={async () => {
-                try {
-                  const response = await fetch("/api/applications/cleanup", {
-                    method: "DELETE",
-                  });
-                  const data = await response.json();
-                  toast({
-                    title: "Cleanup Complete",
-                    description: `Removed ${data.removedCount} invalid applications`,
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["applications"] });
-                } catch (error) {
-                  toast({
-                    title: "Error",
-                    description: "Failed to cleanup applications",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              Cleanup
-            </Button>
-            <ImportJobsDialog />
-          </div>
         </div>
       </div>
 
-      {/* Kanban Board */}
-      {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-[200px] w-full" />
-          <Skeleton className="h-[200px] w-full" />
-        </div>
-      ) : (
-        <>
-          <KanbanBoard
-            applications={filteredApplications}
-            onDrop={handleDrop}
-            onApplicationClick={(applicationId) => {
-              setLocation(`/applications/${applicationId}`);
-            }}
-          />
-        </>
-      )}
+      <Tabs defaultValue={ApplicationStatus.APPLIED} className="w-full">
+        <TabsList>
+          <TabsTrigger value={ApplicationStatus.APPLIED}>Applied</TabsTrigger>
+          <TabsTrigger value={ApplicationStatus.INTERVIEW}>Interview</TabsTrigger>
+          <TabsTrigger value={ApplicationStatus.OFFER}>Offer</TabsTrigger>
+          <TabsTrigger value={ApplicationStatus.REJECTED}>Rejected</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab}>
+          {isLoading ? (
+            <div className="space-y-4">
+              <p>Loading...</p> {/*Simple loading indicator*/}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Applied Date</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredApplications.map((app) => (
+                  <TableRow
+                    key={app.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setLocation(`/applications/${app.id}`)}
+                  >
+                    <TableCell>{app.company}</TableCell>
+                    <TableCell>{app.position}</TableCell>
+                    <TableCell>{app.location || 'N/A'}</TableCell>
+                    <TableCell>
+                      {new Date(app.appliedDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs
+                        ${app.status === ApplicationStatus.APPLIED ? 'bg-blue-500/20 text-blue-500' :
+                          app.status === ApplicationStatus.INTERVIEW ? 'bg-yellow-500/20 text-yellow-500' :
+                          app.status === ApplicationStatus.OFFER ? 'bg-green-500/20 text-green-500' :
+                          'bg-red-500/20 text-red-500'}`
+                      }>
+                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
