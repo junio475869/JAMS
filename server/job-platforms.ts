@@ -38,6 +38,47 @@ export async function searchJobs(
 
 function normalizeJobData(platformId: string, data: any) {
   switch (platformId) {
+    case "remoteok":
+      return data.map((job: any) => ({
+        id: job.id,
+        title: job.position,
+        company: job.company,
+        location: job.location || "Remote",
+        salary: job.salary || "Not specified",
+        url: job.url,
+        jobType: job.job_type,
+        companyLogo: job.company_logo,
+        description: job.description,
+        platform: "RemoteOK",
+      }));
+
+    case "arbeitnow":
+      return data.data.map((job: any) => ({
+        id: job.slug,
+        title: job.title,
+        company: job.company_name,
+        location: job.location || "Remote",
+        salary: job.salary || "Not specified",
+        url: job.url,
+        jobType: job.job_type,
+        companyLogo: job.company_logo,
+        description: job.description,
+        platform: "Arbeitnow",
+      }));
+
+    case "openskills":
+      return data.jobs.map((job: any) => ({
+        id: job.id,
+        title: job.title,
+        company: job.company.name,
+        location: job.location,
+        salary: job.salary_range || "Not specified",
+        url: job.url,
+        jobType: job.employment_type,
+        companyLogo: job.company.logo_url,
+        description: job.description,
+        platform: "OpenSkills",
+      }));
     case "adzuna":
       return data.results.map((job: any) => ({
         id: job.id,

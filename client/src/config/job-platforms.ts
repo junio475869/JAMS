@@ -21,6 +21,37 @@ export type JobPlatform = z.infer<typeof jobPlatformSchema>;
 
 export const JOB_PLATFORMS: JobPlatform[] = [
   {
+    id: "remoteok",
+    name: "RemoteOK",
+    baseUrl: "https://remoteok.io/api",
+    apiKeyRequired: false,
+    searchParams: [
+      { name: "search", label: "Search", type: "text", required: true },
+      { name: "location", label: "Location", type: "text", required: false },
+    ],
+  },
+  {
+    id: "arbeitnow",
+    name: "Arbeitnow",
+    baseUrl: "https://www.arbeitnow.com/api/job-board-api",
+    apiKeyRequired: false,
+    searchParams: [
+      { name: "search", label: "Search", type: "text", required: true },
+      { name: "category", label: "Category", type: "text", required: false },
+    ],
+  },
+  {
+    id: "openskills",
+    name: "OpenSkills",
+    baseUrl: "https://api.openskills.co/v1/jobs",
+    apiKeyRequired: true,
+    apiKeyName: "OPENSKILLS_API_KEY",
+    searchParams: [
+      { name: "search", label: "Keywords", type: "text", required: true },
+      { name: "location", label: "Location", type: "text", required: false },
+    ],
+  },
+  {
     id: "adzuna",
     name: "Adzuna",
     baseUrl: "https://api.adzuna.com/v1/api/jobs",
