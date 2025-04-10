@@ -174,7 +174,7 @@ export default function JobApplyPage() {
           location: job.location,
           salary: job.salary,
           jobType: job.jobType,
-          notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || "Not specified"}\nJob Type: ${job.jobType || "Not specified"}`,
+          notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || "-"}\nJob Type: ${job.jobType || "-"}`,
         }),
       });
 
@@ -217,18 +217,18 @@ export default function JobApplyPage() {
               }}
             >
               <TabsList className="mb-4">
-                {JOB_PLATFORMS.map((platform) => (
-                  <TabsTrigger key={platform.id} value={platform.id}>
+                {JOB_PLATFORMS.map((platform, k) => (
+                  <TabsTrigger key={k} value={platform.id}>
                     {platform.name}
                   </TabsTrigger>
                 ))}
               </TabsList>
 
-              {JOB_PLATFORMS.map((platform) => (
-                <TabsContent key={platform.id} value={platform.id}>
+              {JOB_PLATFORMS.map((platform, k) => (
+                <TabsContent key={k} value={platform.id}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    {platform.searchParams.map((param) => (
-                      <div key={param.name} className="space-y-2">
+                    {platform.searchParams.map((param, k2) => (
+                      <div key={k + "-" + k2} className="space-y-2">
                         <Label htmlFor={param.name}>{param.label}</Label>
                         {param.type === "select" ? (
                           <Select
@@ -246,8 +246,11 @@ export default function JobApplyPage() {
                               />
                             </SelectTrigger>
                             <SelectContent>
-                              {param.options?.map((option) => (
-                                <SelectItem key={option} value={option}>
+                              {param.options?.map((option, k3) => (
+                                <SelectItem
+                                  key={k + "-" + k2 + "-" + k3}
+                                  value={option}
+                                >
                                   {option}
                                 </SelectItem>
                               ))}
@@ -328,8 +331,8 @@ export default function JobApplyPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedJobs.map((job) => (
-                  <TableRow key={job.id}>
+                {paginatedJobs.map((job, k) => (
+                  <TableRow key={job.id + "-" + k}>
                     <TableCell>
                       <button
                         className="text-left hover:text-primary"
@@ -343,12 +346,12 @@ export default function JobApplyPage() {
                     </TableCell>
                     <TableCell>{job.company}</TableCell>
                     <TableCell>{job.location}</TableCell>
-                    <TableCell>{job.salary || "Not specified"}</TableCell>
-                    <TableCell>{job.jobType || "Not specified"}</TableCell>
+                    <TableCell>{job.salary || "-"}</TableCell>
+                    <TableCell>{job.jobType || "-"}</TableCell>
                     <TableCell>
                       {job.publicationDate
                         ? new Date(job.publicationDate).toLocaleDateString()
-                        : "Not specified"}
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">

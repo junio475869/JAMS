@@ -51,7 +51,6 @@ export function Sidebar({
   const baseNavItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/applications", label: "Applications", icon: ListChecks },
-    { href: "/job-apply", label: "Apply for Jobs", icon: Laptop },
     { href: "/documents", label: "Documents", icon: FileText },
     { href: "/interview", label: "Interview Prep", icon: MessagesSquare },
     { href: "/calendar", label: "Calendar", icon: Calendar },
