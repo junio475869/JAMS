@@ -948,14 +948,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       for (const row of rows.slice(1)) {
-        const date = row[0]?.replace(/['"]+/g, "");
-        const skills = row[2]
+        const { columnMapping } = req.body;
+        const date = row[columnMapping.date]?.replace(/['"]+/g, "");
+        const skills = row[columnMapping.skills]
           ?.replace(/['"]+/g, "")
           .split(",")
           .map((s) => s.trim());
-        const company = row[3]?.replace(/['"]+/g, "");
-        const position = row[4]?.replace(/['"]+/g, "");
-        const url = row[5]?.replace(/['"]+/g, "");
+        const company = row[columnMapping.company]?.replace(/['"]+/g, "");
+        const position = row[columnMapping.position]?.replace(/['"]+/g, "");
+        const url = row[columnMapping.url]?.replace(/['"]+/g, "");
+        const profile = row[columnMapping.profile]?.replace(/['"]+/g, "");
 
         // Basic validation
         if (!company || !position) continue;

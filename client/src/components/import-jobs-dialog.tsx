@@ -25,6 +25,24 @@ export default function ImportJobsDialog() {
     setUrl(newUrl);
   };
 
+  const [columnMapping, setColumnMapping] = useState({
+    date: 0,
+    skills: 2,
+    company: 3,
+    position: 4,
+    url: 5,
+    profile: 6
+  });
+
+  const columnOptions = [
+    { label: 'Applied Date', value: 'date' },
+    { label: 'Skills', value: 'skills' },
+    { label: 'Company', value: 'company' },
+    { label: 'Position', value: 'position' },
+    { label: 'URL', value: 'url' },
+    { label: 'Profile', value: 'profile' }
+  ];
+
   const handleImport = async () => {
     if (!url.includes("docs.google.com/spreadsheets")) {
       toast({
@@ -42,7 +60,7 @@ export default function ImportJobsDialog() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, columnMapping }),
       });
 
       if (!response.ok) {
@@ -94,6 +112,23 @@ export default function ImportJobsDialog() {
             value={url}
             onChange={(e) => saveSheetUrl(e.target.value)}
           />
+          <div className="grid grid-cols-2 gap-4">
+            {columnOptions.map((option) => (
+              <div key={option.value} className="flex flex-col gap-2">
+                <label className="text-sm font-medium">{option.label}</label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={columnMapping[option.value]}
+                  onChange={(e) => setColumnMapping({
+                    ...columnMapping,
+                    [option.value]: parseInt(e.target.value) || 0
+                  })}
+                  placeholder="Column index"
+                />
+              </div>
+            ))}
+          </div>
         </div>
         <DialogFooter>
           <Button
