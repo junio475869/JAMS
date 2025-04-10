@@ -30,7 +30,6 @@ async function createTables() {
         description TEXT,
         notes TEXT,
         job_type TEXT,
-        job_type TEXT,
         company_logo TEXT,
         salary TEXT,
         remote_type TEXT,
