@@ -1,0 +1,55 @@
+{id: 4, username: 'gembird1128-25', email: 'gembird1128@gmail.com', fullName: 'GemBird', profilePicture: 'https://lh3.googleusercontent.com/a/ACg8ocI2CkGdJfUpDNX2jLMJVz5GG-_MupK_B-EN6EM7mwksrK-VEQ=s96-c', …}
+queryClient.ts:32 
+            
+            
+           GET https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/api/applications 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=ab9cb753:840
+run @ @tanstack_react-query.js?v=ab9cb753:494
+start @ @tanstack_react-query.js?v=ab9cb753:536
+fetch @ @tanstack_react-query.js?v=ab9cb753:926
+executeFetch_fn @ @tanstack_react-query.js?v=ab9cb753:2211
+onSubscribe @ @tanstack_react-query.js?v=ab9cb753:1898
+subscribe @ @tanstack_react-query.js?v=ab9cb753:24
+(anonymous) @ @tanstack_react-query.js?v=ab9cb753:3022
+subscribeToStore @ chunk-RPCDYKBN.js?v=ab9cb753:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=ab9cb753:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=ab9cb753:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=ab9cb753:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=ab9cb753:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=ab9cb753:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=ab9cb753:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=ab9cb753:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=ab9cb753:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=ab9cb753:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=ab9cb753:19432
+commitRoot @ chunk-RPCDYKBN.js?v=ab9cb753:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=ab9cb753:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=ab9cb753:18718
+workLoop @ chunk-RPCDYKBN.js?v=ab9cb753:197
+flushWork @ chunk-RPCDYKBN.js?v=ab9cb753:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=ab9cb753:384Understand this error
+job-apply-page.tsx:330 Warning: Each child in a list should have a unique "key" prop.
+
+Check the render method of `JobApplyPage`. See https://reactjs.org/link/warning-keys for more information.
+    at _c9 (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/components/ui/table.tsx:102:12)
+    at JobApplyPage (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/pages/job-apply-page.tsx?t=1744259464776:59:47)
+    at Route (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ab9cb753:280:16)
+    at RoleBasedRoute (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/components/role-based-route.tsx:23:3)
+    at Route (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ab9cb753:280:16)
+    at Switch (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ab9cb753:336:17)
+    at div
+    at main
+    at div
+    at div
+    at MainLayout (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/components/layout/main-layout.tsx:24:30)
+    at ProtectedRoute (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/lib/protected-route.tsx:36:34)
+    at Route (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ab9cb753:280:16)
+    at Switch (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ab9cb753:336:17)
+    at AuthProvider (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/hooks/use-auth.tsx:77:32)
+    at App
+    at ApplicationProvider (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/contexts/application-context.tsx?v=4kohUPOoRuOMSMcjVcC-u:25:39)
+    at ThemeProvider (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/contexts/theme-context.tsx?v=4kohUPOoRuOMSMcjVcC-u:30:33)
+    at AuthProvider (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/src/hooks/use-auth.tsx?v=4kohUPOoRuOMSMcjVcC-u:77:32)
+    at QueryClientProvider (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ab9cb753:2805:3)
+    at Router (https://599de926-40ac-4628-bf26-53ffce203360-00-2w3nsgye3d18v.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ab9cb753:235:17)

@@ -2,12 +2,39 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckIcon, ExternalLinkIcon, SearchIcon, ArrowUpDown } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CheckIcon,
+  ExternalLinkIcon,
+  SearchIcon,
+  ArrowUpDown,
+} from "lucide-react";
 import Header from "@/components/layout/header";
 import { useToast } from "@/hooks/use-toast";
 import { JOB_PLATFORMS } from "@/config/job-platforms";
@@ -27,7 +54,9 @@ interface JobListing {
 }
 
 export default function JobApplyPage() {
-  const [activePlatform, setActivePlatform] = useState<JobPlatform>(JOB_PLATFORMS[0]);
+  const [activePlatform, setActivePlatform] = useState<JobPlatform>(
+    JOB_PLATFORMS[0],
+  );
   const [searchParams, setSearchParams] = useState<Record<string, string>>({});
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -78,7 +107,7 @@ export default function JobApplyPage() {
 
   // Sort and filter jobs
   const filteredAndSortedJobs = jobs
-    .filter(job => {
+    .filter((job) => {
       if (!filterText) return true;
       const searchLower = filterText.toLowerCase();
       return (
@@ -90,7 +119,7 @@ export default function JobApplyPage() {
     .sort((a, b) => {
       const aValue = a[sortField as keyof JobListing] || "";
       const bValue = b[sortField as keyof JobListing] || "";
-      return sortOrder === "asc" 
+      return sortOrder === "asc"
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     });
@@ -99,7 +128,7 @@ export default function JobApplyPage() {
   const totalPages = Math.ceil(filteredAndSortedJobs.length / jobsPerPage);
   const paginatedJobs = filteredAndSortedJobs.slice(
     (page - 1) * jobsPerPage,
-    page * jobsPerPage
+    page * jobsPerPage,
   );
 
   const handleSort = (field: string) => {
@@ -114,9 +143,11 @@ export default function JobApplyPage() {
   const handleApplyDone = async (job: JobListing) => {
     try {
       // Check for duplicates
-      const checkResponse = await fetch(`/api/applications/check-duplicate?platformJobId=${job.id}&platform=${job.platform}`);
+      const checkResponse = await fetch(
+        `/api/applications/check-duplicate?platformJobId=${job.id}&platform=${job.platform}`,
+      );
       const { exists } = await checkResponse.json();
-      
+
       if (exists) {
         toast({
           title: "Already Applied",
@@ -143,7 +174,7 @@ export default function JobApplyPage() {
           location: job.location,
           salary: job.salary,
           jobType: job.jobType,
-          notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || 'Not specified'}\nJob Type: ${job.jobType || 'Not specified'}`,
+          notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || "Not specified"}\nJob Type: ${job.jobType || "Not specified"}`,
         }),
       });
 
@@ -151,7 +182,7 @@ export default function JobApplyPage() {
         throw new Error("Failed to save application");
       }
 
-      setAppliedJobs(prev => new Set([...prev, job.id]));
+      setAppliedJobs((prev) => new Set([...prev, job.id]));
       toast({
         title: "Success",
         description: "Application saved successfully",
@@ -177,7 +208,7 @@ export default function JobApplyPage() {
             <Tabs
               defaultValue={JOB_PLATFORMS[0].id}
               onValueChange={(value) => {
-                const platform = JOB_PLATFORMS.find(p => p.id === value);
+                const platform = JOB_PLATFORMS.find((p) => p.id === value);
                 if (platform) {
                   setActivePlatform(platform);
                   setSearchParams({});
@@ -210,7 +241,9 @@ export default function JobApplyPage() {
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder={`Select ${param.label}`} />
+                              <SelectValue
+                                placeholder={`Select ${param.label}`}
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {param.options?.map((option) => (
@@ -255,22 +288,40 @@ export default function JobApplyPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead onClick={() => handleSort("title")} className="cursor-pointer">
+                  <TableHead
+                    onClick={() => handleSort("title")}
+                    className="cursor-pointer"
+                  >
                     Position <ArrowUpDown className="h-4 w-4 inline-block" />
                   </TableHead>
-                  <TableHead onClick={() => handleSort("company")} className="cursor-pointer">
+                  <TableHead
+                    onClick={() => handleSort("company")}
+                    className="cursor-pointer"
+                  >
                     Company <ArrowUpDown className="h-4 w-4 inline-block" />
                   </TableHead>
-                  <TableHead onClick={() => handleSort("location")} className="cursor-pointer">
+                  <TableHead
+                    onClick={() => handleSort("location")}
+                    className="cursor-pointer"
+                  >
                     Location <ArrowUpDown className="h-4 w-4 inline-block" />
                   </TableHead>
-                  <TableHead onClick={() => handleSort("salary")} className="cursor-pointer">
+                  <TableHead
+                    onClick={() => handleSort("salary")}
+                    className="cursor-pointer"
+                  >
                     Salary <ArrowUpDown className="h-4 w-4 inline-block" />
                   </TableHead>
-                  <TableHead onClick={() => handleSort("jobType")} className="cursor-pointer">
+                  <TableHead
+                    onClick={() => handleSort("jobType")}
+                    className="cursor-pointer"
+                  >
                     Type <ArrowUpDown className="h-4 w-4 inline-block" />
                   </TableHead>
-                  <TableHead onClick={() => handleSort("publicationDate")} className="cursor-pointer">
+                  <TableHead
+                    onClick={() => handleSort("publicationDate")}
+                    className="cursor-pointer"
+                  >
                     Posted <ArrowUpDown className="h-4 w-4 inline-block" />
                   </TableHead>
                   <TableHead>Actions</TableHead>
@@ -280,7 +331,7 @@ export default function JobApplyPage() {
                 {paginatedJobs.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell>
-                      <button 
+                      <button
                         className="text-left hover:text-primary"
                         onClick={() => {
                           setSelectedJob(job);
@@ -295,7 +346,7 @@ export default function JobApplyPage() {
                     <TableCell>{job.salary || "Not specified"}</TableCell>
                     <TableCell>{job.jobType || "Not specified"}</TableCell>
                     <TableCell>
-                      {job.publicationDate 
+                      {job.publicationDate
                         ? new Date(job.publicationDate).toLocaleDateString()
                         : "Not specified"}
                     </TableCell>
@@ -304,12 +355,19 @@ export default function JobApplyPage() {
                         {!appliedJobs.has(job.id) && (
                           <>
                             <Button variant="outline" size="sm" asChild>
-                              <a href={job.url} target="_blank" rel="noopener noreferrer">
+                              <a
+                                href={job.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
                                 <ExternalLinkIcon className="h-4 w-4 mr-1" />
                                 Apply
                               </a>
                             </Button>
-                            <Button size="sm" onClick={() => handleApplyDone(job)}>
+                            <Button
+                              size="sm"
+                              onClick={() => handleApplyDone(job)}
+                            >
                               <CheckIcon className="h-4 w-4 mr-1" />
                               Done
                             </Button>
@@ -324,30 +382,46 @@ export default function JobApplyPage() {
                 ))}
 
                 {/* Description Modal */}
-                <Dialog open={showDescription} onOpenChange={setShowDescription}>
+                <Dialog
+                  open={showDescription}
+                  onOpenChange={setShowDescription}
+                >
                   <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
                       <DialogTitle>{selectedJob?.title}</DialogTitle>
                       <DialogDescription>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="font-semibold">{selectedJob?.company}</span>
+                          <span className="font-semibold">
+                            {selectedJob?.company}
+                          </span>
                           <span>•</span>
                           <span>{selectedJob?.location}</span>
                         </div>
                       </DialogDescription>
                     </DialogHeader>
                     <div className="max-h-[400px] overflow-y-auto">
-                      <div dangerouslySetInnerHTML={{ __html: selectedJob?.description || '' }} />
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: selectedJob?.description || "",
+                        }}
+                      />
                     </div>
                     <DialogFooter>
-                      <Button onClick={() => setShowDescription(false)}>Close</Button>
+                      <Button onClick={() => setShowDescription(false)}>
+                        Close
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
                 {paginatedJobs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      {isLoading ? "Loading..." : "No jobs found. Try searching with different criteria."}
+                    <TableCell
+                      colSpan={7}
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      {isLoading
+                        ? "Loading..."
+                        : "No jobs found. Try searching with different criteria."}
                     </TableCell>
                   </TableRow>
                 )}

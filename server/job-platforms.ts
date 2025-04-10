@@ -27,7 +27,6 @@ export async function searchJobs(
   console.log(
     `Fetching jobs from ${platform.name} with params: ${queryParams.toString()}`,
   );
-  console.log(response);
   if (!response.ok) {
     throw new Error(`Failed to fetch jobs from ${platform.name}`);
   }
