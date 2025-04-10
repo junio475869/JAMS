@@ -35,7 +35,9 @@ export default function JobApplyPage() {
   const [sortField, setSortField] = useState<string>("publicationDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterText, setFilterText] = useState("");
-  const [selectedJob, setSelectedJob] = useState<JobListing | null>(null); // Added state for selected job
+  const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
+  const [showDescription, setShowDescription] = useState(false);
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
   const jobsPerPage = 10;
   const { toast } = useToast();
 
@@ -111,6 +113,19 @@ export default function JobApplyPage() {
 
   const handleApplyDone = async (job: JobListing) => {
     try {
+      // Check for duplicates
+      const checkResponse = await fetch(`/api/applications/check-duplicate?platformJobId=${job.id}&platform=${job.platform}`);
+      const { exists } = await checkResponse.json();
+      
+      if (exists) {
+        toast({
+          title: "Already Applied",
+          description: "You have already applied to this position",
+          variant: "warning",
+        });
+        return;
+      }
+
       const response = await fetch("/api/applications", {
         method: "POST",
         headers: {
@@ -121,6 +136,13 @@ export default function JobApplyPage() {
           position: job.title,
           url: job.url,
           status: "applied",
+          platform: job.platform,
+          platformJobId: job.id,
+          description: job.description,
+          publicationDate: job.publicationDate,
+          location: job.location,
+          salary: job.salary,
+          jobType: job.jobType,
           notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || 'Not specified'}\nJob Type: ${job.jobType || 'Not specified'}`,
         }),
       });
@@ -129,6 +151,7 @@ export default function JobApplyPage() {
         throw new Error("Failed to save application");
       }
 
+      setAppliedJobs(prev => new Set([...prev, job.id]));
       toast({
         title: "Success",
         description: "Application saved successfully",
@@ -259,7 +282,10 @@ export default function JobApplyPage() {
                     <TableCell>
                       <button 
                         className="text-left hover:text-primary"
-                        onClick={() => setSelectedJob(job)}
+                        onClick={() => {
+                          setSelectedJob(job);
+                          setShowDescription(true);
+                        }}
                       >
                         {job.title}
                       </button>
@@ -275,20 +301,49 @@ export default function JobApplyPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={job.url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLinkIcon className="h-4 w-4 mr-1" />
-                            Apply
-                          </a>
-                        </Button>
-                        <Button size="sm" onClick={() => handleApplyDone(job)}>
-                          <CheckIcon className="h-4 w-4 mr-1" />
-                          Done
-                        </Button>
+                        {!appliedJobs.has(job.id) && (
+                          <>
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={job.url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLinkIcon className="h-4 w-4 mr-1" />
+                                Apply
+                              </a>
+                            </Button>
+                            <Button size="sm" onClick={() => handleApplyDone(job)}>
+                              <CheckIcon className="h-4 w-4 mr-1" />
+                              Done
+                            </Button>
+                          </>
+                        )}
+                        {appliedJobs.has(job.id) && (
+                          <Badge variant="success">Applied</Badge>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+
+                {/* Description Modal */}
+                <Dialog open={showDescription} onOpenChange={setShowDescription}>
+                  <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                      <DialogTitle>{selectedJob?.title}</DialogTitle>
+                      <DialogDescription>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="font-semibold">{selectedJob?.company}</span>
+                          <span>•</span>
+                          <span>{selectedJob?.location}</span>
+                        </div>
+                      </DialogHeader>
+                    </DialogHeader>
+                    <div className="max-h-[400px] overflow-y-auto">
+                      <div dangerouslySetInnerHTML={{ __html: selectedJob?.description || '' }} />
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={() => setShowDescription(false)}>Close</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 {paginatedJobs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
