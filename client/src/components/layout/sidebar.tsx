@@ -27,6 +27,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
+  BotIcon,
+  SparklesIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@shared/schema";
@@ -141,7 +143,7 @@ export function Sidebar({
       <ScrollArea className="flex-1 py-4">
         <nav className="space-y-1 px-2">
           {navigationItems.map((item) => {
-            const isActive = location === item.href;
+            const isActive = item.href !== "/" && location.includes(item.href);
             return (
               <Button
                 key={item.href}
@@ -149,7 +151,7 @@ export function Sidebar({
                 className={cn(
                   "w-full",
                   isActive
-                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                    ? "bg-primary-600 hover:bg-primary-700"
                     : "text-muted-foreground hover:bg-accent",
                   sidebarCollapsed
                     ? "px-2 justify-center"
@@ -157,7 +159,7 @@ export function Sidebar({
                 )}
                 onClick={() => {
                   setLocation(item.href);
-                  setIsMobileMenuOpen(false);
+                  if (setIsMobileMenuOpen) setIsMobileMenuOpen(false);
                 }}
               >
                 <item.icon
@@ -170,6 +172,26 @@ export function Sidebar({
         </nav>
       </ScrollArea>
 
+      <div className="p-1 border-t border-gray-700">
+        <div className="rounded-lg p-3">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <BotIcon className="text-primary-500 h-5 w-5" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-white">AI Assistant</h3>
+              <p className="text-xs text-gray-400">Optimize your job search</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3 w-full bg-gray-750 hover:bg-gray-700 text-gray-300 border-gray-700"
+          >
+            <SparklesIcon className="h-4 w-4 mr-1" /> Get suggestions
+          </Button>
+        </div>
+      </div>
       {/* User Profile */}
       <div className="border-t border-border p-4">
         <DropdownMenu>

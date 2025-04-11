@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
@@ -53,7 +52,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user && !isDemoMode() && !isLoading) {
-    return <Redirect to="/auth" />;
+    // return <Redirect to="/auth" />;
   }
 
   return <>{children}</>;
