@@ -341,6 +341,15 @@ export default function ChatPage() {
                 variant="ghost"
                 size="icon"
                 className="text-foreground/70 hover:text-foreground hover:bg-[var(--sidebar-item-hover)]"
+                onClick={() => {
+                  if (chatType === 'direct') {
+                    socket.emit('initiate_call', {
+                      type: 'audio',
+                      channelId: activeChat,
+                      caller: user.id
+                    });
+                  }
+                }}
               >
                 <PhoneCall className="h-4 w-4" />
               </Button>
@@ -348,6 +357,15 @@ export default function ChatPage() {
                 variant="ghost"
                 size="icon"
                 className="text-foreground/70 hover:text-foreground hover:bg-[var(--sidebar-item-hover)]"
+                onClick={() => {
+                  if (chatType === 'direct') {
+                    socket.emit('initiate_call', {
+                      type: 'video',
+                      channelId: activeChat,
+                      caller: user.id
+                    });
+                  }
+                }}
               >
                 <Video className="h-4 w-4" />
               </Button>
@@ -442,14 +460,26 @@ export default function ChatPage() {
                   onChange={handleFileUpload}
                 />
                 <div className="absolute bottom-2 right-2 flex space-x-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-foreground/70 hover:text-foreground"
-                    onClick={() => {/* Placeholder for emoji picker */}}
-                  >
-                    <Smile className="h-5 w-5" />
-                  </Button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-foreground/70 hover:text-foreground"
+                      >
+                        <Smile className="h-5 w-5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0">
+                      <div className="emoji-mart">
+                        <data-picker 
+                          onEmojiSelect={(emoji) => {
+                            setNewMessage(prev => prev + emoji.native);
+                          }}
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <Button
                     variant="ghost"
                     size="icon"

@@ -18,9 +18,41 @@ export function setupWebSocket(httpServer: HTTPServer) {
   io.on('connection', (socket) => {
     console.log('Client connected');
 
-    socket.on('join_channel', (channelId) => {
+    socket.on('join_channel', async (data) => {
+      const { channelId, userId } = data;
       socket.join(channelId);
-      console.log(`User joined channel: ${channelId}`);
+      
+      // Add user to channel members if not already present
+      await storage.addChannelMember({
+        channelId,
+        userId,
+        role: 'member'
+      });
+      
+      // Get channel history
+      const messages = await storage.getChatMessagesByChannelId(channelId);
+      socket.emit('channel_history', messages);
+      
+      console.log(`User ${userId} joined channel: ${channelId}`);
+    });
+
+    socket.on('create_channel', async (data) => {
+      const { name, type, createdBy, isPrivate } = data;
+      const channel = await storage.createChatChannel({
+        name,
+        type,
+        createdBy,
+        isPrivate
+      });
+      io.emit('channel_created', channel);
+    });
+
+    socket.on('create_dm', async (data) => {
+      const { users } = data;
+      const channel = await storage.createDirectMessage(users);
+      users.forEach(userId => {
+        socket.to(userId).emit('dm_created', channel);
+      });
     });
 
     socket.on('message', async (message) => {
