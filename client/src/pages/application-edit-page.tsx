@@ -1,45 +1,29 @@
-import { useEffect, useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { useParams, useLocation } from "wouter";
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Application, ApplicationStatus } from "@shared/schema";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Plus, Save, Pencil } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { ApplicationStatus } from "@shared/schema";
+import { useParams } from "wouter";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft } from "lucide-react";
 
-export function ApplicationEditPage() {
+
+export default function ApplicationEditPage() {
   const [_, setLocation] = useLocation();
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isAddingStep, setIsAddingStep] = useState(false);
-  const [activeTab, setActiveTab] = useState<"edit" | "others">("edit");
-  const [selectedApplicant, setSelectedApplicant] =
-    useState<OtherApplicant | null>(null);
-
-  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     company: "",
     position: "",
@@ -47,9 +31,12 @@ export function ApplicationEditPage() {
     url: "",
     notes: "",
     techStack: [] as string[],
+    location:"",
+    jobType:"",
+    salary:""
   });
 
-  const { data: application, isLoading } = useQuery<Application>({
+  const { data: application, isLoading } = useQuery({
     queryKey: ["application", id],
     queryFn: async () => {
       const response = await fetch(`/api/applications/${id}`);
@@ -58,14 +45,11 @@ export function ApplicationEditPage() {
     },
   });
 
-  const { data: otherApplicants = [] } = useQuery<OtherApplicant[]>({
-    queryKey: ["other-applicants", application?.position],
-    enabled: !!application?.position,
+  const { data: timeline } = useQuery({
+    queryKey: ["timeline", id],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/applications/others?position=${encodeURIComponent(application!.position)}`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch other applicants");
+      const response = await fetch(`/api/applications/${id}/timeline`);
+      if (!response.ok) throw new Error("Failed to fetch timeline");
       return response.json();
     },
   });
@@ -78,390 +62,140 @@ export function ApplicationEditPage() {
         status: application.status,
         url: application.url || "",
         notes: application.notes || "",
+        location: application.location || "",
+        jobType: application.jobType || "",
+        salary: application.salary || ""
       });
     }
   }, [application]);
-
-  const updateMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const response = await fetch(`/api/applications/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to update application");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["applications"] });
-      toast({
-        title: "Success",
-        description: "Application updated successfully",
-      });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateMutation.mutate(formData);
-  };
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" onClick={() => setLocation("/applications")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+    <div className="p-4 md:p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Edit Application</h1>
+          <p className="text-muted-foreground">Update application details</p>
+        </div>
+        <Button onClick={() => setLocation("/applications")}>
+          <ArrowLeft className="h-4 w-4 mr-2"/> Back to Applications
         </Button>
-        <h1 className="text-2xl font-bold">Edit Application</h1>
       </div>
 
-      {activeTab === "edit" && (
-        <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Main Information Column */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
               <CardTitle>Basic Information</CardTitle>
-              <Badge variant={
-                formData.status === 'applied' ? 'default' :
-                formData.status === 'interview' ? 'warning' :
-                formData.status === 'offer' ? 'success' :
-                'destructive'
-              }>
-                {formData.status?.charAt(0).toUpperCase() + formData.status?.slice(1)}
-              </Badge>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Company</Label>
-                  <p className="font-medium">{formData.company}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Position</Label>
-                  <p className="font-medium">
-                    {formData.url ? (
-                      <a
-                        href={formData.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        {formData.position}
-                      </a>
-                    ) : (
-                      formData.position
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Tech Stack</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.techStack?.map((tech, index) => (
-                      <Badge key={index} variant="secondary">
-                        {tech}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company">Company</Label>
+                <Input
+                  id="company"
+                  defaultValue={application.company}
+                  placeholder="Enter company name"
+                />
               </div>
-              <div>
-                <Label className="text-muted-foreground">Notes</Label>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {formData.notes || "No notes added"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Basic Information</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    value={formData.company}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        company: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="position">Position</Label>
-                  <Input
-                    id="position"
-                    value={formData.position}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        position: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="position">Position</Label>
+                <Input
+                  id="position"
+                  defaultValue={application.position}
+                  placeholder="Enter position"
+                />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  defaultValue={application.location}
+                  placeholder="Enter location"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="jobType">Job Type</Label>
+                <Input
+                  id="jobType"
+                  defaultValue={application.jobType}
+                  placeholder="Enter job type"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="salary">Salary</Label>
+                <Input
+                  id="salary"
+                  defaultValue={application.salary}
+                  placeholder="Enter salary"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, status: value }))
-                  }
-                >
+                <Select defaultValue={application.status}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ApplicationStatus.APPLIED}>
-                      Applied
-                    </SelectItem>
-                    <SelectItem value={ApplicationStatus.INTERVIEW}>
-                      Interview
-                    </SelectItem>
-                    <SelectItem value={ApplicationStatus.OFFER}>
-                      Offer
-                    </SelectItem>
-                    <SelectItem value={ApplicationStatus.REJECTED}>
-                      Rejected
-                    </SelectItem>
+                    <SelectItem value={ApplicationStatus.APPLIED}>Applied</SelectItem>
+                    <SelectItem value={ApplicationStatus.INTERVIEW}>Interview</SelectItem>
+                    <SelectItem value={ApplicationStatus.OFFER}>Offer</SelectItem>
+                    <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="url">Job URL</Label>
-                <Input
-                  id="url"
-                  value={formData.url}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, url: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="techStack">Tech Stack</Label>
-                <Input
-                  id="techStack"
-                  placeholder="Add technologies (comma-separated)"
-                  value={formData.techStack?.join(", ") || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      techStack: e.target.value
-                        .split(",")
-                        .map((t) => t.trim())
-                        .filter(Boolean),
-                    }))
-                  }
-                />
-              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
                   id="notes"
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      notes: e.target.value,
-                    }))
-                  }
+                  defaultValue={application.notes}
+                  placeholder="Enter notes"
+                  className="min-h-[100px]"
                 />
               </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsEditing(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </CardContent>
+          </Card>
+        </div>
 
-      {activeTab === "edit" && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Interview Timeline</CardTitle>
-            <Button onClick={() => setIsAddingStep(true)} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Step
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="relative pl-4 border-l-2 border-gray-700 space-y-6 timeline-container">
-              <style jsx>{`
-                .timeline-container::before {
-                  content: '';
-                  position: absolute;
-                  left: -1px;
-                  top: 0;
-                  height: 100%;
-                  width: 2px;
-                  background: linear-gradient(to bottom, #374151 0%, #374151 100%);
-                }
-              `}</style>
-              {application?.steps?.length === 0 && (
-                <p className="text-muted-foreground text-sm">No interview steps added yet</p>
-              )}
-            {application?.steps?.map((step, index) => (
-              <div key={step.id} className="relative">
-                <div className="absolute -left-[25px] w-4 h-4 rounded-full bg-gray-800 border-2 border-gray-700" />
-                <div
-                  className={`ml-4 p-4 rounded-lg ${step.completed ? "bg-green-900/30" : "bg-gray-800"}`}
-                >
-                  <h3 className="font-medium">{step.stepName}</h3>
-                  {step.scheduledDate && (
-                    <p className="text-sm text-gray-400">
-                      Scheduled:{" "}
-                      {new Date(step.scheduledDate).toLocaleDateString()}
-                    </p>
-                  )}
-                  {step.comments && (
-                    <p className="text-sm text-gray-400 mt-2">
-                      {step.comments}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      )}
-
-      {isAddingStep && (
-        <InterviewStepsDialog
-          isOpen={isAddingStep}
-          onClose={() => setIsAddingStep(false)}
-          applicationId={parseInt(id)}
-          initialSteps={application?.steps || []}
-          onSave={async (steps) => {
-            try {
-              await fetch(`/api/applications/${id}/interview-steps`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ steps }),
-              });
-              queryClient.invalidateQueries({
-                queryKey: ["applications"],
-              });
-              toast({
-                title: "Success",
-                description: "Interview steps updated successfully",
-              });
-              setIsAddingStep(false);
-            } catch (error) {
-              toast({
-                title: "Error",
-                description: "Failed to update interview steps",
-                variant: "destructive",
-              });
-            }
-          }}
-        />
-      )}
-
-      {activeTab === "edit" ? null : (
-        <div className="space-y-4">
+        {/* Timeline Column */}
+        <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Other Applicants</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Other candidates who applied for this position
-              </p>
+              <CardTitle>Interview Timeline</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                {otherApplicants.map((applicant) => (
-                  <div
-                    key={applicant.id}
-                    className="border-b border-border pb-4 last:border-0 last:pb-0"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium">{applicant.username}</h3>
-                      <span className="text-sm text-muted-foreground">
-                        {applicant.steps.length} interview steps
-                      </span>
+              <div className="relative pl-4 border-l border-border">
+                {timeline?.map((event: any) => (
+                  <div key={event.id} className="mb-4 relative">
+                    <div className="absolute -left-[21px] h-4 w-4 rounded-full bg-primary" />
+                    <div className="bg-muted p-4 rounded-lg">
+                      <div className="font-medium">{event.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(event.date).toLocaleDateString()}
+                      </div>
+                      <div className="mt-2 text-sm">{event.description}</div>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {applicant.steps.map((step, index) => (
-                        <div
-                          key={index}
-                          className={`px-3 py-1 rounded-full text-sm ${
-                            step.completed
-                              ? "bg-green-500/10 text-green-500"
-                              : "bg-gray-500/10 text-gray-400"
-                          }`}
-                        >
-                          {step.stepName}
-                        </div>
-                      ))}
-                    </div>
-                    {applicant.feedback && (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {applicant.feedback}
-                      </p>
-                    )}
                   </div>
                 ))}
-                {otherApplicants.length === 0 && (
-                  <p className="text-center text-muted-foreground py-4">
-                    No other applicants found for this position
-                  </p>
+                {(!timeline || timeline.length === 0) && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No timeline events yet
+                  </div>
                 )}
               </div>
             </CardContent>
           </Card>
         </div>
-      )}
+      </div>
     </div>
   );
 }
-
-interface OtherApplicant {
-  id: number;
-  username: string;
-  steps: InterviewStep[];
-  feedback?: string;
-}
-
-interface InterviewStep {
-  id: number;
-  stepName: string;
-  scheduledDate?: string;
-  completed: boolean;
-  comments?: string;
-}
-
-export default ApplicationEditPage;

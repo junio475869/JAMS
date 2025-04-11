@@ -3,22 +3,27 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ArrowUpDown, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ApplicationStatus } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ImportJobsDialog from "@/components/import-jobs-dialog";
 import { Pagination } from "@/components/ui/pagination";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const ITEMS_PER_PAGE = 10;
 
 export default function ApplicationsPage() {
   const [_, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState(ApplicationStatus.APPLIED);
+  const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState("updatedAt");
@@ -30,7 +35,7 @@ export default function ApplicationsPage() {
     queryKey: ["applications", activeTab, page, searchQuery, sortField, sortOrder],
     queryFn: async () => {
       const params = new URLSearchParams({
-        status: activeTab,
+        status: activeTab !== "all" ? activeTab : "",
         page: page.toString(),
         limit: ITEMS_PER_PAGE.toString(),
         sortBy: sortField,
@@ -54,32 +59,12 @@ export default function ApplicationsPage() {
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
-    setPage(1); // Reset to first page on new search
+    setPage(1);
   };
 
-  const handleStatusChange = (status: ApplicationStatus) => {
+  const handleStatusChange = (status: string) => {
     setActiveTab(status);
-    setPage(1); // Reset to first page on status change
-  };
-
-  const handleDeleteApplications = async () => {
-    try {
-      const response = await fetch("/api/applications/cleanup", {
-        method: "DELETE",
-      });
-      const data = await response.json();
-      toast({
-        title: "Cleanup Complete",
-        description: `Removed ${data.removedCount} invalid applications`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["applications"] });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to cleanup applications",
-        variant: "destructive",
-      });
-    }
+    setPage(1);
   };
 
   return (
@@ -100,115 +85,140 @@ export default function ApplicationsPage() {
             <Plus className="h-4 w-4 mr-2" />
             Add Application
           </Button>
-          <Button variant="outline" onClick={handleDeleteApplications}>
-            Cleanup
-          </Button>
           <ImportJobsDialog />
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => handleStatusChange(value as ApplicationStatus)}>
-        <TabsList>
-          <TabsTrigger value={ApplicationStatus.APPLIED}>Applied</TabsTrigger>
-          <TabsTrigger value={ApplicationStatus.INTERVIEW}>Interview</TabsTrigger>
-          <TabsTrigger value={ApplicationStatus.OFFER}>Offer</TabsTrigger>
-          <TabsTrigger value={ApplicationStatus.REJECTED}>Rejected</TabsTrigger>
-        </TabsList>
+      <div className="flex justify-between items-center">
+        <Tabs value={activeTab} onValueChange={handleStatusChange} className="w-full">
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value={ApplicationStatus.INTERVIEW}>Interview</TabsTrigger>
+            <TabsTrigger value={ApplicationStatus.OFFER}>Offer</TabsTrigger>
+            <TabsTrigger value={ApplicationStatus.REJECTED}>Rejected</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        <TabsContent value={activeTab}>
-          {isLoading ? (
-            <div className="space-y-4">
-              <p>Loading...</p>
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("company")}
-                    >
-                      Company
-                      <span className="ml-2">
-                        {sortField === "company" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("position")}
-                    >
-                      Position
-                      <span className="ml-2">
-                        {sortField === "position" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("location")}
-                    >
-                      Location
-                      <span className="ml-2">
-                        {sortField === "location" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("appliedDate")}
-                    >
-                      Applied Date
-                      <span className="ml-2">
-                        {sortField === "appliedDate" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </span>
-                    </TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {applications.map((app) => (
-                    <TableRow
-                      key={app.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setLocation(`/applications/${app.id}`)}
-                    >
-                      <TableCell>{app.company}</TableCell>
-                      <TableCell>{app.position}</TableCell>
-                      <TableCell>{app.location || "N/A"}</TableCell>
-                      <TableCell>
-                        {new Date(app.appliedDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs
-                            ${app.status === ApplicationStatus.APPLIED ? "bg-blue-500/20 text-blue-500" :
-                              app.status === ApplicationStatus.INTERVIEW ? "bg-yellow-500/20 text-yellow-500" :
-                              app.status === ApplicationStatus.OFFER ? "bg-green-500/20 text-green-500" :
-                              "bg-red-500/20 text-red-500"}`
-                          }
-                        >
-                          {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Showing {applications.length} of {data?.totalItems || 0} applications
-                </div>
-                {totalPages > 1 && (
-                  <Pagination
-                    currentPage={page}
-                    totalPages={totalPages}
-                    onPageChange={setPage}
-                  />
-                )}
-              </div>
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        )}
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="cursor-pointer w-[180px]" onClick={() => handleSort("company")}>
+                Company
+                <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort("position")}>
+                Position
+                <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort("location")}>
+                Location
+                <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort("jobType")}>
+                Type
+                <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort("salary")}>
+                Salary
+                <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort("appliedDate")}>
+                Applied
+                <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort("lastActivity")}>
+                Last Activity
+                <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+              </TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {applications.map((app) => (
+              <TableRow
+                key={app.id}
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => setLocation(`/applications/${app.id}`)}
+              >
+                <TableCell className="font-medium">{app.company}</TableCell>
+                <TableCell>{app.position}</TableCell>
+                <TableCell>{app.location || "N/A"}</TableCell>
+                <TableCell>{app.jobType || "N/A"}</TableCell>
+                <TableCell>{app.salary || "N/A"}</TableCell>
+                <TableCell>{new Date(app.appliedDate).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(app.lastActivity).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs
+                      ${app.status === ApplicationStatus.APPLIED ? "bg-blue-500/20 text-blue-500" :
+                        app.status === ApplicationStatus.INTERVIEW ? "bg-yellow-500/20 text-yellow-500" :
+                        app.status === ApplicationStatus.OFFER ? "bg-green-500/20 text-green-500" :
+                        "bg-red-500/20 text-red-500"}`
+                    }
+                  >
+                    {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <Filter className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        setLocation(`/applications/${app.id}/edit`);
+                      }}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Handle delete
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+            {applications.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={9} className="h-24 text-center">
+                  {isLoading ? (
+                    "Loading..."
+                  ) : (
+                    "No applications found"
+                  )}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {applications.length} of {data?.totalItems || 0} applications
+        </div>
+      </div>
     </div>
   );
 }
