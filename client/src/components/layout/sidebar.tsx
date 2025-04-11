@@ -151,8 +151,8 @@ export function Sidebar({
                 className={cn(
                   "w-full",
                   isActive
-                    ? "bg-primary-600 hover:bg-primary-700"
-                    : "text-muted-foreground hover:bg-accent",
+                    ? "bg-primary hover:bg-primary/90 text-white"
+                    : "text-muted-foreground hover:bg-gray-500",
                   sidebarCollapsed
                     ? "px-2 justify-center"
                     : "px-4 justify-start",
