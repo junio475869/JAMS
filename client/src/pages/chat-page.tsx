@@ -26,12 +26,13 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/use-auth";
 
-const socket = io('http://0.0.0.0:5000', {
+const socket = io({
   path: '/socket.io',
   transports: ['websocket', 'polling'],
   reconnection: true,
   reconnectionAttempts: 5,
-  reconnectionDelay: 1000
+  reconnectionDelay: 1000,
+  secure: true
 });
 
 export default function ChatPage() {

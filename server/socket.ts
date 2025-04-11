@@ -7,7 +7,8 @@ export function setupWebSocket(httpServer: HTTPServer) {
   const io = new Server(httpServer, {
     cors: {
       origin: "*",
-      methods: ["GET", "POST"]
+      methods: ["GET", "POST"],
+      credentials: true
     },
     path: '/socket.io',
     transports: ['websocket', 'polling']
