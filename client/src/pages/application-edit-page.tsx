@@ -69,6 +69,33 @@ export default function ApplicationEditPage() {
     }
   }, [application]);
 
+  const handleSave = async () => {
+    // Add your save logic here.  This is a placeholder.
+    try {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save application: ${response.statusText}`);
+      }
+
+      toast({
+        title: "Application saved successfully!",
+        description: "Your changes have been saved.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error saving application",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
+    }
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -99,6 +126,7 @@ export default function ApplicationEditPage() {
                   id="company"
                   defaultValue={application.company}
                   placeholder="Enter company name"
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 />
               </div>
 
@@ -108,6 +136,7 @@ export default function ApplicationEditPage() {
                   id="position"
                   defaultValue={application.position}
                   placeholder="Enter position"
+                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                 />
               </div>
 
@@ -117,6 +146,7 @@ export default function ApplicationEditPage() {
                   id="location"
                   defaultValue={application.location}
                   placeholder="Enter location"
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 />
               </div>
 
@@ -126,6 +156,7 @@ export default function ApplicationEditPage() {
                   id="jobType"
                   defaultValue={application.jobType}
                   placeholder="Enter job type"
+                  onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
                 />
               </div>
 
@@ -135,12 +166,13 @@ export default function ApplicationEditPage() {
                   id="salary"
                   defaultValue={application.salary}
                   placeholder="Enter salary"
+                  onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select defaultValue={application.status}>
+                <Select defaultValue={application.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -160,7 +192,13 @@ export default function ApplicationEditPage() {
                   defaultValue={application.notes}
                   placeholder="Enter notes"
                   className="min-h-[100px]"
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
+              </div>
+              <div className="flex justify-end mt-6">
+                <Button onClick={handleSave} disabled={isLoading}>
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
             </CardContent>
           </Card>

@@ -74,18 +74,22 @@ export default function ApplicationsPage() {
           <h1 className="text-2xl font-bold">Applications</h1>
           <p className="text-muted-foreground">Track your job applications</p>
         </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Search applications..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-64"
-          />
-          <Button onClick={() => setLocation("/applications/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Application
-          </Button>
-          <ImportJobsDialog />
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search applications..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-64"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setLocation("/applications/new")} variant="default">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Application
+            </Button>
+            <ImportJobsDialog />
+          </div>
         </div>
       </div>
 
