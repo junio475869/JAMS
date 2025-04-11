@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +69,9 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingUsers = new Set();
+
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -93,11 +95,19 @@ export default function ChatPage() {
       setMessages(prev => [...prev, msg]);
       scrollToBottom();
     });
+    socket.on('typing', (username) => {
+      typingUsers.add(username);
+    });
+    socket.on('stopTyping', (username) => {
+      typingUsers.delete(username);
+    });
 
     return () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('message');
+      socket.off('typing');
+      socket.off('stopTyping');
     };
   }, []);
 
@@ -125,6 +135,22 @@ export default function ChatPage() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleTyping = () => {
+    socket.emit('typing', user.username);
+    setTimeout(() => {
+      socket.emit('stopTyping', user.username);
+    }, 2000); // Stop typing after 2 seconds of inactivity
+  };
+
+  const handleFileUpload = () => {
+    // Placeholder for file upload handling
+    const file = fileInputRef.current?.files?.[0];
+    if(file){
+      console.log("File uploaded:", file);
+      // Implement actual file upload logic here
     }
   };
 
@@ -398,14 +424,29 @@ export default function ChatPage() {
                   placeholder={`Message ${getActiveChannelName()}`}
                   className="min-h-[60px] resize-none pr-12 bg-[var(--sidebar-item-hover)] border-[var(--border)] rounded-md px-3 py-2 w-full"
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={(e) => {
+                    setNewMessage(e.target.value);
+                    handleTyping();
+                  }}
                   onKeyDown={handleKeyDown}
+                />
+                {typingUsers.size > 0 && (
+                  <div className="absolute -top-6 left-0 text-sm text-foreground/70">
+                    {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileUpload}
                 />
                 <div className="absolute bottom-2 right-2 flex space-x-1">
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-foreground/70 hover:text-foreground"
+                    onClick={() => {/* Placeholder for emoji picker */}}
                   >
                     <Smile className="h-5 w-5" />
                   </Button>
@@ -413,6 +454,7 @@ export default function ChatPage() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-foreground/70 hover:text-foreground"
+                    onClick={() => fileInputRef.current?.click()}
                   >
                     <Paperclip className="h-5 w-5" />
                   </Button>

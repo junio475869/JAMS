@@ -11,26 +11,59 @@ export function setupWebSocket(httpServer: HTTPServer) {
       credentials: true
     },
     path: '/socket.io',
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    maxHttpBufferSize: 1e7 // 10MB max file size
   });
 
   io.on('connection', (socket) => {
     console.log('Client connected');
 
+    socket.on('join_channel', (channelId) => {
+      socket.join(channelId);
+      console.log(`User joined channel: ${channelId}`);
+    });
+
     socket.on('message', async (message) => {
       // Store message in database
-      await storage.createChatMessage(message);
+      const savedMessage = await storage.createChatMessage(message);
       
-      // Broadcast to all clients
-      io.emit('message', message);
+      // Broadcast to channel
+      io.to(message.channelId).emit('message', savedMessage);
+    });
+
+    socket.on('file_upload', async (data) => {
+      const { file, channelId, userId, fileName } = data;
+      
+      // Store file in object storage and get URL
+      const fileUrl = await storage.uploadFile(file, fileName);
+      
+      const message = {
+        channelId,
+        userId,
+        type: 'file',
+        content: fileName,
+        attachmentUrl: fileUrl,
+        timestamp: new Date().toISOString()
+      };
+
+      const savedMessage = await storage.createChatMessage(message);
+      io.to(channelId).emit('message', savedMessage);
     });
 
     socket.on('reaction', async (data) => {
       // Store reaction in database
       await storage.addMessageReaction(data.messageId, data.reaction, data.userId);
       
-      // Broadcast to all clients
-      io.emit('reaction', data);
+      // Broadcast to channel
+      io.to(data.channelId).emit('reaction', data);
+    });
+
+    socket.on('typing', (data) => {
+      socket.to(data.channelId).emit('typing', {
+        userId: data.userId,
+        username: data.username,
+        isTyping: data.isTyping
+      });
     });
 
     socket.on('disconnect', () => {
