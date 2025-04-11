@@ -26,7 +26,13 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/use-auth";
 
-const socket = io('http://localhost:5000');
+const socket = io('http://0.0.0.0:5000', {
+  path: '/socket.io',
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -34,6 +40,10 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState(new Set());
+  const typingTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -42,9 +52,38 @@ export default function ChatPage() {
   };
 
   useEffect(() => {
+    socket.on('connect', () => {
+      setIsConnected(true);
+      toast({
+        title: "Connected to chat",
+        description: "You're now connected to the chat server",
+      });
+    });
+
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+      toast({
+        title: "Disconnected",
+        description: "Lost connection to chat server",
+        variant: "destructive",
+      });
+    });
+
     socket.on('message', (msg) => {
       setMessages(prev => [...prev, msg]);
       scrollToBottom();
+    });
+
+    socket.on('typing', ({ userId, username }) => {
+      setTypingUsers(prev => new Set([...prev, username]));
+    });
+
+    socket.on('stop_typing', ({ userId, username }) => {
+      setTypingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(username);
+        return newSet;
+      });
     });
 
     socket.on('reaction', ({ messageId, reaction }) => {
