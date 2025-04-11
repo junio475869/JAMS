@@ -28,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { io } from "socket.io-client";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import Picker from '@emoji-mart/react';
 
 const socket = io({
   path: '/socket.io',
@@ -75,6 +76,24 @@ export default function ChatPage() {
 
 
   useEffect(() => {
+    // Fetch initial data
+    socket.emit('fetch_channels');
+    socket.emit('fetch_users');
+
+    // Listen for channel and user updates
+    socket.on('channels_list', (channelsList) => {
+      setChannels(channelsList);
+    });
+
+    socket.on('users_list', (usersList) => {
+      setDirectMessages(usersList.map(user => ({
+        id: user.id,
+        name: user.name,
+        status: user.status,
+        avatar: user.avatar
+      })));
+    });
+
     socket.on('connect', () => {
       setIsConnected(true);
       toast({
@@ -473,10 +492,12 @@ export default function ChatPage() {
                     </PopoverTrigger>
                     <PopoverContent className="w-80 p-0">
                       <div className="emoji-mart">
-                        <data-picker 
-                          onEmojiSelect={(emoji) => {
+                        <Picker 
+                          onEmojiSelect={(emoji: any) => {
                             setNewMessage(prev => prev + emoji.native);
                           }}
+                          theme="light"
+                          autoFocus={true}
                         />
                       </div>
                     </PopoverContent>

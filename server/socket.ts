@@ -4,6 +4,22 @@ import type { Server as HTTPServer } from 'http';
 import { storage } from './storage';
 
 export function setupWebSocket(httpServer: HTTPServer) {
+  // Add channel and user types
+  type Channel = {
+    id: string;
+    name: string;
+    type: string;
+    createdBy: string;
+    isPrivate: boolean;
+  };
+
+  type User = {
+    id: string;
+    name: string;
+    status: string;
+    avatar?: string;
+  };
+
   const io = new Server(httpServer, {
     cors: {
       origin: "*",
@@ -96,6 +112,34 @@ export function setupWebSocket(httpServer: HTTPServer) {
         username: data.username,
         isTyping: data.isTyping
       });
+    });
+
+    // Channel management
+    socket.on('fetch_channels', async () => {
+      try {
+        const channels = await storage.getAllChannels();
+        socket.emit('channels_list', channels);
+      } catch (error) {
+        console.error('Error fetching channels:', error);
+      }
+    });
+
+    socket.on('fetch_users', async () => {
+      try {
+        const users = await storage.getAllUsers();
+        socket.emit('users_list', users);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    });
+
+    socket.on('update_user_status', async (data) => {
+      try {
+        await storage.updateUserStatus(data.userId, data.status);
+        io.emit('user_status_updated', data);
+      } catch (error) {
+        console.error('Error updating user status:', error);
+      }
     });
 
     socket.on('disconnect', () => {
