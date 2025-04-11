@@ -193,28 +193,28 @@ export function Sidebar({
         </div>
       </div>
       {/* User Profile */}
-      <div className="border-t border-border p-4">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start rounded-none h-16",
                 sidebarCollapsed ? "px-2" : "px-4",
               )}
             >
               <div className="flex items-center">
-                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                   {user?.fullName?.charAt(0) ||
                     user?.username?.charAt(0) ||
                     "U"}
                 </div>
                 {!sidebarCollapsed && (
                   <div className="ml-3 text-left">
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-medium text-white">
                       {user?.fullName || user?.username}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-400">
                       {user?.email}
                     </p>
                   </div>
