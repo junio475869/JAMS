@@ -105,7 +105,10 @@ export class DatabaseStorage implements IStorage {
     return application;
   }
 
-  async getApplicationsByUserId(userId: number, status?: string): Promise<Application[]> {
+  async getApplicationsByUserId(
+    userId: number,
+    status?: string,
+  ): Promise<Application[]> {
     let query = db
       .select()
       .from(applications)
@@ -118,7 +121,12 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(applications.updatedAt));
   }
 
-  async getApplicationsByUserIdPaginated(userId: number, limit: number, offset: number, status?: string): Promise<Application[]> {
+  async getApplicationsByUserIdPaginated(
+    userId: number,
+    limit: number,
+    offset: number,
+    status?: string,
+  ): Promise<Application[]> {
     let query = db
       .select()
       .from(applications)
@@ -376,7 +384,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Interview Steps methods
-  async getInterviewStepsByApplicationId(applicationId: number): Promise<InterviewStep[]> {
+  async getInterviewStepsByApplicationId(
+    applicationId: number,
+  ): Promise<InterviewStep[]> {
     return await db
       .select()
       .from(interviewSteps)
@@ -396,7 +406,10 @@ export class DatabaseStorage implements IStorage {
     return newStep;
   }
 
-  async updateInterviewStep(id: number, updates: Partial<InterviewStep>): Promise<InterviewStep> {
+  async updateInterviewStep(
+    id: number,
+    updates: Partial<InterviewStep>,
+  ): Promise<InterviewStep> {
     const [updatedStep] = await db
       .update(interviewSteps)
       .set({
