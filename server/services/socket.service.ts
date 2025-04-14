@@ -1,7 +1,7 @@
 
 import { Server } from 'socket.io';
 import type { Server as HTTPServer } from 'http';
-import { storage } from './storage';
+import { storage } from './storage.service';
 
 export function setupWebSocket(httpServer: HTTPServer) {
   // Add channel and user types

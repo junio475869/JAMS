@@ -4,7 +4,7 @@ type ApiError = Error | { message?: string };
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { setupTeamRoutes } from "./team-routes";
-import { storage } from "./storage";
+import { storage } from "./services/storage.service";
 import {
   generateCoverLetter,
   analyzeResume,

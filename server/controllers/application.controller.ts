@@ -1,6 +1,6 @@
 
 import { Request, Response } from 'express';
-import { storage } from '../storage';
+import { storage } from '../services/storage.service';
 import { insertApplicationSchema, insertInterviewStepSchema } from '@shared/schema';
 
 export const getApplications = async (req: Request, res: Response) => {
