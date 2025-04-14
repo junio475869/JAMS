@@ -28,7 +28,7 @@ import {
 import { eq, and, desc, count, asc, or, sql } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
-import { db, pool } from "./db";
+import { db, pool } from "../config/db";
 
 // Placeholder type - needs to be defined elsewhere
 async function getAllUserGmailData(userId: number) {
