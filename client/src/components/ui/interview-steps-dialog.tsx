@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
@@ -62,7 +63,6 @@ export function InterviewStepsDialog({
 
   useEffect(() => {
     if (!initialSteps.length) {
-      // Add default "Apply" step if no steps exist
       setSteps([
         {
           id: Date.now(),
@@ -92,7 +92,7 @@ export function InterviewStepsDialog({
     setSteps(updatedItems);
   };
 
-  const addStep = (template?: (typeof STEP_TEMPLATES)[0]) => {
+  const addStep = (template?: typeof STEP_TEMPLATES[0]) => {
     const newStep: InterviewStep = {
       id: Date.now(),
       stepName: template?.name || "",
@@ -100,29 +100,65 @@ export function InterviewStepsDialog({
       completed: false,
     };
     setSteps([...steps, newStep]);
+
+    // Add calendar event if scheduled date exists
+    if (newStep.scheduledDate) {
+      fetch("/api/calendar/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          summary: `${newStep.stepName} - Interview`,
+          description: `Interview step for application with ${applicationId}`,
+          startTime: newStep.scheduledDate,
+          endTime: new Date(newStep.scheduledDate.getTime() + (newStep.duration || 60) * 60000),
+          location: newStep.meetingUrl || "TBD",
+        }),
+      });
+    }
   };
 
-  const removeStep = (id: number) => {
-    setSteps(steps.filter((step) => step.id !== id));
-  };
-
-  const updateStep = (id: number, field: keyof InterviewStep, value: any) => {
-    setSteps(
-      steps.map((step) =>
-        step.id === id ? { ...step, [field]: value } : step,
-      ),
+  const updateStep = (index: number, field: string, value: any) => {
+    const updatedSteps = steps.map((step, i) =>
+      i === index ? { ...step, [field]: value } : step
     );
+    setSteps(updatedSteps);
+
+    // Update calendar event if date changed
+    if (field === "scheduledDate" || field === "duration") {
+      const step = updatedSteps[index];
+      if (step.scheduledDate) {
+        fetch("/api/calendar/events", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            summary: `${step.stepName} - Interview`,
+            description: `Interview step for application with ${applicationId}`,
+            startTime: step.scheduledDate,
+            endTime: new Date(step.scheduledDate.getTime() + (step.duration || 60) * 60000),
+            location: step.meetingUrl || "TBD",
+          }),
+        });
+      }
+    }
+  };
+
+  const removeStep = (index: number) => {
+    setSteps(steps.filter((_, i) => i !== index));
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Interview Steps</DialogTitle>
+          <DialogTitle>Manage Interview Steps</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex gap-2 mb-4 flex-wrap">
+        <div className="space-y-6">
+          <div className="flex flex-wrap gap-2">
             {STEP_TEMPLATES.map((template) => (
               <Button
                 key={template.type}
@@ -130,42 +166,41 @@ export function InterviewStepsDialog({
                 size="sm"
                 onClick={() => addStep(template)}
               >
-                + {template.name}
+                <Plus className="h-4 w-4 mr-2" />
+                {template.name}
               </Button>
             ))}
-            <Button
-              onClick={() => addStep()}
-              variant="outline"
-              size="sm"
-            >
-              + Custom Step
-            </Button>
-
           </div>
 
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="steps">
               {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="space-y-4"
+                >
                   {steps.map((step, index) => (
                     <Draggable
                       key={step.id}
-                      draggableId={step.id.toString()}
+                      draggableId={String(step.id)}
                       index={index}
-                      isDragDisabled={step.stepName === "Apply"}
                     >
                       {(provided) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className="border p-4 mb-4 rounded-lg"
+                          className="border rounded-lg p-4"
                         >
-                          <div className="flex items-center gap-4">
-                            <div {...provided.dragHandleProps}>
-                              <GripVertical className="h-5 w-5 text-gray-500" />
+                          <div className="flex items-start gap-4">
+                            <div
+                              {...provided.dragHandleProps}
+                              className="mt-3 cursor-move"
+                            >
+                              <GripVertical className="h-5 w-5 text-muted-foreground" />
                             </div>
 
-                            <div className="flex-1 grid gap-4">
+                            <div className="flex-1 space-y-4">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                   <Label>Step Name</Label>
@@ -173,40 +208,38 @@ export function InterviewStepsDialog({
                                     value={step.stepName}
                                     onChange={(e) =>
                                       updateStep(
-                                        step.id,
+                                        index,
                                         "stepName",
                                         e.target.value,
                                       )
                                     }
-                                    placeholder="e.g. Technical Interview"
-                                    disabled={step.stepName === "Apply"}
+                                    placeholder="Enter step name"
                                   />
                                 </div>
+
                                 <div>
                                   <Label>Interviewer Name</Label>
                                   <Input
-                                    value={step.interviewerName}
+                                    value={step.interviewerName || ""}
                                     onChange={(e) =>
                                       updateStep(
-                                        step.id,
+                                        index,
                                         "interviewerName",
                                         e.target.value,
                                       )
                                     }
-                                    placeholder="Interviewer's name"
+                                    placeholder="Enter interviewer name"
                                   />
                                 </div>
-                              </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                   <Label>LinkedIn Profile</Label>
                                   <div className="flex gap-2">
                                     <Input
-                                      value={step.interviewerLinkedIn}
+                                      value={step.interviewerLinkedIn || ""}
                                       onChange={(e) =>
                                         updateStep(
-                                          step.id,
+                                          index,
                                           "interviewerLinkedIn",
                                           e.target.value,
                                         )
@@ -229,14 +262,15 @@ export function InterviewStepsDialog({
                                     )}
                                   </div>
                                 </div>
+
                                 <div>
                                   <Label>Meeting URL</Label>
                                   <div className="flex gap-2">
                                     <Input
-                                      value={step.meetingUrl}
+                                      value={step.meetingUrl || ""}
                                       onChange={(e) =>
                                         updateStep(
-                                          step.id,
+                                          index,
                                           "meetingUrl",
                                           e.target.value,
                                         )
@@ -256,11 +290,9 @@ export function InterviewStepsDialog({
                                     )}
                                   </div>
                                 </div>
-                              </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                  <Label>Interview Date & Time</Label>
+                                  <Label>Scheduled Date</Label>
                                   <Input
                                     type="datetime-local"
                                     value={
@@ -273,13 +305,14 @@ export function InterviewStepsDialog({
                                     }
                                     onChange={(e) =>
                                       updateStep(
-                                        step.id,
+                                        index,
                                         "scheduledDate",
                                         new Date(e.target.value),
                                       )
                                     }
                                   />
                                 </div>
+
                                 <div>
                                   <Label>Duration (minutes)</Label>
                                   <Input
@@ -287,7 +320,7 @@ export function InterviewStepsDialog({
                                     value={step.duration || ""}
                                     onChange={(e) =>
                                       updateStep(
-                                        step.id,
+                                        index,
                                         "duration",
                                         parseInt(e.target.value),
                                       )
@@ -297,61 +330,60 @@ export function InterviewStepsDialog({
                                 </div>
                               </div>
 
-                              {step.completed && (
-                                <div>
-                                  <Label>Feedback</Label>
-                                  <Textarea
-                                    value={step.feedback}
+                              <div>
+                                <Label>Feedback/Notes</Label>
+                                <Textarea
+                                  value={step.feedback || ""}
+                                  onChange={(e) =>
+                                    updateStep(
+                                      index,
+                                      "feedback",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Enter feedback or notes"
+                                />
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <input
+                                    type="checkbox"
+                                    checked={step.completed}
                                     onChange={(e) =>
                                       updateStep(
-                                        step.id,
-                                        "feedback",
-                                        e.target.value,
+                                        index,
+                                        "completed",
+                                        e.target.checked,
                                       )
                                     }
-                                    placeholder="Interview feedback"
-                                    className="w-full min-h-[100px] p-2 border rounded"
+                                    className="h-4 w-4"
                                   />
+                                  <Label>Completed</Label>
                                 </div>
-                              )}
-                            </div>
 
-                            <div className="flex flex-col gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() =>
-                                  updateStep(
-                                    step.id,
-                                    "completed",
-                                    !step.completed,
-                                  )
-                                }
-                              >
-                                <Calendar
-                                  className={`h-4 w-4 ${step.completed ? "text-green-500" : ""}`}
-                                />
-                              </Button>
-
-                              {onViewOtherInterviews && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => onViewOtherInterviews(step)}
-                                >
-                                  <Users className="h-4 w-4" />
-                                </Button>
-                              )}
-
-                              {step.stepName !== "Apply" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeStep(step.id)}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              )}
+                                <div className="flex gap-2">
+                                  {onViewOtherInterviews && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        onViewOtherInterviews(step)
+                                      }
+                                    >
+                                      <Users className="h-4 w-4 mr-2" />
+                                      View Similar Interviews
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => removeStep(index)}
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -363,13 +395,13 @@ export function InterviewStepsDialog({
               )}
             </Droppable>
           </DragDropContext>
+        </div>
 
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button onClick={() => onSave(steps)}>Save Steps</Button>
-          </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => onSave(steps)}>Save Changes</Button>
         </div>
       </DialogContent>
     </Dialog>

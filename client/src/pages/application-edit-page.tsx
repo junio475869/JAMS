@@ -117,8 +117,54 @@ export default function ApplicationEditPage() {
   };
 
   const handleSaveSteps = async (updatedSteps) => {
-    setInterviewSteps(updatedSteps);
-    setShowStepsDialog(false);
+    try {
+      // Save the updated application with new steps
+      const response = await fetch(`/api/applications/${applicationId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...formData, interviewSteps: updatedSteps }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save application: ${response.statusText}`);
+      }
+
+      // Create timeline events for new steps
+      for (const step of updatedSteps) {
+        if (step.scheduledDate && !interviewSteps.find(s => s.id === step.id)) {
+          await fetch(`/api/applications/${applicationId}/timeline`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title: "Interview Scheduled",
+              description: `${step.stepName} interview scheduled with ${step.interviewerName || 'TBD'}`,
+              type: "interview",
+              date: step.scheduledDate,
+            }),
+          });
+        }
+      }
+
+      setInterviewSteps(updatedSteps);
+      setShowStepsDialog(false);
+      
+      toast({
+        title: "Steps saved successfully!",
+        description: "Interview steps have been updated.",
+      });
+      
+      refetchTimeline();
+    } catch (error) {
+      toast({
+        title: "Error saving steps",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleViewOtherInterviews = async (step) => {
