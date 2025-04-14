@@ -18,9 +18,14 @@ import { useParams } from "wouter";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { format } from 'date-fns';
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
 
 export default function ApplicationEditPage() {
   const [_, setLocation] = useLocation();
@@ -43,7 +48,6 @@ export default function ApplicationEditPage() {
   const [selectedStep, setSelectedStep] = useState(null);
   const [otherInterviews, setOtherInterviews] = useState([]);
 
-
   const { data: application, isLoading } = useQuery({
     queryKey: ["application", applicationId],
     queryFn: async () => {
@@ -56,7 +60,9 @@ export default function ApplicationEditPage() {
   const { data: timeline, refetch: refetchTimeline } = useQuery({
     queryKey: ["timeline", applicationId],
     queryFn: async () => {
-      const response = await fetch(`/api/applications/${applicationId}/timeline`);
+      const response = await fetch(
+        `/api/applications/${applicationId}/timeline`,
+      );
       if (!response.ok) throw new Error("Failed to fetch timeline");
       return response.json();
     },
@@ -118,18 +124,22 @@ export default function ApplicationEditPage() {
   const handleViewOtherInterviews = async (step) => {
     setSelectedStep(step);
     try {
-      const response = await fetch(`/api/applications/${applicationId}/interviews?stepId=${step.id}`);
+      const response = await fetch(
+        `/api/applications/${applicationId}/interviews?stepId=${step.id}`,
+      );
       if (!response.ok) {
-        throw new Error(`Failed to fetch other interviews: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch other interviews: ${response.statusText}`,
+        );
       }
       const data = await response.json();
       setOtherInterviews(data);
       setShowOtherInterviews(true);
     } catch (error) {
       toast({
-        title: 'Error fetching interviews',
+        title: "Error fetching interviews",
         description: error.message,
-        variant: 'destructive'
+        variant: "destructive",
       });
     }
   };
@@ -152,12 +162,12 @@ export default function ApplicationEditPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Main Information Column */}
-        <div className="space-y-6">
+        <div className="">
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label htmlFor="company">Company</Label>
                 <Input
@@ -258,12 +268,15 @@ export default function ApplicationEditPage() {
                   }
                 />
               </div>
-              <div className="flex justify-end mt-6">
-                <div className="flex gap-2">
+              <div className="justify-end mt-6">
+                <div className="grid gap-2">
                   <Button onClick={handleSave} disabled={isLoading}>
                     {isLoading ? "Saving..." : "Save Changes"}
                   </Button>
-                  <Button variant="outline" onClick={() => setShowStepsDialog(true)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowStepsDialog(true)}
+                  >
                     Manage Interview Steps
                   </Button>
                 </div>
@@ -283,29 +296,33 @@ export default function ApplicationEditPage() {
                 <Button
                   onClick={async () => {
                     try {
-                      const response = await fetch(`/api/applications/${applicationId}/timeline`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json'
+                      const response = await fetch(
+                        `/api/applications/${applicationId}/timeline`,
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            title: "Status Update",
+                            description: "Added a new status update",
+                            type: "note",
+                            date: new Date(),
+                          }),
                         },
-                        body: JSON.stringify({
-                          title: 'Status Update',
-                          description: 'Added a new status update',
-                          type: 'note',
-                          date: new Date()
-                        })
-                      });
-                      if (!response.ok) throw new Error('Failed to add timeline event');
+                      );
+                      if (!response.ok)
+                        throw new Error("Failed to add timeline event");
                       refetchTimeline();
                       toast({
-                        title: 'Timeline event added',
-                        description: 'Successfully added new timeline event'
+                        title: "Timeline event added",
+                        description: "Successfully added new timeline event",
                       });
                     } catch (error) {
                       toast({
-                        title: 'Error',
-                        description: 'Failed to add timeline event',
-                        variant: 'destructive'
+                        title: "Error",
+                        description: "Failed to add timeline event",
+                        variant: "destructive",
                       });
                     }
                   }}
@@ -337,7 +354,6 @@ export default function ApplicationEditPage() {
         </div>
       </div>
 
-
       <InterviewStepsDialog
         isOpen={showStepsDialog}
         onClose={() => setShowStepsDialog(false)}
@@ -350,14 +366,16 @@ export default function ApplicationEditPage() {
       <Dialog open={showOtherInterviews} onOpenChange={setShowOtherInterviews}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Other Interviews for {selectedStep?.stepName}</DialogTitle>
+            <DialogTitle>
+              Other Interviews for {selectedStep?.stepName}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {otherInterviews.map((interview) => (
               <div key={interview.id} className="border p-4 rounded-lg">
                 <div className="font-medium">{interview.interviewerName}</div>
                 <div className="text-sm text-muted-foreground">
-                  {format(new Date(interview.scheduledDate), 'PPP')}
+                  {format(new Date(interview.scheduledDate), "PPP")}
                 </div>
                 <div className="mt-2">{interview.feedback}</div>
               </div>
@@ -374,37 +392,35 @@ export default function ApplicationEditPage() {
   );
 }
 
+// // Placeholder for InterviewStepsDialog component -  Replace with your actual component
+// const InterviewStepsDialog = ({ isOpen, onClose, applicationId, initialSteps, onSave, onViewOtherInterviews }) => {
+//   const [steps, setSteps] = useState(initialSteps);
 
-// Placeholder for InterviewStepsDialog component -  Replace with your actual component
-const InterviewStepsDialog = ({ isOpen, onClose, applicationId, initialSteps, onSave, onViewOtherInterviews }) => {
-  const [steps, setSteps] = useState(initialSteps);
+//   const handleStepChange = (index, newStep) => {
+//     const updatedSteps = [...steps];
+//     updatedSteps[index] = newStep;
+//     setSteps(updatedSteps);
+//   };
 
-  const handleStepChange = (index, newStep) => {
-    const updatedSteps = [...steps];
-    updatedSteps[index] = newStep;
-    setSteps(updatedSteps);
-  };
-
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Manage Interview Steps</DialogTitle>
-        </DialogHeader>
-        <div>
-          {/* Add your step management UI here.  This is a placeholder */}
-          {steps.map((step, index) => (
-            <div key={index}>
-              <Input type="text" value={step.stepName} onChange={e => handleStepChange(index, {...step, stepName: e.target.value})}/>
-              <Button onClick={() => onViewOtherInterviews(step)}>View Other Interviews</Button>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-end mt-4">
-            <Button onClick={() => onSave(steps)}>Save</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+//   return (
+//     <Dialog open={isOpen} onOpenChange={onClose}>
+//       <DialogContent>
+//         <DialogHeader>
+//           <DialogTitle>Manage Interview Steps</DialogTitle>
+//         </DialogHeader>
+//         <div>
+//           {/* Add your step management UI here.  This is a placeholder */}
+//           {steps.map((step, index) => (
+//             <div key={index}>
+//               <Input type="text" value={step.stepName} onChange={e => handleStepChange(index, {...step, stepName: e.target.value})}/>
+//               <Button onClick={() => onViewOtherInterviews(step)}>View Other Interviews</Button>
+//             </div>
+//           ))}
+//         </div>
+//         <div className="flex justify-end mt-4">
+//             <Button onClick={() => onSave(steps)}>Save</Button>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };

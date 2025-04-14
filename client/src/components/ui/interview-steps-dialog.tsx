@@ -1,12 +1,20 @@
-
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plus, GripVertical, Trash, ExternalLink, Calendar, LinkedinIcon } from "lucide-react";
+import {
+  Plus,
+  GripVertical,
+  Trash,
+  ExternalLink,
+  Calendar,
+  LinkedinIcon,
+  Users,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
 import { Button } from "./button";
 import { Input } from "./input";
 import { Label } from "./label";
+import { Textarea } from "./textarea";
 
 const STEP_TEMPLATES = [
   { name: "Apply", type: "APPLY" },
@@ -17,7 +25,7 @@ const STEP_TEMPLATES = [
   { name: "Technical Interview", type: "TECH" },
   { name: "CTO Interview", type: "CTO" },
   { name: "CEO Interview", type: "CEO" },
-  { name: "Behavioral Interview", type: "BEHAVIORAL" }
+  { name: "Behavioral Interview", type: "BEHAVIORAL" },
 ];
 
 interface InterviewStep {
@@ -48,20 +56,22 @@ export function InterviewStepsDialog({
   applicationId,
   initialSteps = [],
   onSave,
-  onViewOtherInterviews
+  onViewOtherInterviews,
 }: InterviewStepsDialogProps) {
   const [steps, setSteps] = useState<InterviewStep[]>(initialSteps);
 
   useEffect(() => {
     if (!initialSteps.length) {
       // Add default "Apply" step if no steps exist
-      setSteps([{
-        id: Date.now(),
-        stepName: "Apply",
-        sequence: 1,
-        completed: true,
-        scheduledDate: new Date()
-      }]);
+      setSteps([
+        {
+          id: Date.now(),
+          stepName: "Apply",
+          sequence: 1,
+          completed: true,
+          scheduledDate: new Date(),
+        },
+      ]);
     } else {
       setSteps(initialSteps);
     }
@@ -76,30 +86,32 @@ export function InterviewStepsDialog({
 
     const updatedItems = items.map((item, index) => ({
       ...item,
-      sequence: index + 1
+      sequence: index + 1,
     }));
 
     setSteps(updatedItems);
   };
 
-  const addStep = (template?: typeof STEP_TEMPLATES[0]) => {
+  const addStep = (template?: (typeof STEP_TEMPLATES)[0]) => {
     const newStep: InterviewStep = {
       id: Date.now(),
       stepName: template?.name || "",
       sequence: steps.length + 1,
-      completed: false
+      completed: false,
     };
     setSteps([...steps, newStep]);
   };
 
   const removeStep = (id: number) => {
-    setSteps(steps.filter(step => step.id !== id));
+    setSteps(steps.filter((step) => step.id !== id));
   };
 
   const updateStep = (id: number, field: keyof InterviewStep, value: any) => {
-    setSteps(steps.map(step =>
-      step.id === id ? { ...step, [field]: value } : step
-    ));
+    setSteps(
+      steps.map((step) =>
+        step.id === id ? { ...step, [field]: value } : step,
+      ),
+    );
   };
 
   return (
@@ -121,6 +133,14 @@ export function InterviewStepsDialog({
                 + {template.name}
               </Button>
             ))}
+            <Button
+              onClick={() => addStep()}
+              variant="outline"
+              size="sm"
+            >
+              + Custom Step
+            </Button>
+
           </div>
 
           <DragDropContext onDragEnd={handleDragEnd}>
@@ -151,7 +171,13 @@ export function InterviewStepsDialog({
                                   <Label>Step Name</Label>
                                   <Input
                                     value={step.stepName}
-                                    onChange={(e) => updateStep(step.id, 'stepName', e.target.value)}
+                                    onChange={(e) =>
+                                      updateStep(
+                                        step.id,
+                                        "stepName",
+                                        e.target.value,
+                                      )
+                                    }
                                     placeholder="e.g. Technical Interview"
                                     disabled={step.stepName === "Apply"}
                                   />
@@ -160,7 +186,13 @@ export function InterviewStepsDialog({
                                   <Label>Interviewer Name</Label>
                                   <Input
                                     value={step.interviewerName}
-                                    onChange={(e) => updateStep(step.id, 'interviewerName', e.target.value)}
+                                    onChange={(e) =>
+                                      updateStep(
+                                        step.id,
+                                        "interviewerName",
+                                        e.target.value,
+                                      )
+                                    }
                                     placeholder="Interviewer's name"
                                   />
                                 </div>
@@ -172,14 +204,25 @@ export function InterviewStepsDialog({
                                   <div className="flex gap-2">
                                     <Input
                                       value={step.interviewerLinkedIn}
-                                      onChange={(e) => updateStep(step.id, 'interviewerLinkedIn', e.target.value)}
+                                      onChange={(e) =>
+                                        updateStep(
+                                          step.id,
+                                          "interviewerLinkedIn",
+                                          e.target.value,
+                                        )
+                                      }
                                       placeholder="LinkedIn URL"
                                     />
                                     {step.interviewerLinkedIn && (
                                       <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => window.open(step.interviewerLinkedIn, '_blank')}
+                                        onClick={() =>
+                                          window.open(
+                                            step.interviewerLinkedIn,
+                                            "_blank",
+                                          )
+                                        }
                                       >
                                         <LinkedinIcon className="h-4 w-4" />
                                       </Button>
@@ -191,14 +234,22 @@ export function InterviewStepsDialog({
                                   <div className="flex gap-2">
                                     <Input
                                       value={step.meetingUrl}
-                                      onChange={(e) => updateStep(step.id, 'meetingUrl', e.target.value)}
+                                      onChange={(e) =>
+                                        updateStep(
+                                          step.id,
+                                          "meetingUrl",
+                                          e.target.value,
+                                        )
+                                      }
                                       placeholder="Meeting URL"
                                     />
                                     {step.meetingUrl && (
                                       <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => window.open(step.meetingUrl, '_blank')}
+                                        onClick={() =>
+                                          window.open(step.meetingUrl, "_blank")
+                                        }
                                       >
                                         <ExternalLink className="h-4 w-4" />
                                       </Button>
@@ -212,16 +263,35 @@ export function InterviewStepsDialog({
                                   <Label>Interview Date & Time</Label>
                                   <Input
                                     type="datetime-local"
-                                    value={step.scheduledDate ? format(new Date(step.scheduledDate), "yyyy-MM-dd'T'HH:mm") : ''}
-                                    onChange={(e) => updateStep(step.id, 'scheduledDate', new Date(e.target.value))}
+                                    value={
+                                      step.scheduledDate
+                                        ? format(
+                                            new Date(step.scheduledDate),
+                                            "yyyy-MM-dd'T'HH:mm",
+                                          )
+                                        : ""
+                                    }
+                                    onChange={(e) =>
+                                      updateStep(
+                                        step.id,
+                                        "scheduledDate",
+                                        new Date(e.target.value),
+                                      )
+                                    }
                                   />
                                 </div>
                                 <div>
                                   <Label>Duration (minutes)</Label>
                                   <Input
                                     type="number"
-                                    value={step.duration || ''}
-                                    onChange={(e) => updateStep(step.id, 'duration', parseInt(e.target.value))}
+                                    value={step.duration || ""}
+                                    onChange={(e) =>
+                                      updateStep(
+                                        step.id,
+                                        "duration",
+                                        parseInt(e.target.value),
+                                      )
+                                    }
                                     placeholder="60"
                                   />
                                 </div>
@@ -230,9 +300,15 @@ export function InterviewStepsDialog({
                               {step.completed && (
                                 <div>
                                   <Label>Feedback</Label>
-                                  <textarea
+                                  <Textarea
                                     value={step.feedback}
-                                    onChange={(e) => updateStep(step.id, 'feedback', e.target.value)}
+                                    onChange={(e) =>
+                                      updateStep(
+                                        step.id,
+                                        "feedback",
+                                        e.target.value,
+                                      )
+                                    }
                                     placeholder="Interview feedback"
                                     className="w-full min-h-[100px] p-2 border rounded"
                                   />
@@ -244,11 +320,19 @@ export function InterviewStepsDialog({
                               <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => updateStep(step.id, 'completed', !step.completed)}
+                                onClick={() =>
+                                  updateStep(
+                                    step.id,
+                                    "completed",
+                                    !step.completed,
+                                  )
+                                }
                               >
-                                <Calendar className={`h-4 w-4 ${step.completed ? 'text-green-500' : ''}`} />
+                                <Calendar
+                                  className={`h-4 w-4 ${step.completed ? "text-green-500" : ""}`}
+                                />
                               </Button>
-                              
+
                               {onViewOtherInterviews && (
                                 <Button
                                   variant="outline"
@@ -280,18 +364,11 @@ export function InterviewStepsDialog({
             </Droppable>
           </DragDropContext>
 
-          <Button onClick={() => addStep()} variant="outline" className="w-full mt-4">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Custom Step
-          </Button>
-
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={() => onSave(steps)}>
-              Save Steps
-            </Button>
+            <Button onClick={() => onSave(steps)}>Save Steps</Button>
           </div>
         </div>
       </DialogContent>
