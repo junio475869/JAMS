@@ -338,76 +338,249 @@ export default function ApplicationEditPage() {
               <CardTitle>Interview Timeline</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between items-center mb-4">
-                <Button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(
-                        `/api/applications/${applicationId}/timeline`,
-                        {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({
-                            title: "Status Update",
-                            description: "Added a new status update",
-                            type: "note",
-                            date: new Date(),
-                          }),
-                        },
-                      );
-                      if (!response.ok)
-                        throw new Error("Failed to add timeline event");
-                      refetchTimeline();
-                      toast({
-                        title: "Timeline event added",
-                        description: "Successfully added new timeline event",
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: "Failed to add timeline event",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  Add Timeline Event
-                </Button>
-              </div>
-              <div className="relative pl-4 border-l border-border">
-                {timeline?.map((event: any) => (
-                  <div key={event.id} className="mb-4 relative">
-                    <div className="absolute -left-[21px] h-4 w-4 rounded-full bg-primary" />
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="font-medium">{event.title}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(event.date).toLocaleDateString()}
+              <div className="space-y-6">
+                <div className="flex flex-wrap gap-2">
+                  {STEP_TEMPLATES.map((template) => (
+                    <Button
+                      key={template.type}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newStep = {
+                          id: Date.now(),
+                          stepName: template.name,
+                          sequence: interviewSteps.length + 1,
+                          completed: false,
+                        };
+                        handleSaveSteps([...interviewSteps, newStep]);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      {template.name}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  {interviewSteps.map((step, index) => (
+                    <div key={step.id} className="border rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Step Name</Label>
+                          <Input
+                            value={step.stepName}
+                            onChange={(e) => {
+                              const updatedSteps = [...interviewSteps];
+                              updatedSteps[index] = {
+                                ...step,
+                                stepName: e.target.value,
+                              };
+                              handleSaveSteps(updatedSteps);
+                            }}
+                            placeholder="Enter step name"
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Interviewer Name</Label>
+                          <Input
+                            value={step.interviewerName || ""}
+                            onChange={(e) => {
+                              const updatedSteps = [...interviewSteps];
+                              updatedSteps[index] = {
+                                ...step,
+                                interviewerName: e.target.value,
+                              };
+                              handleSaveSteps(updatedSteps);
+                            }}
+                            placeholder="Enter interviewer name"
+                          />
+                        </div>
+
+                        <div>
+                          <Label>LinkedIn Profile</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={step.interviewerLinkedIn || ""}
+                              onChange={(e) => {
+                                const updatedSteps = [...interviewSteps];
+                                updatedSteps[index] = {
+                                  ...step,
+                                  interviewerLinkedIn: e.target.value,
+                                };
+                                handleSaveSteps(updatedSteps);
+                              }}
+                              placeholder="LinkedIn URL"
+                            />
+                            {step.interviewerLinkedIn && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                  window.open(step.interviewerLinkedIn, "_blank")
+                                }
+                              >
+                                <LinkedinIcon className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>Meeting URL</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={step.meetingUrl || ""}
+                              onChange={(e) => {
+                                const updatedSteps = [...interviewSteps];
+                                updatedSteps[index] = {
+                                  ...step,
+                                  meetingUrl: e.target.value,
+                                };
+                                handleSaveSteps(updatedSteps);
+                              }}
+                              placeholder="Meeting URL"
+                            />
+                            {step.meetingUrl && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                  window.open(step.meetingUrl, "_blank")
+                                }
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>Scheduled Date</Label>
+                          <Input
+                            type="datetime-local"
+                            value={
+                              step.scheduledDate
+                                ? format(
+                                    new Date(step.scheduledDate),
+                                    "yyyy-MM-dd'T'HH:mm",
+                                  )
+                                : ""
+                            }
+                            onChange={(e) => {
+                              const updatedSteps = [...interviewSteps];
+                              updatedSteps[index] = {
+                                ...step,
+                                scheduledDate: new Date(e.target.value),
+                              };
+                              handleSaveSteps(updatedSteps);
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Duration (minutes)</Label>
+                          <Input
+                            type="number"
+                            value={step.duration || ""}
+                            onChange={(e) => {
+                              const updatedSteps = [...interviewSteps];
+                              updatedSteps[index] = {
+                                ...step,
+                                duration: parseInt(e.target.value),
+                              };
+                              handleSaveSteps(updatedSteps);
+                            }}
+                            placeholder="60"
+                          />
+                        </div>
+
+                        <div className="col-span-2">
+                          <Label>Feedback/Notes</Label>
+                          <Textarea
+                            value={step.feedback || ""}
+                            onChange={(e) => {
+                              const updatedSteps = [...interviewSteps];
+                              updatedSteps[index] = {
+                                ...step,
+                                feedback: e.target.value,
+                              };
+                              handleSaveSteps(updatedSteps);
+                            }}
+                            placeholder="Enter feedback or notes"
+                          />
+                        </div>
                       </div>
-                      <div className="mt-2 text-sm">{event.description}</div>
+
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="checkbox"
+                            checked={step.completed}
+                            onChange={(e) => {
+                              const updatedSteps = [...interviewSteps];
+                              updatedSteps[index] = {
+                                ...step,
+                                completed: e.target.checked,
+                              };
+                              handleSaveSteps(updatedSteps);
+                            }}
+                            className="h-4 w-4"
+                          />
+                          <Label>Completed</Label>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewOtherInterviews(step)}
+                          >
+                            <Users className="h-4 w-4 mr-2" />
+                            View Similar Interviews
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              const updatedSteps = interviewSteps.filter(
+                                (s) => s.id !== step.id
+                              );
+                              handleSaveSteps(updatedSteps);
+                            }}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {(!timeline || timeline.length === 0) && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No timeline events yet
-                  </div>
-                )}
+                  ))}
+                </div>
+
+                <div className="relative pl-4 border-l border-border mt-8">
+                  {timeline?.map((event: any) => (
+                    <div key={event.id} className="mb-4 relative">
+                      <div className="absolute -left-[21px] h-4 w-4 rounded-full bg-primary" />
+                      <div className="bg-muted p-4 rounded-lg">
+                        <div className="font-medium">{event.title}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(event.date).toLocaleDateString()}
+                        </div>
+                        <div className="mt-2 text-sm">{event.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!timeline || timeline.length === 0) && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No timeline events yet
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-
-      <InterviewStepsDialog
-        isOpen={showStepsDialog}
-        onClose={() => setShowStepsDialog(false)}
-        applicationId={applicationId}
-        initialSteps={interviewSteps}
-        onSave={handleSaveSteps}
-        onViewOtherInterviews={handleViewOtherInterviews}
-      />
 
       <Dialog open={showOtherInterviews} onOpenChange={setShowOtherInterviews}>
         <DialogContent>
