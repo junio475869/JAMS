@@ -150,21 +150,7 @@ export const insertInterviewSchema = createInsertSchema(interviews).pick({
   notes: true,
 });
 
-// Interview Steps
-export const interviewSteps = pgTable("interview_steps", {
-  id: serial("id").primaryKey(),
-  applicationId: integer("application_id").notNull().references(() => applications.id),
-  stepName: text("step_name").notNull(),
-  sequence: integer("sequence").notNull(),
-  scheduledDate: timestamp("scheduled_date"),
-  completed: boolean("completed").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-});
-
-export const insertInterviewStepSchema = createInsertSchema(interviewSteps);
-export type InterviewStep = typeof interviewSteps.$inferSelect;
-export type InsertInterviewStep = z.infer<typeof insertInterviewStepSchema>;
+// The other declaration of interviewSteps already exists above
 
 // Contacts
 export const contacts = pgTable("contacts", {
