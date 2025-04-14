@@ -17,7 +17,14 @@ import { ApplicationStatus } from "@shared/schema";
 import { useParams } from "wouter";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Trash,
+  ExternalLink,
+  LinkedinIcon,
+  Users,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +33,18 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
+
+const STEP_TEMPLATES = [
+  { name: "Apply", type: "APPLY" },
+  { name: "HR Screen", type: "HR" },
+  { name: "Hiring Manager", type: "HM" },
+  { name: "Technical Assessment", type: "ASSESSMENT" },
+  { name: "Director of Engineering", type: "DOE" },
+  { name: "Technical Interview", type: "TECH" },
+  { name: "CTO Interview", type: "CTO" },
+  { name: "CEO Interview", type: "CEO" },
+  { name: "Behavioral Interview", type: "BEHAVIORAL" },
+];
 
 export default function ApplicationEditPage() {
   const [_, setLocation] = useLocation();
@@ -43,7 +62,6 @@ export default function ApplicationEditPage() {
     salary: "",
   });
 
-  const [showStepsDialog, setShowStepsDialog] = useState(false);
   const [showOtherInterviews, setShowOtherInterviews] = useState(false);
   const [selectedStep, setSelectedStep] = useState(null);
   const [otherInterviews, setOtherInterviews] = useState([]);
@@ -116,52 +134,57 @@ export default function ApplicationEditPage() {
     }
   };
 
-  const handleSaveSteps = async (updatedSteps) => {
+  const handleSaveSteps = async (updatedSteps, syncToDatabase = false) => {
     try {
-      // Save the updated application with new steps
-      const response = await fetch(`/api/applications/${applicationId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...formData, interviewSteps: updatedSteps }),
-      });
+      if (syncToDatabase) {
+        // Save the updated application with new steps
+        const response = await fetch(`/api/applications/${applicationId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...formData, interviewSteps: updatedSteps }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Failed to save application: ${response.statusText}`);
-      }
-
-      // Create timeline events for new steps
-      for (const step of updatedSteps) {
-        if (step.scheduledDate && !interviewSteps.find(s => s.id === step.id)) {
-          await fetch(`/api/applications/${applicationId}/timeline`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              title: "Interview Scheduled",
-              description: `${step.stepName} interview scheduled with ${step.interviewerName || 'TBD'}`,
-              type: "interview",
-              date: step.scheduledDate,
-            }),
-          });
+        if (!response.ok) {
+          throw new Error(`Failed to save application: ${response.statusText}`);
         }
+
+        // Create timeline events for new steps
+        for (const step of updatedSteps) {
+          if (
+            step.scheduledDate &&
+            !interviewSteps.find((s) => s.id === step.id)
+          ) {
+            await fetch(`/api/applications/${applicationId}/timeline`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title: "Interview Scheduled",
+                description: `${step.stepName} interview scheduled with ${step.interviewerName || "TBD"}`,
+                type: "interview",
+                date: step.scheduledDate,
+              }),
+            });
+          }
+        }
+        toast({
+          title: "Steps saved successfully!",
+          description: "Interview steps have been updated.",
+        });
+        refetchTimeline();
       }
 
       setInterviewSteps(updatedSteps);
-      setShowStepsDialog(false);
-      
-      toast({
-        title: "Steps saved successfully!",
-        description: "Interview steps have been updated.",
-      });
-      
-      refetchTimeline();
     } catch (error) {
       toast({
         title: "Error saving steps",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     }
@@ -314,18 +337,14 @@ export default function ApplicationEditPage() {
                   }
                 />
               </div>
-              <div className="justify-end mt-6">
-                <div className="grid gap-2">
-                  <Button onClick={handleSave} disabled={isLoading}>
-                    {isLoading ? "Saving..." : "Save Changes"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowStepsDialog(true)}
-                  >
-                    Manage Interview Steps
-                  </Button>
-                </div>
+              <div className="flex items-center justify-center">
+                <Button
+                  onClick={handleSave}
+                  disabled={isLoading}
+                  className="m-auto"
+                >
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -339,6 +358,25 @@ export default function ApplicationEditPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
+                <div className="relative pl-4 border-l border-border mt-8">
+                  {timeline?.map((event: any) => (
+                    <div key={event.id} className="mb-4 relative">
+                      <div className="absolute -left-[21px] h-4 w-4 rounded-full bg-primary" />
+                      <div className="bg-muted p-4 rounded-lg">
+                        <div className="font-medium">{event.title}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(event.date).toLocaleDateString()}
+                        </div>
+                        <div className="mt-2 text-sm">{event.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!timeline || timeline.length === 0) && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No timeline events yet
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {STEP_TEMPLATES.map((template) => (
                     <Button
@@ -417,7 +455,10 @@ export default function ApplicationEditPage() {
                                 variant="outline"
                                 size="icon"
                                 onClick={() =>
-                                  window.open(step.interviewerLinkedIn, "_blank")
+                                  window.open(
+                                    step.interviewerLinkedIn,
+                                    "_blank",
+                                  )
                                 }
                               >
                                 <LinkedinIcon className="h-4 w-4" />
@@ -544,7 +585,7 @@ export default function ApplicationEditPage() {
                             size="sm"
                             onClick={() => {
                               const updatedSteps = interviewSteps.filter(
-                                (s) => s.id !== step.id
+                                (s) => s.id !== step.id,
                               );
                               handleSaveSteps(updatedSteps);
                             }}
@@ -555,26 +596,6 @@ export default function ApplicationEditPage() {
                       </div>
                     </div>
                   ))}
-                </div>
-
-                <div className="relative pl-4 border-l border-border mt-8">
-                  {timeline?.map((event: any) => (
-                    <div key={event.id} className="mb-4 relative">
-                      <div className="absolute -left-[21px] h-4 w-4 rounded-full bg-primary" />
-                      <div className="bg-muted p-4 rounded-lg">
-                        <div className="font-medium">{event.title}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(event.date).toLocaleDateString()}
-                        </div>
-                        <div className="mt-2 text-sm">{event.description}</div>
-                      </div>
-                    </div>
-                  ))}
-                  {(!timeline || timeline.length === 0) && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No timeline events yet
-                    </div>
-                  )}
                 </div>
               </div>
             </CardContent>

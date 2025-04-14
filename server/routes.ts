@@ -50,8 +50,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const limit = parseInt(req.query.limit as string) || 20;
     const status = req.query.status as string;
     const search = req.query.search as string;
-    const sortBy = req.query.sortBy as string || 'updatedAt';
-    const sortOrder = (req.query.sortOrder as string || 'desc').toLowerCase();
+    const sortBy = (req.query.sortBy as string) || "updatedAt";
+    const sortOrder = ((req.query.sortOrder as string) || "desc").toLowerCase();
     const offset = (page - 1) * limit;
 
     try {
@@ -122,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(application);
   });
 
-  app.patch("/api/applications/:id", async (req, res) => {
+  app.put("/api/applications/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const applicationId = parseInt(req.params.id);
@@ -135,6 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Application not found" });
     }
 
+    console.log("Application ID:", applicationId, req.body);
     try {
       const updatedApplication = await storage.updateApplication(
         applicationId,
