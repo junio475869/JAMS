@@ -199,7 +199,7 @@ export default function AnalyticsPage() {
   }
   
   return (
-    <div className="container py-10">
+    <div className="p-4 md:p-6 space-y-6">
       {isDemoMode && (
         <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6">
           <p className="text-blue-300 font-medium">
