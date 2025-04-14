@@ -2,6 +2,8 @@ import express from 'express';
 import { createServer } from 'http';
 import { createTables } from './migrations';
 import applicationRoutes from './routes/application.routes';
+import adminRoutes from './routes/admin.routes';
+import teamRoutes from './routes/team.routes';
 
 const app = express();
 app.use(express.json());
