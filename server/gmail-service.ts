@@ -1,7 +1,7 @@
 
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { storage } from './storage.service';
+import { storage } from './storage';
 
 export interface GmailConnection {
   userId: number;
