@@ -72,6 +72,20 @@ export const insertApplicationSchema = createInsertSchema(applications).pick({
   description: true,
   notes: true,
   appliedDate: true,
+}).extend({
+  interviewSteps: z.array(z.object({
+    id: z.number(),
+    stepName: z.string(),
+    sequence: z.number(),
+    completed: z.boolean(),
+    scheduledDate: z.date().optional(),
+    interviewerName: z.string().optional(),
+    interviewerLinkedIn: z.string().optional(),
+    meetingUrl: z.string().optional(),
+    duration: z.number().optional(),
+    comments: z.string().optional(),
+    feedback: z.string().optional()
+  })).optional()
 });
 
 // Interviews
