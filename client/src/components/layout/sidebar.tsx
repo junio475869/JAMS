@@ -171,21 +171,26 @@ export function Sidebar({
 
       <div className="p-1 border-t border-gray-700">
         <div className="rounded-lg p-3">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <BotIcon className="text-primary-500 h-5 w-5" />
+          {!sidebarCollapsed && (
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <BotIcon className="text-primary-500 h-5 w-5" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-white">AI Assistant</h3>
+                <p className="text-xs text-gray-400">
+                  Optimize your job search
+                </p>
+              </div>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-white">AI Assistant</h3>
-              <p className="text-xs text-gray-400">Optimize your job search</p>
-            </div>
-          </div>
+          )}
           <Button
             variant="outline"
             size="sm"
             className="mt-3 w-full bg-gray-750 hover:bg-gray-700 text-gray-300 border-gray-700"
           >
-            <SparklesIcon className="h-4 w-4 mr-1" /> Get suggestions
+            <SparklesIcon className="h-4 w-4 mr-1" />{" "}
+            {!sidebarCollapsed && <span>Get suggestions</span>}
           </Button>
         </div>
       </div>
@@ -202,8 +207,13 @@ export function Sidebar({
             >
               <div className="flex items-center">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.profilePicture} alt={user?.username} />
-                  <AvatarFallback>{user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarImage
+                    src={user?.profilePicture}
+                    alt={user?.username}
+                  />
+                  <AvatarFallback>
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 {!sidebarCollapsed && (
                   <div className="ml-3 text-left">
