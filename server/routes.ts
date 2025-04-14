@@ -358,6 +358,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Timeline endpoints
+  // Interview Steps endpoints
+  app.get("/api/applications/:id/interview-steps", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const applicationId = parseInt(req.params.id);
+    if (isNaN(applicationId)) {
+      return res.status(400).json({ error: "Invalid application ID" });
+    }
+
+    const application = await storage.getApplicationById(applicationId);
+    if (!application || application.userId !== req.user!.id) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const steps = await storage.getInterviewStepsByApplicationId(applicationId);
+    res.json(steps);
+  });
+
+  app.post("/api/applications/:id/interview-steps", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const applicationId = parseInt(req.params.id);
+    if (isNaN(applicationId)) {
+      return res.status(400).json({ error: "Invalid application ID" });
+    }
+
+    const application = await storage.getApplicationById(applicationId);
+    if (!application || application.userId !== req.user!.id) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    try {
+      const step = await storage.createInterviewStep({
+        ...req.body,
+        applicationId,
+      });
+
+      // Create timeline event for the new step
+      if (step.scheduledDate) {
+        await storage.createTimelineEvent({
+          applicationId,
+          userId: req.user!.id,
+          title: "Interview Step Added",
+          description: `${step.stepName} scheduled for ${new Date(step.scheduledDate).toLocaleDateString()}`,
+          type: "interview",
+          date: step.scheduledDate,
+        });
+      }
+
+      res.status(201).json(step);
+    } catch (error) {
+      res.status(400).json({ error: error.message || "Invalid request" });
+    }
+  });
+
+  app.put("/api/applications/:appId/interview-steps/:stepId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const applicationId = parseInt(req.params.appId);
+    const stepId = parseInt(req.params.stepId);
+    if (isNaN(applicationId) || isNaN(stepId)) {
+      return res.status(400).json({ error: "Invalid ID provided" });
+    }
+
+    const application = await storage.getApplicationById(applicationId);
+    if (!application || application.userId !== req.user!.id) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    try {
+      const updatedStep = await storage.updateInterviewStep(stepId, req.body);
+
+      // Create timeline event for status change
+      if (req.body.completed !== undefined) {
+        await storage.createTimelineEvent({
+          applicationId,
+          userId: req.user!.id,
+          title: req.body.completed ? "Interview Step Completed" : "Interview Step Reopened",
+          description: `${updatedStep.stepName} ${req.body.completed ? "completed" : "reopened"}`,
+          type: "interview",
+          date: new Date(),
+        });
+      }
+
+      res.json(updatedStep);
+    } catch (error) {
+      res.status(400).json({ error: error.message || "Invalid request" });
+    }
+  });
+
+  app.delete("/api/applications/:appId/interview-steps/:stepId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const applicationId = parseInt(req.params.appId);
+    const stepId = parseInt(req.params.stepId);
+    if (isNaN(applicationId) || isNaN(stepId)) {
+      return res.status(400).json({ error: "Invalid ID provided" });
+    }
+
+    const application = await storage.getApplicationById(applicationId);
+    if (!application || application.userId !== req.user!.id) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    await storage.deleteInterviewStep(stepId);
+    res.status(204).send();
+  });
+
   app.get("/api/applications/:id/timeline", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 

@@ -375,6 +375,43 @@ export class DatabaseStorage implements IStorage {
     await db.delete(timelineEvents).where(eq(timelineEvents.id, id));
   }
 
+  // Interview Steps methods
+  async getInterviewStepsByApplicationId(applicationId: number): Promise<InterviewStep[]> {
+    return await db
+      .select()
+      .from(interviewSteps)
+      .where(eq(interviewSteps.applicationId, applicationId))
+      .orderBy(interviewSteps.sequence);
+  }
+
+  async createInterviewStep(step: InsertInterviewStep): Promise<InterviewStep> {
+    const [newStep] = await db
+      .insert(interviewSteps)
+      .values({
+        ...step,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newStep;
+  }
+
+  async updateInterviewStep(id: number, updates: Partial<InterviewStep>): Promise<InterviewStep> {
+    const [updatedStep] = await db
+      .update(interviewSteps)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(interviewSteps.id, id))
+      .returning();
+    return updatedStep;
+  }
+
+  async deleteInterviewStep(id: number): Promise<void> {
+    await db.delete(interviewSteps).where(eq(interviewSteps.id, id));
+  }
+
   // Dashboard stats
   async getDashboardStats(userId: number): Promise<{
     totalApplications: number;
