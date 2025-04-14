@@ -167,6 +167,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Handle interview steps if provided
+      if (req.body.interviewSteps) {
+        // Delete existing steps
+        const existingSteps = await storage.getInterviewStepsByApplicationId(applicationId);
+        for (const step of existingSteps) {
+          await storage.deleteInterviewStep(step.id);
+        }
+
+        // Create new steps and timeline events
+        for (const step of req.body.interviewSteps) {
+          const createdStep = await storage.createInterviewStep({
+            ...step,
+            applicationId,
+          });
+
+          // Create timeline event for scheduled interviews
+          if (createdStep.scheduledDate) {
+            await storage.createTimelineEvent({
+              applicationId,
+              userId: req.user!.id,
+              title: "Interview Scheduled",
+              description: `${createdStep.stepName} interview scheduled${createdStep.interviewerName ? ` with ${createdStep.interviewerName}` : ''}`,
+              type: "interview",
+              date: createdStep.scheduledDate,
+            });
+          }
+        }
+      }
+
       res.json(updatedApplication);
     } catch (error) {
       res.status(400).json({ error: error.message || "Invalid request" });
