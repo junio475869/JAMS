@@ -238,6 +238,40 @@ export default function ApplicationEditPage() {
               <CardTitle>Interview Timeline</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="flex justify-between items-center mb-4">
+                <Button 
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/applications/${id}/timeline`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                          title: 'Status Update',
+                          description: 'Added a new status update',
+                          type: 'note',
+                          date: new Date()
+                        })
+                      });
+                      if (!response.ok) throw new Error('Failed to add timeline event');
+                      queryClient.invalidateQueries(['timeline', id]);
+                      toast({
+                        title: 'Timeline event added',
+                        description: 'Successfully added new timeline event'
+                      });
+                    } catch (error) {
+                      toast({
+                        title: 'Error',
+                        description: 'Failed to add timeline event',
+                        variant: 'destructive'
+                      });
+                    }
+                  }}
+                >
+                  Add Timeline Event
+                </Button>
+              </div>
               <div className="relative pl-4 border-l border-border">
                 {timeline?.map((event: any) => (
                   <div key={event.id} className="mb-4 relative">
