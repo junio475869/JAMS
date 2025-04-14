@@ -118,7 +118,7 @@ export default function CalendarPage() {
   // View type state
   const [calendarViewType, setCalendarViewType] = useState<
     "monthly" | "weekly" | "daily" | "timeline"
-  >("monthly");
+  >("timeline");
 
   // Selected event for modal
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
@@ -1456,7 +1456,7 @@ export default function CalendarPage() {
                       </div>
                     </div>
                   )}
-                </div>  
+                </div>
               </div>
               <div>
                 <h1>Create Event</h1>
