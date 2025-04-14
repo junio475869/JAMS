@@ -36,19 +36,53 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     root.classList.add(`theme-${theme}`);
     
     // Update the appearance in theme.json via CSS variables
-    if (theme === 'light') {
-      document.documentElement.style.setProperty('--background', '#ffffff');
-      document.documentElement.style.setProperty('--foreground', '#020817');
-    } else if (theme === 'dark-blue') {
-      document.documentElement.style.setProperty('--background', '#0f172a');
-      document.documentElement.style.setProperty('--foreground', '#f8fafc');
-    } else if (theme === 'dark-gray') {
-      document.documentElement.style.setProperty('--background', '#111827');
-      document.documentElement.style.setProperty('--foreground', '#f9fafb');
-    } else if (theme === 'dark-purple') {
-      document.documentElement.style.setProperty('--background', '#1e1b4b');
-      document.documentElement.style.setProperty('--foreground', '#f5f3ff');
-    }
+    const themeColors = {
+      'light': {
+        background: '#ffffff',
+        foreground: '#020817',
+        secondary: '#f1f5f9',
+        'secondary-foreground': '#020817',
+        muted: '#f1f5f9',
+        'muted-foreground': '#64748b',
+        accent: '#f8fafc',
+        'accent-foreground': '#020817',
+      },
+      'dark-blue': {
+        background: '#0f172a',
+        foreground: '#f8fafc',
+        secondary: '#1e293b',
+        'secondary-foreground': '#f8fafc',
+        muted: '#334155',
+        'muted-foreground': '#94a3b8',
+        accent: '#1e293b',
+        'accent-foreground': '#f8fafc',
+      },
+      'dark-gray': {
+        background: '#111827',
+        foreground: '#f9fafb',
+        secondary: '#1f2937',
+        'secondary-foreground': '#f9fafb',
+        muted: '#374151',
+        'muted-foreground': '#9ca3af',
+        accent: '#1f2937',
+        'accent-foreground': '#f9fafb',
+      },
+      'dark-purple': {
+        background: '#1e1b4b',
+        foreground: '#f5f3ff',
+        secondary: '#312e81',
+        'secondary-foreground': '#f5f3ff',
+        muted: '#4338ca',
+        'muted-foreground': '#a5b4fc',
+        accent: '#312e81',
+        'accent-foreground': '#f5f3ff',
+      }
+    };
+
+    const colors = themeColors[theme as keyof typeof themeColors];
+    Object.entries(colors).forEach(([key, value]) => {
+      document.documentElement.style.setProperty(`--${key}`, value);
+    });
   }, [theme]);
 
   return (
