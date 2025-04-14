@@ -7,6 +7,12 @@ import { setupTeamRoutes } from './routes/team.routes';
 
 const app = express();
 app.use(express.json());
+app.use(express.static('dist'));
+
+// Handle SPA routing
+app.get('*', (req, res) => {
+  res.sendFile('dist/index.html', { root: '.' });
+});
 
 // Run migrations
 createTables().catch(console.error);
