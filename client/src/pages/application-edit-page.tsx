@@ -437,36 +437,3 @@ export default function ApplicationEditPage() {
     </div>
   );
 }
-
-// // Placeholder for InterviewStepsDialog component -  Replace with your actual component
-// const InterviewStepsDialog = ({ isOpen, onClose, applicationId, initialSteps, onSave, onViewOtherInterviews }) => {
-//   const [steps, setSteps] = useState(initialSteps);
-
-//   const handleStepChange = (index, newStep) => {
-//     const updatedSteps = [...steps];
-//     updatedSteps[index] = newStep;
-//     setSteps(updatedSteps);
-//   };
-
-//   return (
-//     <Dialog open={isOpen} onOpenChange={onClose}>
-//       <DialogContent>
-//         <DialogHeader>
-//           <DialogTitle>Manage Interview Steps</DialogTitle>
-//         </DialogHeader>
-//         <div>
-//           {/* Add your step management UI here.  This is a placeholder */}
-//           {steps.map((step, index) => (
-//             <div key={index}>
-//               <Input type="text" value={step.stepName} onChange={e => handleStepChange(index, {...step, stepName: e.target.value})}/>
-//               <Button onClick={() => onViewOtherInterviews(step)}>View Other Interviews</Button>
-//             </div>
-//           ))}
-//         </div>
-//         <div className="flex justify-end mt-4">
-//             <Button onClick={() => onSave(steps)}>Save</Button>
-//         </div>
-//       </DialogContent>
-//     </Dialog>
-//   );
-// };
