@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { applications } from "./models/application";
 
 // User Roles Enum
 export const UserRole = {
@@ -120,21 +121,13 @@ export const interviewSteps = pgTable("interview_steps", {
   applicationId: integer("application_id").notNull().references(() => applications.id),
   stepName: text("step_name").notNull(),
   sequence: integer("sequence").notNull(),
-  interviewerName: text("interviewer_name"),
-  interviewerLinkedIn: text("interviewer_linkedin"),
-  meetingUrl: text("meeting_url"),
   scheduledDate: timestamp("scheduled_date"),
-  duration: integer("duration"), // minutes
-  comments: text("comments"),
-  feedback: text("feedback"),
-  interviewer: integer("interviewer").references(() => users.id),
-  completed: boolean("completed").notNull().default(false),
+  completed: boolean("completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const insertInterviewStepSchema = createInsertSchema(interviewSteps);
-
 export type InterviewStep = typeof interviewSteps.$inferSelect;
 export type InsertInterviewStep = z.infer<typeof insertInterviewStepSchema>;
 
@@ -149,22 +142,6 @@ export const insertInterviewSchema = createInsertSchema(interviews).pick({
   location: true,
   notes: true,
 });
-
-// Interview Steps
-export const interviewSteps = pgTable("interview_steps", {
-  id: serial("id").primaryKey(),
-  applicationId: integer("application_id").notNull().references(() => applications.id),
-  stepName: text("step_name").notNull(),
-  sequence: integer("sequence").notNull(),
-  scheduledDate: timestamp("scheduled_date"),
-  completed: boolean("completed").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-});
-
-export const insertInterviewStepSchema = createInsertSchema(interviewSteps);
-export type InterviewStep = typeof interviewSteps.$inferSelect;
-export type InsertInterviewStep = z.infer<typeof insertInterviewStepSchema>;
 
 // Contacts
 export const contacts = pgTable("contacts", {
@@ -502,3 +479,5 @@ export const gmailConnections = pgTable("gmail_connections", {
 export const insertGmailConnectionSchema = createInsertSchema(gmailConnections);
 export type GmailConnection = typeof gmailConnections.$inferSelect;
 export type InsertGmailConnection = z.infer<typeof insertGmailConnectionSchema>;
+
+import { jsonb } from "drizzle-orm/pg-core";
