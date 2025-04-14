@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { createTables } from './config/migrations';
 import applicationRoutes from './routes/application.routes';
 import adminRoutes from './routes/admin.routes';
-import teamRoutes from './routes/team.routes';
+import { setupTeamRoutes } from './routes/team.routes';
 
 const app = express();
 app.use(express.json());
@@ -15,6 +15,8 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use('/api/applications', applicationRoutes);
+app.use('/api/admin', adminRoutes);
+setupTeamRoutes(app);
 
 // Error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
