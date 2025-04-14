@@ -110,11 +110,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(applications)
       .where(eq(applications.userId, userId));
-    
+
     if (status) {
       query = query.where(eq(applications.status, status));
     }
-    
+
     return await query.orderBy(desc(applications.updatedAt));
   }
 
@@ -123,11 +123,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(applications)
       .where(eq(applications.userId, userId));
-    
+
     if (status) {
       query = query.where(eq(applications.status, status));
     }
-    
+
     return await query
       .orderBy(desc(applications.updatedAt))
       .limit(limit)
