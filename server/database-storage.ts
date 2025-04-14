@@ -158,12 +158,15 @@ export class DatabaseStorage implements IStorage {
 
   async updateApplication(
     id: number,
-    updates: Partial<Application>,
+    updates: Partial<Application> & { interviewSteps?: any[] },
   ): Promise<Application> {
+    // Remove interviewSteps from updates since it's not a column
+    const { interviewSteps, ...applicationUpdates } = updates;
+    
     const [updatedApplication] = await db
       .update(applications)
       .set({
-        ...updates,
+        ...applicationUpdates,
         updatedAt: new Date(),
       })
       .where(eq(applications.id, id))
