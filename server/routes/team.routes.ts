@@ -1,7 +1,7 @@
 import { Express, Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { storage } from "./storage";
 import { UserRole } from "@shared/schema";
+import { storage } from '../services/storage.service';
 
 export function setupTeamRoutes(app: Express) {
   // Middleware to check admin or group leader roles
