@@ -29,6 +29,7 @@ import {
   DocumentType,
   InterviewQuestionCategory,
   InterviewQuestionDifficulty,
+  insertSheetImportSettingsSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { gmailService } from "./gmail-service";
@@ -1183,6 +1184,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(otherApplicants);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch other applicants" });
+    }
+  });
+
+  // Sheet Import Settings routes
+  app.get("/api/sheet-settings", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const settings = await storage.getSheetImportSettingsByUserId(req.user!.id);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  app.post("/api/sheet-settings", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const userData = { ...req.body, userId: req.user!.id };
+      const validatedData = insertSheetImportSettingsSchema.parse(userData);
+      const setting = await storage.createSheetImportSettings(validatedData);
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save settings" });
+    }
+  });
+
+  app.put("/api/sheet-settings/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const settingId = parseInt(req.params.id);
+    if (isNaN(settingId)) {
+      return res.status(400).json({ error: "Invalid setting ID" });
+    }
+
+    try {
+      const setting = await storage.getSheetImportSettingsById(settingId);
+      if (!setting || setting.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+
+      const updatedSetting = await storage.updateSheetImportSettings(settingId, req.body);
+      res.json(updatedSetting);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update setting" });
+    }
+  });
+
+  app.delete("/api/sheet-settings/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const settingId = parseInt(req.params.id);
+    if (isNaN(settingId)) {
+      return res.status(400).json({ error: "Invalid setting ID" });
+    }
+
+    try {
+      const setting = await storage.getSheetImportSettingsById(settingId);
+      if (!setting || setting.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+
+      await storage.deleteSheetImportSettings(settingId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete setting" });
     }
   });
 
