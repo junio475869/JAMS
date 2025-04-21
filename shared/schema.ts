@@ -164,8 +164,6 @@ export const insertInterviewSchema = createInsertSchema(interviews).pick({
   notes: true,
 });
 
-// The other declaration of interviewSteps already exists above
-
 // Contacts
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
@@ -486,6 +484,23 @@ export const ChatMessageType = {
 } as const;
 
 export type ChatMessageTypeType = typeof ChatMessageType[keyof typeof ChatMessageType];
+
+// Sheet Import Settings
+export const sheetImportSettings = pgTable("sheet_import_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  sheetUrl: text("sheet_url").notNull(),
+  columnMapping: jsonb("column_mapping").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertSheetImportSettingsSchema = createInsertSchema(sheetImportSettings);
+export type SheetImportSettings = typeof sheetImportSettings.$inferSelect;
+export type InsertSheetImportSettings = z.infer<typeof insertSheetImportSettingsSchema>;
+
 
 // Gmail Connections
 export const gmailConnections = pgTable("gmail_connections", {
