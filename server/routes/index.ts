@@ -1,4 +1,7 @@
 
+import path from 'path';
+
+
 import { Express } from "express";
 import { createServer, type Server } from "http";
 import adminRoutes from './admin';
@@ -31,6 +34,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } else {
     serveStatic(app);
   }
+
+  // Catch-all route for client-side routing
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      next();
+      return;
+    }
+    if (app.get("env") === "development") {
+      // Let Vite handle the request
+      next();
+    } else {
+      // Serve the static index.html
+      res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+    }
+  });
 
   return server;
 }
