@@ -1,12 +1,10 @@
-
-import path from 'path';
-
+import path from "path";
 
 import { Express } from "express";
 import { createServer, type Server } from "http";
-import adminRoutes from './admin';
-import teamRoutes from './team';
-import apiRoutes from './api';
+import adminRoutes from "./admin";
+import teamRoutes from "./team";
+import apiRoutes from "./api";
 import { setupAuth } from "../auth";
 import { setupVite, serveStatic } from "../vite";
 
@@ -15,9 +13,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Mount route modules
-  app.use('/api/admin', adminRoutes);
-  app.use('/api/team', teamRoutes);
-  app.use('/api', apiRoutes);
+  app.use("/api/admin", adminRoutes);
+  app.use("/api/team", teamRoutes);
+  app.use("/api", apiRoutes);
 
   const server = createServer(app);
 
@@ -36,8 +34,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Catch-all route for client-side routing
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
       next();
       return;
     }
@@ -46,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next();
     } else {
       // Serve the static index.html
-      res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+      res.sendFile(path.join(__dirname, "../../client/dist/index.html"));
     }
   });
 

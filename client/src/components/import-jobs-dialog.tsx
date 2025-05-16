@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,43 +29,43 @@ export default function ImportJobsDialog() {
     company: 3,
     position: 4,
     url: 5,
-    profile: 6
+    profile: 6,
   });
 
   useEffect(() => {
     // Load saved settings
-    fetch('/api/sheet-settings')
-      .then(res => res.json())
-      .then(data => setSavedSettings(data))
+    fetch("/api/sheet-settings")
+      .then((res) => res.json())
+      .then((data) => setSavedSettings(data))
       .catch(console.error);
   }, []);
 
   const columnOptions = [
-    { label: 'Applied Date', value: 'date' },
-    { label: 'Skills', value: 'skills' },
-    { label: 'Company', value: 'company' },
-    { label: 'Position', value: 'position' },
-    { label: 'URL', value: 'url' },
-    { label: 'Profile', value: 'profile' }
+    { label: "Applied Date", value: "date" },
+    { label: "Skills", value: "skills" },
+    { label: "Company", value: "company" },
+    { label: "Position", value: "position" },
+    { label: "URL", value: "url" },
+    { label: "Profile", value: "profile" },
   ];
 
   const handleSaveSettings = async () => {
     try {
-      const response = await fetch('/api/sheet-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/sheet-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, sheetUrl: url, columnMapping }),
       });
-      if (!response.ok) throw new Error('Failed to save settings');
-      
+      if (!response.ok) throw new Error("Failed to save settings");
+
       const newSettings = await response.json();
       setSavedSettings([...savedSettings, newSettings]);
       toast({ title: "Settings saved successfully" });
     } catch (error) {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: "Failed to save settings",
-        variant: "destructive" 
+        variant: "destructive",
       });
     }
   };
@@ -114,7 +113,10 @@ export default function ImportJobsDialog() {
       console.error("Import error:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to import applications",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to import applications",
         variant: "destructive",
       });
     } finally {
@@ -131,22 +133,24 @@ export default function ImportJobsDialog() {
         <DialogHeader>
           <DialogTitle>Import Job Applications</DialogTitle>
           <DialogDescription>
-            Enter sheet details and column mappings or select a saved configuration.
+            Enter sheet details and column mappings or select a saved
+            configuration.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {savedSettings.map((setting) => (
-              <Button
-                key={setting.id}
-                variant="outline"
-                size="sm"
-                onClick={() => loadSettings(setting)}
-              >
-                {setting.name}
-              </Button>
-            ))}
+            {savedSettings && savedSettings.length > 0 &&
+              savedSettings.map((setting) => (
+                <Button
+                  key={setting.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => loadSettings(setting)}
+                >
+                  {setting.name}
+                </Button>
+              ))}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -167,7 +171,7 @@ export default function ImportJobsDialog() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          
+
           <div className="grid grid-cols-2 gap-4">
             {columnOptions.map((option) => (
               <div key={option.value} className="flex flex-col gap-2">
@@ -176,17 +180,19 @@ export default function ImportJobsDialog() {
                   type="number"
                   min="0"
                   value={columnMapping[option.value]}
-                  onChange={(e) => setColumnMapping({
-                    ...columnMapping,
-                    [option.value]: parseInt(e.target.value) || 0
-                  })}
+                  onChange={(e) =>
+                    setColumnMapping({
+                      ...columnMapping,
+                      [option.value]: parseInt(e.target.value) || 0,
+                    })
+                  }
                   placeholder="Column index"
                 />
               </div>
             ))}
           </div>
         </div>
-        
+
         <DialogFooter className="flex gap-2">
           <Button
             variant="outline"
@@ -195,17 +201,14 @@ export default function ImportJobsDialog() {
           >
             Cancel
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleSaveSettings}
             disabled={!name || !email || !url}
           >
             Save Settings
           </Button>
-          <Button 
-            onClick={handleImport} 
-            disabled={isLoading || !url}
-          >
+          <Button onClick={handleImport} disabled={isLoading || !url}>
             {isLoading ? "Importing..." : "Import"}
           </Button>
         </DialogFooter>
