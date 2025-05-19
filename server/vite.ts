@@ -22,8 +22,19 @@ export function log(message: string, source = "express") {
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true,
+    hmr: { 
+      server,
+      protocol: 'ws',
+      host: 'localhost',
+    },
+    cors: true,
+    allowedHosts: ['localhost', '127.0.0.1'],
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true'
+    }
   };
 
   const vite = await createViteServer({

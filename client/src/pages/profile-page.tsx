@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +24,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, User, KeyIcon, ShieldIcon, BellIcon, CalendarIcon } from "lucide-react";
+import { Loader2, User, KeyIcon, ShieldIcon, BellIcon, CalendarIcon, MailIcon, PlusIcon, TrashIcon } from "lucide-react";
 
 // Profile update form schema
 const profileFormSchema = z.object({
@@ -44,8 +44,17 @@ const passwordFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Add Gmail connection schema
+const gmailConnectionSchema = z.object({
+  email: z.string().email(),
+  accessToken: z.string(),
+  refreshToken: z.string(),
+  expiry: z.date()
+});
+
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
+type GmailConnection = z.infer<typeof gmailConnectionSchema>;
 
 export default function ProfilePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -73,6 +82,38 @@ export default function ProfilePage() {
       newPassword: "",
       confirmPassword: "",
     },
+  });
+
+  // Add Gmail connections query
+  const { data: gmailConnections, isLoading: isLoadingGmail } = useQuery({
+    queryKey: ['/api/gmail/connections'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/gmail/connections');
+      return res.json();
+    }
+  });
+
+  // Add Gmail connection mutation
+  const connectGmailMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/gmail/auth-url');
+      const { url } = await res.json();
+      window.location.href = url;
+    }
+  });
+
+  // Add Gmail disconnection mutation
+  const disconnectGmailMutation = useMutation({
+    mutationFn: async (email: string) => {
+      await apiRequest('DELETE', `/api/gmail/connections/${email}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/gmail/connections'] });
+      toast({
+        title: "Gmail disconnected",
+        description: "The Gmail account has been successfully disconnected",
+      });
+    }
   });
 
   // Update form values when user data loads
@@ -183,7 +224,7 @@ export default function ProfilePage() {
       <div className="min-h-screen flex flex-col bg-gray-900 text-gray-200">
         <Header toggleSidebar={toggleSidebar} />
         <div className="flex flex-1 overflow-hidden">
-          <Sidebar isOpen={sidebarOpen} closeSidebar={() => setSidebarOpen(false)} />
+          <Sidebar sidebarCollapsed={sidebarOpen} setSidebarCollapsed={setSidebarOpen} isMobileMenuOpen={false} setIsMobileMenuOpen={() => {}} />
           <main className="flex-1 overflow-auto bg-gray-900 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
           </main>
@@ -227,7 +268,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="pb-0">
             <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-3 bg-gray-750">
+              <TabsList className="grid grid-cols-4 bg-gray-750">
                 <TabsTrigger value="profile" className="data-[state=active]:bg-gray-700">
                   <User className="h-4 w-4 mr-2" />
                   Profile
@@ -239,6 +280,10 @@ export default function ProfilePage() {
                 <TabsTrigger value="preferences" className="data-[state=active]:bg-gray-700">
                   <BellIcon className="h-4 w-4 mr-2" />
                   Preferences
+                </TabsTrigger>
+                <TabsTrigger value="gmail" className="data-[state=active]:bg-gray-700">
+                  <MailIcon className="h-4 w-4 mr-2" />
+                  Gmail
                 </TabsTrigger>
               </TabsList>
               
@@ -477,7 +522,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="bg-gray-750 p-4 rounded-md border border-gray-700 flex justify-between items-center">
                         <div>
-                          <p className="text-white font-medium">Account Deletion</p>
+                          <p className="text-white font-medium">Account Delefgdsfgdstion</p>
                           <p className="text-gray-400 text-sm">Permanently delete your account and data</p>
                         </div>
                         <Button variant="destructive">
@@ -485,6 +530,63 @@ export default function ProfilePage() {
                         </Button>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Gmail Tab */}
+              <TabsContent value="gmail" className="pt-6">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-medium text-white">Gmail Accounts</h3>
+                    <p className="text-gray-400 text-sm mt-1">Manage your connected Gmail accounts for email tracking and calendar integration.</p>
+                  </div>
+                  <Separator className="bg-gray-700" />
+                  
+                  {/* Connected Gmail Accounts */}
+                  <div className="space-y-4">
+                    {isLoadingGmail ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+                      </div>
+                    ) : gmailConnections?.length > 0 ? (
+                      gmailConnections.map((connection: GmailConnection) => (
+                        <div key={connection.email} className="bg-gray-750 p-4 rounded-md border border-gray-700 flex justify-between items-center">
+                          <div className="flex items-center">
+                            <MailIcon className="h-5 w-5 text-gray-500 mr-3" />
+                            <div>
+                              <p className="text-white font-medium">{connection.email}</p>
+                              <p className="text-gray-400 text-sm">
+                                Connected {new Date(connection.expiry).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            className="bg-gray-700 border-gray-600 hover:bg-red-900/20 hover:text-red-400"
+                            onClick={() => disconnectGmailMutation.mutate(connection.email)}
+                          >
+                            <TrashIcon className="h-4 w-4 mr-2" />
+                            Disconnect
+                          </Button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-400">
+                        No Gmail accounts connected
+                      </div>
+                    )}
+
+                    {/* Connect New Gmail Button */}
+                    <Button
+                      variant="outline"
+                      className="w-full bg-gray-700 border-gray-600"
+                      onClick={() => connectGmailMutation.mutate()}
+                      disabled={connectGmailMutation.isPending}
+                    >
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      {connectGmailMutation.isPending ? "Connecting..." : "Connect Gmail Account"}
+                    </Button>
                   </div>
                 </div>
               </TabsContent>

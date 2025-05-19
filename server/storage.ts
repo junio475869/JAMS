@@ -7,6 +7,7 @@ import {
   timelineEvents,
   interviewQuestions,
   interviewAssistance,
+  gmailConnections,
   type User,
   type InsertUser,
   type Application,
@@ -29,6 +30,7 @@ import { eq, and, desc, count, asc, or, sql } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { db, pool } from "./db";
+import { GmailConnection } from "./gmail-service";
 
 // Placeholder type - needs to be defined elsewhere
 async function getAllUserGmailData(userId: number) {
@@ -206,14 +208,19 @@ export interface IStorage {
   // Session store
   sessionStore: any;
   getGmailConnectionsByUserId(userId: number): Promise<GmailConnection[]>;
-  saveGmailConnection(
-    connection: InsertGmailConnection,
-  ): Promise<GmailConnection>;
+  // saveGmailConnection(
+  //   connection: InsertGmailConnection,
+  // ): Promise<GmailConnection>;
 
   // Static Data methods
   getStaticData(): Promise<any[]>;
   createStaticData(data: { name: string; type: string }): Promise<any>;
   deleteStaticData(id: number): Promise<void>;
+
+  // Gmail connection methods
+  saveGmailConnection(connection: GmailConnection): Promise<void>;
+  getGmailConnections(userId: number): Promise<GmailConnection[]>;
+  deleteGmailConnection(userId: number, email: string): Promise<void>;
 }
 
 const PostgresSessionStore = connectPg(session);
@@ -1209,20 +1216,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(interviewAssistance).where(eq(interviewAssistance.id, id));
   }
 
-  async getGmailConnectionsByUserId(
-    userId: number,
-  ): Promise<GmailConnection[]> {
-    // Implement Gmail connection retrieval logic here.  This is a placeholder.
-    return [];
-  }
-
-  async saveGmailConnection(
-    connection: InsertGmailConnection,
-  ): Promise<GmailConnection> {
-    // Implement Gmail connection saving logic here. This is a placeholder.
-    return { id: 1, ...connection };
-  }
-
   async getStaticData(): Promise<any[]> {
     // Placeholder for static data table - replace with your actual table name
     const staticData = db.select().from(staticData);
@@ -1247,6 +1240,40 @@ export class DatabaseStorage implements IStorage {
   async deleteStaticData(id: number): Promise<void> {
     // Placeholder for static data table - replace with your actual table name
     await db.delete(staticData).where(eq(staticData.id, id));
+  }
+
+  async saveGmailConnection(
+    connection: InsertGmailConnection,
+  ): Promise<GmailConnection> {
+    
+    const [newConnection] = await db
+      .insert(gmailConnections)
+      .values({ ...connection, createdAt: new Date(), updatedAt: new Date() })
+      .returning();
+    return newConnection;
+  }
+
+  async getGmailConnections(userId: number): Promise<GmailConnection[]> {
+    const result = await db.execute(/* sql */`
+      SELECT email, access_token, refresh_token, expiry
+      FROM gmail_connections
+      WHERE user_id = ?
+    `, [userId]);
+
+    return result.map(row => ({
+      userId,
+      email: row.email,
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token,
+      expiry: new Date(row.expiry)
+    }));
+  }
+
+  async deleteGmailConnection(userId: number, email: string): Promise<void> {
+    await db.execute(/* sql */`
+      DELETE FROM gmail_connections
+      WHERE user_id = ? AND email = ?
+    `, [userId, email]);
   }
 }
 

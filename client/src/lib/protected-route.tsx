@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { queryClient } from "@/lib/queryClient";
 
@@ -22,6 +22,7 @@ const isDemoMode = () => {
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const [checkingDemo, setCheckingDemo] = useState(true);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     const checkDemoMode = () => {
@@ -51,7 +52,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && !isDemoMode() && !isLoading) {
+  if (!user && !isDemoMode()) {
     // return <Redirect to="/auth" />;
   }
 

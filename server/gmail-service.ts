@@ -15,15 +15,11 @@ export class GmailService {
   private oauth2Client: OAuth2Client;
 
   constructor() {
-    const domain = process.env.REPL_SLUG && process.env.REPL_OWNER 
-      ? `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
-      : process.env.REPL_ID ? `${process.env.REPL_ID}.id.repl.co`
-      : process.env.APP_URL?.replace('https://', '');
-      
+    const callbackUrl = (process.env.APP_URL || "") + (process.env.OAUTH_CALLBACK_URL || "");
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      `https://${domain}/api/gmail/oauth/callback`
+      callbackUrl
     );
   }
 
@@ -81,7 +77,7 @@ export class GmailService {
   async handleCallback(code: string, userId: number) {
     const { tokens } = await this.oauth2Client.getToken(code);
     this.oauth2Client.setCredentials(tokens);
-
+    console.log("tokens", tokens);
     const gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
     const profile = await gmail.users.getProfile({ userId: 'me' });
 

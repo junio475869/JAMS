@@ -1,17 +1,12 @@
-import path from "path";
-
-import { Express } from "express";
-import { createServer, type Server } from "http";
+import { Express, Request, Response, NextFunction } from "express";
 import adminRoutes from "./admin";
 import teamRoutes from "./team";
 import apiRoutes from "./api";
-import { setupAuth } from "../auth";
+import path from "path";
+import { createServer, type Server } from "http";
 import { setupVite, serveStatic } from "../vite";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Sets up /api/register, /api/login, /api/logout, /api/user
-  setupAuth(app);
-
   // Mount route modules
   app.use("/api/admin", adminRoutes);
   app.use("/api/team", teamRoutes);
@@ -19,12 +14,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const server = createServer(app);
 
-  // Error handling
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(status).json({ message });
-    throw err;
+  // Error handling middleware
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error("Error:", err);
+
+    // Handle specific error types
+    if (err.name === "UnauthorizedError") {
+      return res.status(401).json({
+        message: "Authentication required",
+        error: err.message,
+      });
+    }
+
+    if (err.name === "ForbiddenError") {
+      return res.status(403).json({
+        message: "Access denied",
+        error: err.message,
+      });
+    }
+
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Validation failed",
+        error: err.message,
+      });
+    }
+
+    // Default error response
+    res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+      error: process.env.NODE_ENV === "development" ? err : undefined,
+    });
   });
 
   if (app.get("env") === "development") {
@@ -34,18 +54,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Catch-all route for client-side routing
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api")) {
-      next();
-      return;
+  app.get("*", (req: Request, res: Response, next: NextFunction) => {
+    // Skip API routes and static files
+    if (req.path.startsWith("/api") || req.path.startsWith("/assets")) {
+      return next();
     }
-    if (app.get("env") === "development") {
-      // Let Vite handle the request
-      next();
-    } else {
-      // Serve the static index.html
-      res.sendFile(path.join(__dirname, "../../client/dist/index.html"));
+
+    // Let Vite handle the request in development
+    if (process.env.NODE_ENV === "development") {
+      return next();
     }
+
+    // Serve the static index.html file in production
+    res.sendFile(path.join(process.cwd(), "dist", "index.html"));
   });
 
   return server;

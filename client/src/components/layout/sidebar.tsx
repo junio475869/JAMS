@@ -62,9 +62,9 @@ export function Sidebar({
     { href: "/chat", label: "Chat", icon: MessagesSquare },
     { href: "/profile", label: "Profile", icon: UserCircle },
   ];
-  const jobBidderItems = [
-    { href: "/job-apply", label: "Job Apply", icon: Briefcase },
-  ];
+  // const jobBidderItems = [
+    // { href: "/job-apply", label: "Job Apply", icon: Briefcase },
+  // ];
   const jobSeekerItems = [
     { href: "/job-apply", label: "Job Apply", icon: Briefcase },
   ];
@@ -76,8 +76,8 @@ export function Sidebar({
   const getNavItems = () => {
     let items = [...baseNavItems];
 
-    items = [...items, ...jobBidderItems];
-    if ([UserRole.JOB_BIDDER].includes(user?.role as any)) return items;
+    // items = [...items, ...jobBidderItems];
+    // if ([UserRole.JOB_BIDDER].includes(user?.role as any)) return items;
 
     items = [...items, ...jobSeekerItems];
     if ([UserRole.JOB_SEEKER].includes(user?.role as any)) return items;
@@ -88,7 +88,12 @@ export function Sidebar({
     items = [...items, ...adminItems];
     if ([UserRole.ADMIN].includes(user?.role as any)) return items;
 
-    return items;
+    // Deduplicate by `href`
+    const uniqueItems = Array.from(
+      new Map(items.map((item) => [item.href, item])).values()
+    );
+
+    return uniqueItems;
   };
 
   const navigationItems = getNavItems();
@@ -139,11 +144,11 @@ export function Sidebar({
       {/* Navigation */}
       <ScrollArea className="flex-1 py-4">
         <nav className="space-y-1 px-2">
-          {navigationItems.map((item) => {
+          {navigationItems.map((item, index) => {
             const isActive = item.href !== "/" && location.includes(item.href);
             return (
               <Button
-                key={item.href}
+                key={index}
                 variant="ghost"
                 className={cn(
                   "w-full",
@@ -208,7 +213,7 @@ export function Sidebar({
               <div className="flex items-center">
                 <Avatar className="h-8 w-8">
                   <AvatarImage
-                    src={user?.profilePicture}
+                    src={user?.profilePicture || ""}
                     alt={user?.username}
                   />
                   <AvatarFallback>

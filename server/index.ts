@@ -3,11 +3,26 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { createTables } from './migrations';
+import gmailRoutes from './routes/gmail';
+import cors from 'cors';
 
 const app = express();
+
+// CORS configuration - more permissive in development
+const isDev = process.env.NODE_ENV !== 'production';
+app.use(cors({
+  origin: isDev ? true : process.env.CLIENT_URL || 'http://localhost:8080',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
+// app.get('/', (req, res) => {
+//   res.send('Server is up!');
+// });
 // Run migrations
 createTables().catch(console.error);
 
@@ -42,21 +57,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// Register Gmail routes
+// app.use('/api/gmail', gmailRoutes);
+
 (async () => {
   try {
     const server = await registerRoutes(app);
 
-    // importantly only setup vite in development and after
-    // setting up all the other routes so the catch-all route
-    // doesn't interfere with the other routes
-    if (app.get("env") === "development") {
+    // Setup Vite in development
+    if (isDev) {
       await setupVite(app, server);
     } else {
       serveStatic(app);
     }
 
-    // Try different ports if 5000 is not available
-    const ports = [5000, 3000, 8080, 4000];
+    const ports = [8080, 3000, 4000];
     let serverStarted = false;
 
     for (const port of ports) {
@@ -64,7 +79,7 @@ app.use((req, res, next) => {
         await new Promise((resolve, reject) => {
           server.listen({
             port,
-            host: "localhost", // Changed from 0.0.0.0 to localhost
+            host: "localhost",
           }, () => {
             log(`Server running on http://localhost:${port}`);
             serverStarted = true;
@@ -86,6 +101,16 @@ app.use((req, res, next) => {
         }
       }
     }
+
+    // Handle graceful shutdown
+    process.on('SIGTERM', () => {
+      log('SIGTERM signal received: closing HTTP server');
+      server.close(() => {
+        log('HTTP server closed');
+        process.exit(0);
+      });
+    });
+
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

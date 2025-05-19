@@ -199,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedApplication);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -238,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const document = await storage.createDocument(validatedData);
       res.status(201).json(document);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -285,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(updatedDocument);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -323,7 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check that the application belongs to the user
       const application = await storage.getApplicationById(
-        validatedData.applicationId,
+        validatedData.applicationId ?? 0,
       );
       if (!application || application.userId !== req.user!.id) {
         return res.status(404).json({ error: "Application not found" });
@@ -333,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create a timeline event for this interview
       await storage.createTimelineEvent({
-        applicationId: validatedData.applicationId,
+        applicationId: validatedData.applicationId ?? 0,
         userId: req.user!.id,
         title: "Interview Scheduled",
         description: `${interview.type} interview scheduled for ${interview.title} at ${interview.company}`,
@@ -342,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(interview);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -383,7 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contact = await storage.createContact(validatedData);
       res.status(201).json(contact);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -439,7 +439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(step);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -474,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedStep);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -533,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const event = await storage.createTimelineEvent(validatedData);
       res.status(201).json(event);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -582,7 +582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ coverLetter });
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -610,7 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ analysis });
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -645,7 +645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
         .map((event) => ({
           status: event.title.includes("Status")
-            ? event.description.split("to ")[1]
+            ? event.description?.split("to ")[1]
             : event.type === "application"
               ? "applied"
               : event.type === "interview"
@@ -716,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const question = await storage.createInterviewQuestion(validatedData);
       res.status(201).json(question);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -743,7 +743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedQuestion);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -777,7 +777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assistance = await storage.createInterviewAssistance(validatedData);
       res.status(201).json(assistance);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -802,7 +802,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ questions });
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -844,7 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ answer });
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -868,7 +868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ feedback });
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -894,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(mockInterview);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -918,7 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ analysis });
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid request" });
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 
@@ -930,7 +930,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/gmail/oauth/callback", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const { code } = req.query;
     if (!code || typeof code !== "string") {
       return res.status(400).json({ error: "No authorization code provided" });
@@ -949,7 +948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const connections = await storage.getGmailConnectionsByUserId(
+      const connections = await storage.getGmailConnections(
         req.user!.id,
       );
       if (!connections || connections.length === 0) {
@@ -962,7 +961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(event);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error instanceof Error ? error.message : "Invalid request" });
     }
   });
 

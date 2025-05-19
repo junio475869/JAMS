@@ -5,6 +5,8 @@ import {
   interviews,
   contacts,
   timelineEvents,
+  interviewSteps,
+  gmailConnections,
   type User,
   type InsertUser,
   type Application,
@@ -17,6 +19,10 @@ import {
   type InsertContact,
   type TimelineEvent,
   type InsertTimelineEvent,
+  type GmailConnection,
+  type InsertGmailConnection,
+  type InterviewStep,
+  type InsertInterviewStep,
 } from "@shared/schema";
 import { eq, and, desc, count } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
