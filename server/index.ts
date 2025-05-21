@@ -3,7 +3,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { createTables } from './migrations';
-import gmailRoutes from './routes/gmail';
 import cors from 'cors';
 
 const app = express();
@@ -56,9 +55,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-// Register Gmail routes
-// app.use('/api/gmail', gmailRoutes);
 
 (async () => {
   try {

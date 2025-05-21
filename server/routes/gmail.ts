@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { gmailService } from '../gmail-service';
 import { storage } from '../storage';
-import { authenticate } from '../auth';
 
 const router = Router();
 
 // Get auth URL for Gmail connection
-router.post('/auth-url', authenticate, (req, res) => {
+router.post('/auth-url', async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+
   const url = gmailService.getAuthUrl();
   res.json({ url });
 });
@@ -30,13 +31,13 @@ router.get('/callback', async (req, res) => {
 });
 
 // Get user's Gmail connections
-router.get('/connections', authenticate, async (req, res) => {
+router.get('/connections', async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
   try {
-    console.log("req.user", req.user);
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const connections = await storage.getGmailConnections(req.user!.id);
+    const connections = await storage.getGmailConnections(req.user.id);
     res.json(connections);
   } catch (error) {
     console.error('Error fetching Gmail connections:', error);
@@ -45,7 +46,8 @@ router.get('/connections', authenticate, async (req, res) => {
 });
 
 // Disconnect Gmail account
-router.delete('/connections/:email', authenticate, async (req, res) => {
+router.delete('/connections/:email', async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
   const { email } = req.params;
   const userId = req.user!.id;
 

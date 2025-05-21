@@ -221,6 +221,8 @@ export interface IStorage {
   saveGmailConnection(connection: GmailConnection): Promise<void>;
   getGmailConnections(userId: number): Promise<GmailConnection[]>;
   deleteGmailConnection(userId: number, email: string): Promise<void>;
+
+  updateGmailConnection(id: number, data: Partial<GmailConnection>): Promise<void>;
 }
 
 const PostgresSessionStore = connectPg(session);
@@ -1242,38 +1244,29 @@ export class DatabaseStorage implements IStorage {
     await db.delete(staticData).where(eq(staticData.id, id));
   }
 
-  async saveGmailConnection(
-    connection: InsertGmailConnection,
-  ): Promise<GmailConnection> {
-    
-    const [newConnection] = await db
-      .insert(gmailConnections)
-      .values({ ...connection, createdAt: new Date(), updatedAt: new Date() })
-      .returning();
-    return newConnection;
+  async saveGmailConnection(connection: GmailConnection) {
+    return db.insert(gmailConnections).values(connection).returning();
   }
 
-  async getGmailConnections(userId: number): Promise<GmailConnection[]> {
-    const result = await db.execute(/* sql */`
-      SELECT email, access_token, refresh_token, expiry
-      FROM gmail_connections
-      WHERE user_id = ?
-    `, [userId]);
+  async updateGmailConnection(id: number, data: Partial<GmailConnection>) {
+    return db
+      .update(gmailConnections)
+      .set(data)
+      .where(eq(gmailConnections.id, id))
+      .returning();
+  }
 
-    return result.map(row => ({
-      userId,
-      email: row.email,
-      accessToken: row.access_token,
-      refreshToken: row.refresh_token,
-      expiry: new Date(row.expiry)
-    }));
+  async getGmailConnections(userId: number) {
+    return db
+      .select()
+      .from(gmailConnections)
+      .where(eq(gmailConnections.userId, userId));
   }
 
   async deleteGmailConnection(userId: number, email: string): Promise<void> {
-    await db.execute(/* sql */`
-      DELETE FROM gmail_connections
-      WHERE user_id = ? AND email = ?
-    `, [userId, email]);
+    await db
+      .delete(gmailConnections)
+      .where(and(eq(gmailConnections.userId, userId), eq(gmailConnections.email, email)));
   }
 }
 

@@ -43,8 +43,8 @@ export function MainLayout({ children }: MainLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
-          <div className=" mx-auto">{children}</div>
+        <main className="flex-1 overflow-auto h-full">
+          {children}
         </main>
       </div>
 

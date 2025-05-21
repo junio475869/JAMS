@@ -35,6 +35,7 @@ import { db } from "./db";
 import { gmailService } from "./gmail-service";
 import { searchJobs } from "./job-platforms";
 import { JOB_PLATFORMS } from "../client/src/config/job-platforms";
+import gmailRoutes from "./routes/gmail";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Sets up /api/register, /api/login, /api/logout, /api/user
@@ -42,6 +43,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Sets up team management routes
   setupTeamRoutes(app);
+
+  // Register Gmail routes
+  app.use("/api/gmail", gmailRoutes);
 
   // Application endpoints
   app.get("/api/applications", async (req, res) => {
@@ -64,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status,
           search,
           sortBy,
-          sortOrder,
+          sortOrder
         ),
         storage.getApplicationsCountByUserId(req.user!.id, status, search),
       ]);
@@ -140,7 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const updatedApplication = await storage.updateApplication(
         applicationId,
-        req.body,
+        req.body
       );
 
       // If status has changed, add timeline event
@@ -171,7 +175,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle interview steps if provided
       if (req.body.interviewSteps) {
         // Delete existing steps
-        const existingSteps = await storage.getInterviewStepsByApplicationId(applicationId);
+        const existingSteps =
+          await storage.getInterviewStepsByApplicationId(applicationId);
         for (const step of existingSteps) {
           await storage.deleteInterviewStep(step.id);
         }
@@ -189,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               applicationId,
               userId: req.user!.id,
               title: "Interview Scheduled",
-              description: `${createdStep.stepName} interview scheduled${createdStep.interviewerName ? ` with ${createdStep.interviewerName}` : ''}`,
+              description: `${createdStep.stepName} interview scheduled${createdStep.interviewerName ? ` with ${createdStep.interviewerName}` : ""}`,
               type: "interview",
               date: createdStep.scheduledDate,
             });
@@ -199,7 +204,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedApplication);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -238,7 +245,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const document = await storage.createDocument(validatedData);
       res.status(201).json(document);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -281,11 +290,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedData = { ...req.body, version, updatedAt: new Date() };
       const updatedDocument = await storage.updateDocument(
         documentId,
-        updatedData,
+        updatedData
       );
       res.json(updatedDocument);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -323,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check that the application belongs to the user
       const application = await storage.getApplicationById(
-        validatedData.applicationId ?? 0,
+        validatedData.applicationId ?? 0
       );
       if (!application || application.userId !== req.user!.id) {
         return res.status(404).json({ error: "Application not found" });
@@ -342,7 +353,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(interview);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -383,7 +396,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contact = await storage.createContact(validatedData);
       res.status(201).json(contact);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -439,62 +454,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(step);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
-  app.put("/api/applications/:appId/interview-steps/:stepId", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.put(
+    "/api/applications/:appId/interview-steps/:stepId",
+    async (req, res) => {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const applicationId = parseInt(req.params.appId);
-    const stepId = parseInt(req.params.stepId);
-    if (isNaN(applicationId) || isNaN(stepId)) {
-      return res.status(400).json({ error: "Invalid ID provided" });
-    }
-
-    const application = await storage.getApplicationById(applicationId);
-    if (!application || application.userId !== req.user!.id) {
-      return res.status(404).json({ error: "Application not found" });
-    }
-
-    try {
-      const updatedStep = await storage.updateInterviewStep(stepId, req.body);
-
-      // Create timeline event for status change
-      if (req.body.completed !== undefined) {
-        await storage.createTimelineEvent({
-          applicationId,
-          userId: req.user!.id,
-          title: req.body.completed ? "Interview Step Completed" : "Interview Step Reopened",
-          description: `${updatedStep.stepName} ${req.body.completed ? "completed" : "reopened"}`,
-          type: "interview",
-          date: new Date(),
-        });
+      const applicationId = parseInt(req.params.appId);
+      const stepId = parseInt(req.params.stepId);
+      if (isNaN(applicationId) || isNaN(stepId)) {
+        return res.status(400).json({ error: "Invalid ID provided" });
       }
 
-      res.json(updatedStep);
-    } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      const application = await storage.getApplicationById(applicationId);
+      if (!application || application.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Application not found" });
+      }
+
+      try {
+        const updatedStep = await storage.updateInterviewStep(stepId, req.body);
+
+        // Create timeline event for status change
+        if (req.body.completed !== undefined) {
+          await storage.createTimelineEvent({
+            applicationId,
+            userId: req.user!.id,
+            title: req.body.completed
+              ? "Interview Step Completed"
+              : "Interview Step Reopened",
+            description: `${updatedStep.stepName} ${req.body.completed ? "completed" : "reopened"}`,
+            type: "interview",
+            date: new Date(),
+          });
+        }
+
+        res.json(updatedStep);
+      } catch (error) {
+        res.status(400).json({
+          error: error instanceof Error ? error.message : "Invalid request",
+        });
+      }
     }
-  });
+  );
 
-  app.delete("/api/applications/:appId/interview-steps/:stepId", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.delete(
+    "/api/applications/:appId/interview-steps/:stepId",
+    async (req, res) => {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const applicationId = parseInt(req.params.appId);
-    const stepId = parseInt(req.params.stepId);
-    if (isNaN(applicationId) || isNaN(stepId)) {
-      return res.status(400).json({ error: "Invalid ID provided" });
+      const applicationId = parseInt(req.params.appId);
+      const stepId = parseInt(req.params.stepId);
+      if (isNaN(applicationId) || isNaN(stepId)) {
+        return res.status(400).json({ error: "Invalid ID provided" });
+      }
+
+      const application = await storage.getApplicationById(applicationId);
+      if (!application || application.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Application not found" });
+      }
+
+      await storage.deleteInterviewStep(stepId);
+      res.status(204).send();
     }
-
-    const application = await storage.getApplicationById(applicationId);
-    if (!application || application.userId !== req.user!.id) {
-      return res.status(404).json({ error: "Application not found" });
-    }
-
-    await storage.deleteInterviewStep(stepId);
-    res.status(204).send();
-  });
+  );
 
   app.get("/api/applications/:id/timeline", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -533,7 +560,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const event = await storage.createTimelineEvent(validatedData);
       res.status(201).json(event);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -558,7 +587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { jobDescription, resumeId, company, position } = schema.parse(
-        req.body,
+        req.body
       );
 
       let resumeContent = "";
@@ -577,12 +606,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobDescription,
         resumeContent,
         company,
-        position,
+        position
       );
 
       res.json({ coverLetter });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -610,7 +641,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ analysis });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -641,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             event.type === "application" ||
             event.type === "interview" ||
             event.type === "offer" ||
-            event.type === "rejection",
+            event.type === "rejection"
         )
         .map((event) => ({
           status: event.title.includes("Status")
@@ -671,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const colorAnalysis = await analyzeApplicationStatus(
         safeApplication,
-        statusHistory,
+        statusHistory
       );
 
       res.json({ colorAnalysis });
@@ -716,7 +749,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const question = await storage.createInterviewQuestion(validatedData);
       res.status(201).json(question);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -738,12 +773,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedQuestion = await storage.voteInterviewQuestion(
         questionId,
         req.user!.id,
-        isUpvote,
+        isUpvote
       );
 
       res.json(updatedQuestion);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -752,7 +789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const assistances = await storage.getInterviewAssistanceByUserId(
-      req.user!.id,
+      req.user!.id
     );
     res.json(assistances);
   });
@@ -767,7 +804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check that the interview belongs to the user if provided
       if (validatedData.interviewId) {
         const interview = await storage.getInterviewById(
-          validatedData.interviewId,
+          validatedData.interviewId
         );
         if (!interview || interview.userId !== req.user!.id) {
           return res.status(404).json({ error: "Interview not found" });
@@ -777,7 +814,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assistance = await storage.createInterviewAssistance(validatedData);
       res.status(201).json(assistance);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -797,12 +836,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const questions = await generateInterviewQuestions(
         jobDescription,
         position,
-        company,
+        company
       );
 
       res.json({ questions });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -819,7 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { question, resumeId, framework, keywords, tone } = schema.parse(
-        req.body,
+        req.body
       );
 
       let resumeContent = "";
@@ -839,12 +880,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         resumeContent,
         framework,
         keywords,
-        tone,
+        tone
       );
 
       res.json({ answer });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -863,12 +906,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const feedback = await generateInterviewFeedback(
         questions,
         answers,
-        position,
+        position
       );
 
       res.json({ feedback });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -889,12 +934,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         position,
         company,
         level,
-        focusAreas,
+        focusAreas
       );
 
       res.json(mockInterview);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -913,12 +960,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysis = await analyzeInterviewTranscript(
         transcript,
         jobDescription,
-        position,
+        position
       );
 
       res.json({ analysis });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -948,20 +997,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const connections = await storage.getGmailConnections(
-        req.user!.id,
-      );
+      const connections = await storage.getGmailConnections(req.user!.id);
       if (!connections || connections.length === 0) {
         return res.status(404).json({ error: "No Google account connected" });
       }
 
       const event = await gmailService.createCalendarEvent(
         connections[0],
-        req.body,
+        req.body
       );
       res.json(event);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Invalid request" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Invalid request",
+      });
     }
   });
 
@@ -1035,24 +1084,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/gmail/inbox", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
-      const connections = await storage.getGmailConnectionsByUserId(
-        req.user!.id,
-      );
+      const connections = await storage.getGmailConnections(req.user!.id);
       if (!connections || connections.length === 0) {
         return res.status(404).json({ error: "No Gmail accounts connected" });
       }
 
-      // Get emails from all connected accounts
+      // Get emails from filtered accounts
       const allEmails = await Promise.all(
-        connections.map((connection) => gmailService.getEmails(connection)),
+        connections.map(async (connection) => {
+          const emails = await gmailService.getEmails(connection);
+          return emails;
+        })
       );
 
-      // Flatten and sort by date
-      const emails = allEmails
-        .flat()
-        .sort((a, b) => b.date.getTime() - a.date.getTime());
+      // Flatten and deduplicate emails based on Message-ID
+      const emailMap = new Map();
+      allEmails.flat().forEach(email => {
+        const key = email.messageId || email.id;
+        if (!emailMap.has(key)) {
+          emailMap.set(key, email);
+        } else {
+          // If we have a duplicate, keep the one with the most recent date
+          const existingEmail = emailMap.get(key);
+          if (new Date(email.date) > new Date(existingEmail.date)) {
+            emailMap.set(key, email);
+          }
+        }
+      });
 
-      res.json(emails);
+      // Convert back to array and sort by date
+      const emails = Array.from(emailMap.values())
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // Return both emails and available Gmail accounts
+      res.json({
+        emails,
+        availableAccounts: connections.map(conn => ({
+          email: conn.email,
+          isSelected: true
+        }))
+      });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -1067,18 +1138,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "URL is required" });
       }
 
-      // Extract sheet ID from URL
-      const match = url.match(/\/d\/(.*?)\/|$/);
+      // Extract sheetId and gid from the full sheet URL
+      const match = url.match(/\/d\/([^/]+).*?gid=(\d+)/);
       if (!match) {
         return res.status(400).json({ error: "Invalid Google Sheets URL" });
       }
 
-      const sheetId = match[1];
-      const response = await fetch(
-        `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`,
-      );
+      const [_, sheetId, gid] = match;
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
 
+      const response = await fetch(csvUrl);
       if (!response.ok) {
+        console.log("response", response.statusText);
         return res.status(400).json({ error: "Failed to fetch sheet data" });
       }
 
@@ -1088,7 +1159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Skip header row and validate data
       const validApplications = [];
       const existingApplications = await storage.getApplicationsByUserId(
-        req.user!.id,
+        req.user!.id
       );
 
       for (const row of rows.slice(1)) {
@@ -1110,7 +1181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const isDuplicate = existingApplications.some(
           (app) =>
             app.company.toLowerCase() === company.toLowerCase() &&
-            app.position.toLowerCase() === position.toLowerCase(),
+            app.position.toLowerCase() === position.toLowerCase()
         );
 
         if (!isDuplicate) {
@@ -1133,7 +1204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (let i = 0; i < validApplications.length; i += batchSize) {
         const batch = validApplications.slice(i, i + batchSize);
         const results = await Promise.all(
-          batch.map((app) => storage.createApplication(app)),
+          batch.map((app) => storage.createApplication(app))
         );
         createdApplications.push(...results);
       }
@@ -1178,7 +1249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const otherApplicants = await storage.getOtherApplicantsByPosition(
         req.user!.id,
-        position,
+        position
       );
       res.json(otherApplicants);
     } catch (error) {
@@ -1190,7 +1261,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sheet-settings", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
-      const settings = await storage.getSheetImportSettingsByUserId(req.user!.id);
+      const settings = await storage.getSheetImportSettingsByUserId(
+        req.user!.id
+      );
       res.json(settings);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch settings" });
@@ -1223,7 +1296,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Setting not found" });
       }
 
-      const updatedSetting = await storage.updateSheetImportSettings(settingId, req.body);
+      const updatedSetting = await storage.updateSheetImportSettings(
+        settingId,
+        req.body
+      );
       res.json(updatedSetting);
     } catch (error) {
       res.status(500).json({ error: "Failed to update setting" });
