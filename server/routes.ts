@@ -33,6 +33,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { gmailService } from "./gmail-service";
+import { CalendarService } from "./microservices/calendar/calendar.service";
 import { searchJobs } from "./job-platforms";
 import { JOB_PLATFORMS } from "../client/src/config/job-platforms";
 import gmailRoutes from "./routes/gmail";
@@ -990,6 +991,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("OAuth callback error:", error);
       res.status(500).json({ error: "Failed to complete OAuth flow" });
+    }
+  });
+
+  app.get("/api/calendar/events", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const connections = await storage.getGmailConnections(req.user!.id);
+      if (!connections || connections.length === 0) {
+        return res.status(404).json({ error: "No Google account connected" });
+      }
+      const events = await Promise.all(
+        connections.map(async (connection) => {
+          const events = await gmailService.getCalendarEvents(connection);
+          return events;
+        })
+      );
+      res.json({ events });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch calendar events" });
     }
   });
 

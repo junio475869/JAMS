@@ -1,0 +1,155 @@
+[
+    [],
+    [
+        {
+            "kind": "calendar#event",
+            "etag": "\"3494825094474510\"",
+            "id": "_64q3cdhm6soj6eavc5m6au1eehgmsppechincc9h68rk0prdc5kmobj3dtmg",
+            "status": "confirmed",
+            "htmlLink": "https://www.google.com/calendar/event?eid=XzY0cTNjZGhtNnNvajZlYXZjNW02YXUxZWVoZ21zcHBlY2hpbmNjOWg2OHJrMHByZGM1a21vYmozZHRtZyBhbGV4LnRhbmcuZGV2MTEyN0Bt",
+            "created": "2025-05-16T16:22:18.000Z",
+            "updated": "2025-05-16T16:22:35.324Z",
+            "summary": "Interview - Alex Tang-25-1224-Sr. Software Engineer (Remote)",
+            "description": "Candidate Name: Tang, Alex\nPosition: Sr. Software Engineer (Remote)\nInterview Type: rm.TEAMS\nINSTRUCTIONS- \nPlease note that this virtual Microsoft Teams video meeting will require you to have your audio and camera/video turned on.  \n \nAdditionally, please ensure you select the correct time zone you will be in during the scheduled interview.\n\nBefore the interview, please make sure you have done some research on Inspira Financial to help you prepare.\n \nIf you have any questions or concerns prior to the interview, please feel free to reach out to victor.olivares@inspirafinancial.com\n\nSCHEDULE DETAILS- \nInterviewer(s)- \nOlivares, Victor\nDate: Wed, May 21, 2025\nTime: 07:30 PM  - 08:00 PM America/Chicago\n\n\n",
+            "location": " ",
+            "creator": {
+                "email": "alex.tang.dev1127@gmail.com",
+                "self": true
+            },
+            "organizer": {
+                "email": "do-not-reply@candidatecare.com"
+            },
+            "start": {
+                "dateTime": "2025-05-21T15:30:00-05:00",
+                "timeZone": "UTC"
+            },
+            "end": {
+                "dateTime": "2025-05-21T16:00:00-05:00",
+                "timeZone": "UTC"
+            },
+            "iCalUID": "146667139_alex.tang.dev1127@gmail.com",
+            "sequence": 1747411385,
+            "attendees": [
+                {
+                    "email": "alex.tang.dev1127@gmail.com",
+                    "self": true,
+                    "responseStatus": "accepted"
+                },
+                {
+                    "email": "victor.olivares@inspirafinancial.com",
+                    "displayName": "Victor Olivares",
+                    "responseStatus": "needsAction"
+                }
+            ],
+            "privateCopy": true,
+            "reminders": {
+                "useDefault": false,
+                "overrides": [
+                    {
+                        "method": "popup",
+                        "minutes": 60
+                    }
+                ]
+            },
+            "eventType": "default"
+        },
+        {
+            "kind": "calendar#event",
+            "etag": "\"3495513382614478\"",
+            "id": "9i6ilcbasidjgvf537btt4rqmo",
+            "status": "confirmed",
+            "htmlLink": "https://www.google.com/calendar/event?eid=OWk2aWxjYmFzaWRqZ3ZmNTM3YnR0NHJxbW8gYWxleC50YW5nLmRldjExMjdAbQ",
+            "created": "2025-05-20T14:09:08.000Z",
+            "updated": "2025-05-20T17:39:32.599Z",
+            "summary": "Your Virtual Interview with Lightspeed",
+            "description": "Itinerary: Alex T<br />Friday, May 23, 2025 CDT<br/><br/>1:30PM (CDT) - 3:00PM (CDT): Julian Azolin (Manager, Software Development), Kelsey Champagne (Manager, Software Development), Eduardo Caceres (Staff Software Developer)<br/><br/>Hi Alex,<br/><br/>Here's your calendar invite! You are confirmed for your virtual interview with Julian Azolin, Kelsey Champagne and Eduardo Caceres for Fri May 23, 2025 at 1:30PM (CDT). Please connect with Julian Azolin, Kelsey Champagne and Eduardo Caceres on Zoom. Ensure you’re in a quiet place with steady internet and headphones are recommended.<br/><br/><strong>Your Zoom Link:  https://lightspeed.zoom.us/j/97980072502?pwd=wJvl68sxuTophEYD28NkXZ3o0f3phr.1</strong><br /><strong>Meeting Password: yXD_@!2t (for phone users: 03638925)</strong><br/><br/><strong>What To Expect:</strong> This interview will be to discuss the practical task, the team will want to learn more about how you solve a problem. If you have any suggestions about what you would do in the future to extend or make your work production ready please discuss this. If there was anything you did not have time to complete please also explain what you would do differently with more time.<br/><br/>For anything scheduling related, please contact  Lesya (lesya.nakoneczny@lightspeedhq.com) and for all other questions please reach out to Joseph (josephrouchier@lightspeedhq.com).<br/><br/>Should you wish to reschedule, you can also use the event confirmation link below ⬇️! <br/><br/> Here's your event confirmation.<br />https://request-availability.goodtime.io/intro/K2JyT37zhiB9YSFZ <br/><br/> <a href=\"https://portal.goodtime.io/candidate-portal/e5c987bd-2e27-4452-8822-2a94ec0cfdff/2805f0a5-5465-480f-80ae-03e80206be4f/425875125\"><b>Take me to my portal</b></a> <br/><br/> &lt;&lt;&lt;&lt;&lt;&gt;&gt;&gt;&gt;&gt;   ",
+            "creator": {
+                "email": "lesya.nakoneczny@lightspeedhq.com"
+            },
+            "organizer": {
+                "email": "c_bt02cmtcl2r0lb2ogjoqc7sn5g@group.calendar.google.com",
+                "displayName": "Lightspeed Candidate Interviews"
+            },
+            "start": {
+                "dateTime": "2025-05-23T13:30:00-05:00",
+                "timeZone": "America/Toronto"
+            },
+            "end": {
+                "dateTime": "2025-05-23T15:00:00-05:00",
+                "timeZone": "America/Toronto"
+            },
+            "visibility": "private",
+            "iCalUID": "9i6ilcbasidjgvf537btt4rqmo@google.com",
+            "sequence": 0,
+            "attendees": [
+                {
+                    "email": "alex.tang.dev1127@gmail.com",
+                    "self": true,
+                    "responseStatus": "accepted"
+                },
+                {
+                    "email": "c_j853j93ok8p59rvdct7jrp2fgg@group.calendar.google.com",
+                    "displayName": "GoodTime Sync",
+                    "responseStatus": "needsAction"
+                }
+            ],
+            "guestsCanInviteOthers": false,
+            "reminders": {
+                "useDefault": false,
+                "overrides": [
+                    {
+                        "method": "popup",
+                        "minutes": 30
+                    }
+                ]
+            },
+            "eventType": "default"
+        },
+        {
+            "kind": "calendar#event",
+            "etag": "\"3495543919814814\"",
+            "id": "0pnbdghks16ee4l03ljlemrqc4",
+            "status": "confirmed",
+            "htmlLink": "https://www.google.com/calendar/event?eid=MHBuYmRnaGtzMTZlZTRsMDNsamxlbXJxYzQgYWxleC50YW5nLmRldjExMjdAbQ",
+            "created": "2025-05-16T16:35:40.000Z",
+            "updated": "2025-05-20T20:12:43.989Z",
+            "summary": "Introductory Call with Underdog Sports for Backend Engineer ",
+            "description": "Itinerary: Alex T<br />Thursday, May 22, 2025 CDT<br/><br/>9:30AM (CDT) - 10:00AM (CDT): <a href=\"https://www.linkedin.com/in/kate-dina/\" target=\"_blank\" rel=\"noopener noreferrer\">Kate Dina</a> (Senior Talent Acquisition Partner)<br/><br/>Hi Alex,<br/><br/>I'm looking forward to connecting! I will give you a call at 14693109696. Please ensure you’re in a quiet place with steady signal. If I'm unable to reach you, I will e-mail you at alex.tang.dev1127@gmail.com.<br/><br/>Should you need to reschedule, you can use the Event Confirmation link below to reschedule your day and time. If you have any questions around scheduling, please reach out to me! <br/><br/> Here's your event confirmation.<br />https://request-availability.goodtime.io/intro/U6dwIOtRPXmtDF6i <br/><br/> <a href=\"https://portal.goodtime.io/candidate-portal/f99d975d-43b9-4cec-9d57-dd2ee7c55779/e4231103-57df-4b1f-b91d-b6d191f3bc75/63956093005\"><b>Take me to my portal</b></a> <br/><br/> &lt;&lt;&lt;&lt;&lt;&gt;&gt;&gt;&gt;&gt;  ",
+            "creator": {
+                "email": "kate.dina@underdogfantasy.com"
+            },
+            "organizer": {
+                "email": "c_5116196d1c400bf90afba6f43439893ff2c06e284466b14a51abf8e8eb0b14a2@group.calendar.google.com",
+                "displayName": "GoodTime Interviews"
+            },
+            "start": {
+                "dateTime": "2025-05-22T09:30:00-05:00",
+                "timeZone": "America/New_York"
+            },
+            "end": {
+                "dateTime": "2025-05-22T10:00:00-05:00",
+                "timeZone": "America/New_York"
+            },
+            "visibility": "private",
+            "iCalUID": "0pnbdghks16ee4l03ljlemrqc4@google.com",
+            "sequence": 1,
+            "attendees": [
+                {
+                    "email": "c_67c2e19212099a4cd4312c0b3e556c88b7eada4d83dcad392243d55cb0880f9c@group.calendar.google.com",
+                    "displayName": "GoodTime Sync - [06 24]",
+                    "responseStatus": "needsAction"
+                },
+                {
+                    "email": "alex.tang.dev1127@gmail.com",
+                    "self": true,
+                    "responseStatus": "accepted"
+                }
+            ],
+            "guestsCanInviteOthers": false,
+            "reminders": {
+                "useDefault": false
+            },
+            "eventType": "default"
+        }
+    ]
+]

@@ -25,10 +25,10 @@ export async function setupVite(app: Express, server: Server) {
     hmr: { 
       server,
       protocol: 'ws',
-      host: 'localhost',
+      host: process.env.HOST,
     },
     cors: true,
-    allowedHosts: ['localhost', '127.0.0.1'],
+    allowedHosts: [process.env.HOST],
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',

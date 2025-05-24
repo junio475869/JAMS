@@ -45,6 +45,8 @@ import {
   Video,
   Building,
   Link,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import {
@@ -69,7 +71,7 @@ import {
   getWeek,
 } from "date-fns";
 
-// Demo events types
+// Calendar event types
 interface CalendarEvent {
   id: string;
   title: string;
@@ -82,6 +84,32 @@ interface CalendarEvent {
   interviewLink?: string;
   contactEmail?: string;
   location?: string;
+  startTime?: Date;
+  endTime?: Date;
+  description?: string;
+  // New fields from Google Calendar
+  htmlLink?: string;
+  status?: string;
+  visibility?: string;
+  attendees?: {
+    email: string;
+    displayName?: string;
+    responseStatus?: string;
+  }[];
+  reminders?: {
+    useDefault: boolean;
+    overrides?: {
+      method: string;
+      minutes: number;
+    }[];
+  };
+  timeZone?: string;
+  created?: Date;
+  updated?: Date;
+  organizer?: {
+    email: string;
+    displayName?: string;
+  };
 }
 
 // Calendar sources
@@ -92,6 +120,17 @@ interface CalendarSource {
   enabled: boolean;
 }
 
+// Gmail connection
+interface GmailConnection {
+  id?: number;
+  userId: number;
+  email: string;
+  accessToken: string;
+  refreshToken: string;
+  expiry: Date;
+  updatedAt?: Date;
+}
+
 export default function CalendarPage() {
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -99,6 +138,13 @@ export default function CalendarPage() {
     from: new Date(),
     to: addDays(new Date(), 7),
   });
+
+  // Gmail connection state
+  const [gmailConnections, setGmailConnections] = useState<GmailConnection[]>(
+    []
+  );
+  const [isLoadingGmail, setIsLoadingGmail] = useState(true);
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
 
   // Demo mode check
   const isDemoMode = localStorage.getItem("demoMode") === "true";
@@ -122,196 +168,403 @@ export default function CalendarPage() {
 
   // Selected event for modal
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
-    null,
+    null
   );
   const [showEventModal, setShowEventModal] = useState(false);
 
-  // Generate mock events for demo mode
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  // Event form state
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [eventStartTime, setEventStartTime] = useState("");
+  const [eventEndTime, setEventEndTime] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
 
+  // Events state
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+
+  // Load Gmail connections
   useEffect(() => {
-    if (isDemoMode) {
-      // Current month and next month
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
+    const loadGmailConnections = async () => {
+      try {
+        const response = await fetch("/api/gmail/connections");
+        if (response.ok) {
+          const data = await response.json();
+          setGmailConnections(data.connections);
+        }
+      } catch (error) {
+        console.error("Error loading Gmail connections:", error);
+      } finally {
+        setIsLoadingGmail(false);
+      }
+    };
 
-      // Generate mock interview events
-      const mockEvents: CalendarEvent[] = [
-        {
-          id: "1",
-          title: "Technical Interview - Acme Inc",
-          date: new Date(
-            currentYear,
-            currentMonth,
-            currentDate.getDate() + 3,
-            14,
-            0,
-          ),
-          type: "interview",
-          notes:
-            "Technical interview for Software Engineer position. Focus on algorithms and system design.",
-          company: "Acme Inc",
-          jobUrl: "https://example.com/jobs/software-engineer",
-          companyOverview:
-            "Acme Inc is a leading technology company specializing in cloud infrastructure and services with over 5,000 employees worldwide.",
-          interviewLink: "https://meeting.example.com/acme-interview",
-          contactEmail: "recruiting@acme.example.com",
-          location: "Remote (Zoom)",
-        },
-        {
-          id: "2",
-          title: "HR Interview - Globex",
-          date: new Date(
-            currentYear,
-            currentMonth,
-            currentDate.getDate() + 5,
-            11,
-            0,
-          ),
-          type: "interview",
-          notes: "HR interview to discuss compensation and benefits.",
-          company: "Globex Corporation",
-          jobUrl: "https://example.com/jobs/senior-developer",
-          companyOverview:
-            "Globex Corporation is a multinational technology firm focused on innovative software solutions and digital transformation.",
-          interviewLink: "https://teams.example.com/globex-hr",
-          contactEmail: "sarah.thompson@globex.example.com",
-          location: "Globex HQ - Floor 12, Room 1204",
-        },
-        {
-          id: "3",
-          title: "Follow-up with Jane (Recruiter)",
-          date: new Date(
-            currentYear,
-            currentMonth,
-            currentDate.getDate() + 2,
-            15,
-            30,
-          ),
-          type: "followup",
-          notes: "Check on application status for Senior Developer role.",
-          company: "TechRecruit Agency",
-          contactEmail: "jane.smith@techrecruit.example.com",
-          jobUrl: "https://example.com/jobs/senior-developer-initech",
-        },
-        {
-          id: "4",
-          title: "Application Deadline - Umbrella Corp",
-          date: new Date(
-            currentYear,
-            currentMonth,
-            currentDate.getDate() + 8,
-            23,
-            59,
-          ),
-          type: "deadline",
-          notes: "Last day to submit application for Lead Developer position.",
-          company: "Umbrella Corporation",
-          jobUrl: "https://example.com/jobs/lead-developer-umbrella",
-          companyOverview:
-            "Umbrella Corporation is a pharmaceutical company known for cutting-edge research and development in biotechnology.",
-        },
-        {
-          id: "5",
-          title: "Resume Review Session",
-          date: new Date(
-            currentYear,
-            currentMonth,
-            currentDate.getDate() + 1,
-            13,
-            0,
-          ),
-          type: "other",
-          notes: "Meet with career coach to review resume.",
-          interviewLink: "https://meet.example.com/resume-review",
-          contactEmail: "coach@careerservices.example.com",
-          location: "Virtual Meeting",
-        },
-        {
-          id: "6",
-          title: "Technical Assessment - Wayne Enterprises",
-          date: new Date(
-            currentYear,
-            currentMonth,
-            currentDate.getDate() + 4,
-            10,
-            0,
-          ),
-          type: "interview",
-          notes: "Complete coding assessment for Senior Full Stack position.",
-          company: "Wayne Enterprises",
-          jobUrl: "https://example.com/jobs/senior-fullstack-wayne",
-          companyOverview:
-            "Wayne Enterprises is a global technology conglomerate with interests in software, hardware, and digital services.",
-          interviewLink: "https://codingchallenge.example.com/wayne-assessment",
-          contactEmail: "tech-recruiting@wayne.example.com",
-        },
-        {
-          id: "7",
-          title: "Team Interview - Cyberdyne Systems",
-          date: new Date(
-            currentYear,
-            currentMonth,
-            currentDate.getDate() + 6,
-            14,
-            30,
-          ),
-          type: "interview",
-          notes:
-            "Panel interview with engineering team for Machine Learning Engineer role.",
-          company: "Cyberdyne Systems",
-          jobUrl: "https://example.com/jobs/ml-engineer-cyberdyne",
-          companyOverview:
-            "Cyberdyne Systems is a pioneer in AI and machine learning technologies with a focus on autonomous systems.",
-          interviewLink: "https://meet.example.com/cyberdyne-panel",
-          contactEmail: "mark.wilson@cyberdyne.example.com",
-          location: "Cyberdyne Office - 123 Tech Parkway, Building B",
-        },
-      ];
+    loadGmailConnections();
+  }, []);
 
-      setEvents(mockEvents);
+  // Load calendar events
+  useEffect(() => {
+    const loadCalendarEvents = async () => {
+      if (isDemoMode) {
+        // Load demo events
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+
+        const mockEvents: CalendarEvent[] = [
+          {
+            id: "1",
+            title: "Technical Interview - Acme Inc",
+            date: new Date(
+              currentYear,
+              currentMonth,
+              currentDate.getDate() + 3,
+              14,
+              0
+            ),
+            type: "interview",
+            notes:
+              "Technical interview for Software Engineer position. Focus on algorithms and system design.",
+            company: "Acme Inc",
+            jobUrl: "https://example.com/jobs/software-engineer",
+            companyOverview:
+              "Acme Inc is a leading technology company specializing in cloud infrastructure and services with over 5,000 employees worldwide.",
+            interviewLink: "https://meeting.example.com/acme-interview",
+            contactEmail: "recruiting@acme.example.com",
+            location: "Remote (Zoom)",
+          },
+          {
+            id: "2",
+            title: "HR Interview - Globex",
+            date: new Date(
+              currentYear,
+              currentMonth,
+              currentDate.getDate() + 5,
+              11,
+              0
+            ),
+            type: "interview",
+            notes: "HR interview to discuss compensation and benefits.",
+            company: "Globex Corporation",
+            jobUrl: "https://example.com/jobs/senior-developer",
+            companyOverview:
+              "Globex Corporation is a multinational technology firm focused on innovative software solutions and digital transformation.",
+            interviewLink: "https://teams.example.com/globex-hr",
+            contactEmail: "sarah.thompson@globex.example.com",
+            location: "Globex HQ - Floor 12, Room 1204",
+          },
+          {
+            id: "3",
+            title: "Follow-up with Jane (Recruiter)",
+            date: new Date(
+              currentYear,
+              currentMonth,
+              currentDate.getDate() + 2,
+              15,
+              30
+            ),
+            type: "followup",
+            notes: "Check on application status for Senior Developer role.",
+            company: "TechRecruit Agency",
+            contactEmail: "jane.smith@techrecruit.example.com",
+            jobUrl: "https://example.com/jobs/senior-developer-initech",
+          },
+          {
+            id: "4",
+            title: "Application Deadline - Umbrella Corp",
+            date: new Date(
+              currentYear,
+              currentMonth,
+              currentDate.getDate() + 8,
+              23,
+              59
+            ),
+            type: "deadline",
+            notes:
+              "Last day to submit application for Lead Developer position.",
+            company: "Umbrella Corporation",
+            jobUrl: "https://example.com/jobs/lead-developer-umbrella",
+            companyOverview:
+              "Umbrella Corporation is a pharmaceutical company known for cutting-edge research and development in biotechnology.",
+          },
+          {
+            id: "5",
+            title: "Resume Review Session",
+            date: new Date(
+              currentYear,
+              currentMonth,
+              currentDate.getDate() + 1,
+              13,
+              0
+            ),
+            type: "other",
+            notes: "Meet with career coach to review resume.",
+            interviewLink: "https://meet.example.com/resume-review",
+            contactEmail: "coach@careerservices.example.com",
+            location: "Virtual Meeting",
+          },
+          {
+            id: "6",
+            title: "Technical Assessment - Wayne Enterprises",
+            date: new Date(
+              currentYear,
+              currentMonth,
+              currentDate.getDate() + 4,
+              10,
+              0
+            ),
+            type: "interview",
+            notes: "Complete coding assessment for Senior Full Stack position.",
+            company: "Wayne Enterprises",
+            jobUrl: "https://example.com/jobs/senior-fullstack-wayne",
+            companyOverview:
+              "Wayne Enterprises is a global technology conglomerate with interests in software, hardware, and digital services.",
+            interviewLink:
+              "https://codingchallenge.example.com/wayne-assessment",
+            contactEmail: "tech-recruiting@wayne.example.com",
+          },
+          {
+            id: "7",
+            title: "Team Interview - Cyberdyne Systems",
+            date: new Date(
+              currentYear,
+              currentMonth,
+              currentDate.getDate() + 6,
+              14,
+              30
+            ),
+            type: "interview",
+            notes:
+              "Panel interview with engineering team for Machine Learning Engineer role.",
+            company: "Cyberdyne Systems",
+            jobUrl: "https://example.com/jobs/ml-engineer-cyberdyne",
+            companyOverview:
+              "Cyberdyne Systems is a pioneer in AI and machine learning technologies with a focus on autonomous systems.",
+            interviewLink: "https://meet.example.com/cyberdyne-panel",
+            contactEmail: "mark.wilson@cyberdyne.example.com",
+            location: "Cyberdyne Office - 123 Tech Parkway, Building B",
+          },
+        ];
+
+        setEvents(mockEvents);
+      } else {
+        // Load real calendar events
+        try {
+          const response = await fetch("/api/calendar/events");
+          if (response.ok) {
+            const data = await response.json();
+            // Transform Google Calendar events to our format
+            const transformedEvents = data.events.flat().map((event: any) => ({
+              id: event.id,
+              title: event.summary,
+              date: new Date(event.start?.dateTime || event.start?.date),
+              type: determineEventType(event.summary, event.description),
+              description: event.description,
+              location: event.location,
+              startTime: new Date(event.start?.dateTime || event.start?.date),
+              endTime: new Date(event.end?.dateTime || event.end?.date),
+              htmlLink: event.htmlLink,
+              status: event.status,
+              visibility: event.visibility,
+              attendees: event.attendees,
+              reminders: event.reminders,
+              timeZone: event.start?.timeZone || event.end?.timeZone,
+              created: new Date(event.created),
+              updated: new Date(event.updated),
+              organizer: event.organizer,
+              // Extract additional metadata from description
+              ...extractMetadataFromDescription(event.description),
+            }));
+            setEvents(transformedEvents);
+          }
+        } catch (error) {
+          console.error("Error loading calendar events:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load calendar events",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+
+    loadCalendarEvents();
+  }, [isDemoMode, toast]);
+
+  // Helper function to determine event type based on title and description
+  const determineEventType = (
+    title: string,
+    description: string = ""
+  ): CalendarEvent["type"] => {
+    if (!title) return "other";
+    if (!description) return "other";
+
+    const lowerTitle = title.toLowerCase();
+    const lowerDesc = description.toLowerCase();
+
+    if (lowerTitle.includes("interview") || lowerDesc.includes("interview")) {
+      return "interview";
     }
-  }, [isDemoMode]);
+    if (lowerTitle.includes("follow") || lowerDesc.includes("follow")) {
+      return "followup";
+    }
+    if (lowerTitle.includes("deadline") || lowerDesc.includes("deadline")) {
+      return "deadline";
+    }
+    return "other";
+  };
+
+  // Helper function to extract metadata from event description
+  const extractMetadataFromDescription = (description: string = "") => {
+    const metadata: any = {};
+
+    // Extract company name
+    const companyMatch = description.match(/Company:\s*([^\n]+)/i);
+    if (companyMatch) {
+      metadata.company = companyMatch[1].trim();
+    }
+
+    // Extract job URL
+    const jobUrlMatch = description.match(/Job URL:\s*(https?:\/\/[^\s\n]+)/i);
+    if (jobUrlMatch) {
+      metadata.jobUrl = jobUrlMatch[1].trim();
+    }
+
+    // Extract contact email
+    const emailMatch = description.match(
+      /Contact:\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i
+    );
+    if (emailMatch) {
+      metadata.contactEmail = emailMatch[1].trim();
+    }
+
+    // Extract interview link
+    const interviewLinkMatch = description.match(
+      /Interview Link:\s*(https?:\/\/[^\s\n]+)/i
+    );
+    if (interviewLinkMatch) {
+      metadata.interviewLink = interviewLinkMatch[1].trim();
+    }
+
+    return metadata;
+  };
+
+  // Handle Gmail calendar connection
+  const handleConnectCalendar = async () => {
+    try {
+      const response = await fetch("/api/gmail/auth");
+      if (response.ok) {
+        const { authUrl } = await response.json();
+        window.location.href = authUrl;
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect to Google Calendar",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle calendar sync
+  const handleCalendarSync = async () => {
+    if (isDemoMode) {
+      toast({
+        title: "Demo Mode",
+        description: "Calendar sync is not available in demo mode",
+      });
+      return;
+    }
+
+    setIsSyncingCalendar(true);
+    try {
+      const response = await fetch("/api/calendar/sync", {
+        method: "POST",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data.events);
+        toast({
+          title: "Success",
+          description: "Calendar synchronized successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sync calendar",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncingCalendar(false);
+    }
+  };
 
   // Handle form submission for creating a new event
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const newEvent = {
-      title: eventTitle,
-      description: eventDescription,
-      date: new Date(eventDate),
-    };
+
+    if (isDemoMode) {
+      toast({
+        title: "Demo Mode",
+        description: "Event creation is not available in demo mode",
+      });
+      return;
+    }
+
     try {
-      const response = await fetch("/api/events", {
+      const startTime = new Date(`${eventDate}T${eventStartTime}`);
+      const endTime = new Date(`${eventDate}T${eventEndTime}`);
+
+      const response = await fetch("/api/calendar/events", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newEvent),
+        body: JSON.stringify({
+          summary: eventTitle,
+          description: eventDescription,
+          startTime,
+          endTime,
+          location: eventLocation,
+        }),
       });
-      if (response.ok) {
-        // Optionally, you can handle successful submission
-        setEventTitle("");
-        setEventDescription("");
-        setEventDate("");
-        alert("Event created successfully!");
-      } else {
-        alert("Failed to create event.");
+
+      if (!response.ok) {
+        throw new Error("Failed to create event");
       }
+
+      const newEvent = await response.json();
+      setEvents((prev) => [...prev, newEvent]);
+
+      // Reset form
+      setEventTitle("");
+      setEventDescription("");
+      setEventDate("");
+      setEventStartTime("");
+      setEventEndTime("");
+      setEventLocation("");
+      setShowEventModal(false);
+
+      toast({
+        title: "Success",
+        description: "Event created successfully",
+      });
     } catch (error) {
-      console.error("Error creating event:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create event",
+        variant: "destructive",
+      });
     }
   };
+
   // Toggle calendar source
   const toggleCalendarSource = (id: string) => {
     setCalendarSources((sources) =>
       sources.map((source) =>
-        source.id === id ? { ...source, enabled: !source.enabled } : source,
-      ),
+        source.id === id ? { ...source, enabled: !source.enabled } : source
+      )
     );
   };
 
@@ -347,7 +600,7 @@ export default function CalendarPage() {
 
   // Find today's events
   const todayEvents = events.filter((event) =>
-    isSameDay(event.date, new Date()),
+    isSameDay(event.date, new Date())
   );
 
   // Find upcoming events (next 7 days)
@@ -406,7 +659,7 @@ export default function CalendarPage() {
 
     const hours = Array.from(
       { length: workHoursEnd - workHoursStart + 1 },
-      (_, i) => workHoursStart + i,
+      (_, i) => workHoursStart + i
     );
 
     const hourEvents = hours.map((hour) => {
@@ -417,7 +670,7 @@ export default function CalendarPage() {
         time: format(hourStart, "h:mm a"),
         events: events.filter(
           (event) =>
-            isSameDay(event.date, viewDate) && getHours(event.date) === hour,
+            isSameDay(event.date, viewDate) && getHours(event.date) === hour
         ),
       };
     });
@@ -457,18 +710,26 @@ export default function CalendarPage() {
 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Calendar</h1>
-        <Button
-          onClick={() =>
-            toast({
-              title: "Calendar sync not available in demo mode",
-              description:
-                "Connect Google Calendar to enable calendar sync functionality.",
-            })
-          }
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Connect Calendar
-        </Button>
+        <div className="flex gap-2">
+          {!isDemoMode && (
+            <Button
+              variant="outline"
+              onClick={handleCalendarSync}
+              disabled={isSyncingCalendar}
+            >
+              {isSyncingCalendar ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Sync Calendar
+            </Button>
+          )}
+          <Button onClick={handleConnectCalendar}>
+            <Plus className="h-4 w-4 mr-2" />
+            Connect Calendar
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="calendar">
@@ -493,9 +754,9 @@ export default function CalendarPage() {
                             ? 30
                             : calendarViewType === "weekly"
                               ? 7
-                              : 1,
+                              : 1
                         )
-                      : new Date(),
+                      : new Date()
                   )
                 }
               >
@@ -520,9 +781,9 @@ export default function CalendarPage() {
                             ? 30
                             : calendarViewType === "weekly"
                               ? 7
-                              : 1,
+                              : 1
                         )
-                      : new Date(),
+                      : new Date()
                   )
                 }
               >
@@ -671,7 +932,7 @@ export default function CalendarPage() {
                             <div className="space-y-1">
                               {day.events
                                 .sort(
-                                  (a, b) => a.date.getTime() - b.date.getTime(),
+                                  (a, b) => a.date.getTime() - b.date.getTime()
                                 )
                                 .map((event) => (
                                   <button
@@ -802,7 +1063,7 @@ export default function CalendarPage() {
                                 .filter(
                                   (event) =>
                                     getHours(event.date) === 0 ||
-                                    event.type === "deadline",
+                                    event.type === "deadline"
                                 )
                                 .map((event, i) => (
                                   <button
@@ -819,7 +1080,7 @@ export default function CalendarPage() {
                             {Array.from({ length: 12 }).map((_, hourIndex) => {
                               const hour = hourIndex + 8; // Start from 8 AM
                               const hourEvents = day.events.filter(
-                                (event) => getHours(event.date) === hour,
+                                (event) => getHours(event.date) === hour
                               );
 
                               return (
@@ -1348,8 +1609,8 @@ export default function CalendarPage() {
 
       {/* Event Modal */}
       <Dialog open={showEventModal} onOpenChange={setShowEventModal}>
-        <DialogContent className="max-w-3xl">
-          {selectedEvent && (
+        <DialogContent className="max-w-3xl max-h-[calc(100vh-100px)]">
+          {selectedEvent ? (
             <>
               <DialogHeader>
                 <div className="flex items-center gap-2">
@@ -1361,20 +1622,12 @@ export default function CalendarPage() {
                 <DialogDescription>
                   {format(selectedEvent.date, "EEEE, MMMM d, yyyy")} at{" "}
                   {format(selectedEvent.date, "h:mm a")}
+                  {selectedEvent.timeZone && ` (${selectedEvent.timeZone})`}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  {selectedEvent.notes && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Notes</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedEvent.notes}
-                      </p>
-                    </div>
-                  )}
-
                   {selectedEvent.location && (
                     <div>
                       <h3 className="text-sm font-medium mb-1">Location</h3>
@@ -1393,14 +1646,61 @@ export default function CalendarPage() {
                     </div>
                   )}
 
-                  {selectedEvent.companyOverview && (
+                  {selectedEvent.attendees &&
+                    selectedEvent.attendees.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Attendees</h3>
+                        <div className="space-y-1">
+                          {selectedEvent.attendees.map((attendee, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2"
+                            >
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">
+                                {attendee.displayName || attendee.email}
+                                {attendee.responseStatus && (
+                                  <Badge variant="outline" className="ml-2">
+                                    {attendee.responseStatus}
+                                  </Badge>
+                                )}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {selectedEvent.reminders && (
                     <div>
-                      <h3 className="text-sm font-medium mb-1">
-                        Company Overview
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedEvent.companyOverview}
-                      </p>
+                      <h3 className="text-sm font-medium mb-1">Reminders</h3>
+                      <div className="space-y-1">
+                        {selectedEvent.reminders.overrides?.map(
+                          (reminder, index) => (
+                            <div
+                              key={index}
+                              className="text-sm text-muted-foreground"
+                            >
+                              {reminder.method}: {reminder.minutes} minutes
+                              before
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedEvent.description && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">Description</h3>
+                      <ScrollArea className="max-h-[calc(100vh-300px)]">
+                        <div
+                          className="text-sm text-muted-foreground prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{
+                            __html: selectedEvent.description,
+                          }}
+                        />
+                      </ScrollArea>
                     </div>
                   )}
                 </div>
@@ -1456,33 +1756,28 @@ export default function CalendarPage() {
                       </div>
                     </div>
                   )}
+
+                  {selectedEvent.htmlLink && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">
+                        Calendar Link
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                        <a
+                          href={selectedEvent.htmlLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-500 hover:underline"
+                        >
+                          View in Google Calendar
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div>
-                <h1>Create Event</h1>
-                <form onSubmit={handleSubmit}>
-                  <Input
-                    type="text"
-                    value={eventTitle}
-                    onChange={(e) => setEventTitle(e.target.value)}
-                    placeholder="Event Title"
-                    required
-                  />
-                  <Input
-                    type="text"
-                    value={eventDescription}
-                    onChange={(e) => setEventDescription(e.target.value)}
-                    placeholder="Event Description"
-                  />
-                  <Input
-                    type="datetime-local"
-                    value={eventDate}
-                    onChange={(e) => setEventDate(e.target.value)}
-                    required
-                  />
-                  <Button type="submit">Create Event</Button>
-                </form>
-              </div>
+
               <DialogFooter className="flex justify-between items-center gap-2">
                 <div>
                   <Button
@@ -1523,6 +1818,79 @@ export default function CalendarPage() {
                 </div>
               </DialogFooter>
             </>
+          ) : (
+            <div>
+              <DialogHeader>
+                <DialogTitle>Create New Event</DialogTitle>
+                <DialogDescription>
+                  Add a new event to your calendar
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Event Title</Label>
+                  <Input
+                    id="title"
+                    value={eventTitle}
+                    onChange={(e) => setEventTitle(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    value={eventDescription}
+                    onChange={(e) => setEventDescription(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="date">Date</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={eventLocation}
+                      onChange={(e) => setEventLocation(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="startTime">Start Time</Label>
+                    <Input
+                      id="startTime"
+                      type="time"
+                      value={eventStartTime}
+                      onChange={(e) => setEventStartTime(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="endTime">End Time</Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      value={eventEndTime}
+                      onChange={(e) => setEventEndTime(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Create Event</Button>
+                </DialogFooter>
+              </form>
+            </div>
           )}
         </DialogContent>
       </Dialog>

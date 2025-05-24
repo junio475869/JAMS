@@ -257,6 +257,30 @@ export class GmailService {
       throw error;
     }
   }
+
+  async getCalendarEvents(connection: GmailConnection) {
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      (process.env.APP_URL || "") + (process.env.OAUTH_CALLBACK_URL || "")
+    );
+
+    oauth2Client.setCredentials({
+      access_token: connection.accessToken,
+      refresh_token: connection.refreshToken,
+    });
+
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+    const response = await calendar.events.list({
+      calendarId: "primary",
+      timeMin: new Date().toISOString(),
+      timeMax: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(),
+      maxResults: 100,
+      singleEvents: true,
+    });
+
+    return response.data.items;
+  }
 }
 
 export const gmailService = new GmailService();

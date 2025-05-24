@@ -58,17 +58,17 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { GmailAccountFilter } from "@/components/GmailAccountFilter";
+import { MultiSelect, MultiSelectOption } from "@/components/MultiSelect";
 
 // Email types
 type EmailCategory =
-  | "Job Application Confirmation"
-  | "Interview Invite"
-  | "Recruiter Outreach"
-  | "Availability Request"
+  | "Application"
+  | "Interview"
+  | "Recruiter"
+  | "Availability"
   | "Offer"
   | "Rejection"
-  | "Follow-up Required"
+  | "Follow-up"
   | "Other";
 
 interface Email {
@@ -106,9 +106,7 @@ export default function EmailPage() {
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [composeMode, setComposeMode] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<EmailCategory | "All">(
-    "All"
-  );
+  const [categoryFilter, setCategoryFilter] = useState<EmailCategory[]>([]);
 
   const [loading, setLoading] = useState(false);
 
@@ -192,7 +190,7 @@ Acme Inc. Recruiting Team`,
           read: true,
           starred: true,
           pinned: true,
-          category: "Job Application Confirmation",
+          category: "Application",
           companyName: "Acme Inc",
           jobUrl: "https://example.com/jobs/software-engineer-acme",
         },
@@ -222,7 +220,7 @@ Globex Corporation`,
           read: false,
           starred: true,
           todo: true,
-          category: "Interview Invite",
+          category: "Interview",
           companyName: "Globex Corporation",
           jobUrl: "https://example.com/jobs/senior-developer-globex",
         },
@@ -248,7 +246,7 @@ Tech Jobs Recruiter`,
           date: subDays(now, 3),
           read: true,
           starred: false,
-          category: "Recruiter Outreach",
+          category: "Recruiter",
           companyName: "Initech",
         },
         {
@@ -333,7 +331,7 @@ Cyberdyne Systems`,
           read: false,
           starred: false,
           todo: true,
-          category: "Availability Request",
+          category: "Availability",
           companyName: "Cyberdyne Systems",
           jobUrl: "https://example.com/jobs/ml-engineer-cyberdyne",
         },
@@ -360,7 +358,7 @@ Stark Industries`,
           date: now,
           read: false,
           starred: false,
-          category: "Follow-up Required",
+          category: "Follow-up",
           companyName: "Stark Industries",
           jobUrl: "https://example.com/jobs/software-engineer-stark",
         },
@@ -386,7 +384,7 @@ Oceanic Airlines`,
           date: subDays(now, 5),
           read: true,
           starred: false,
-          category: "Job Application Confirmation",
+          category: "Application",
           companyName: "Oceanic Airlines",
           jobUrl: "https://example.com/jobs/frontend-oceanic",
         },
@@ -412,7 +410,7 @@ Aperture Science`,
           starred: true,
           pinned: true,
           todo: true,
-          category: "Interview Invite",
+          category: "Interview",
           companyName: "Aperture Science",
           jobUrl: "https://example.com/jobs/ux-designer-aperture",
         },
@@ -443,7 +441,7 @@ Top Talent Recruiters`,
           date: subDays(now, 2),
           read: true,
           starred: false,
-          category: "Recruiter Outreach",
+          category: "Recruiter",
           companyName: "TechStart Inc",
         },
       ];
@@ -481,7 +479,7 @@ Top Talent Recruiters`,
               activeFolder === "inbox" ||
               (activeFolder === "starred" && email.starred) ||
               (activeFolder === "important" &&
-                ["Interview Invite", "Offer"].includes(email.category));
+                ["Interview", "Offer"].includes(email.category));
 
             // Filter by search query
             const matchesSearch =
@@ -494,7 +492,8 @@ Top Talent Recruiters`,
 
             // Filter by category
             const matchesCategory =
-              categoryFilter === "All" || email.category === categoryFilter;
+              categoryFilter.length === 0 ||
+              categoryFilter.includes(email.category);
 
             return (
               matchesFolder &&
@@ -563,19 +562,19 @@ Top Talent Recruiters`,
   // Get category badge
   const getCategoryBadge = (category: EmailCategory) => {
     switch (category) {
-      case "Job Application Confirmation":
+      case "Application":
         return <Badge className="bg-blue-500">Application</Badge>;
-      case "Interview Invite":
+      case "Interview":
         return <Badge className="bg-green-500">Interview</Badge>;
-      case "Recruiter Outreach":
+      case "Recruiter":
         return <Badge className="bg-purple-500">Recruiter</Badge>;
-      case "Availability Request":
+      case "Availability":
         return <Badge className="bg-amber-500">Availability</Badge>;
       case "Offer":
         return <Badge className="bg-emerald-500">Offer</Badge>;
       case "Rejection":
         return <Badge className="bg-red-500">Rejection</Badge>;
-      case "Follow-up Required":
+      case "Follow-up":
         return <Badge className="bg-indigo-500">Follow-up</Badge>;
       default:
         return <Badge className="bg-gray-500">Other</Badge>;
@@ -583,15 +582,23 @@ Top Talent Recruiters`,
   };
 
   // Email categories for filter
-  const emailCategories: EmailCategory[] = [
-    "Job Application Confirmation",
-    "Interview Invite",
-    "Recruiter Outreach",
-    "Availability Request",
-    "Offer",
-    "Rejection",
-    "Follow-up Required",
-    "Other",
+  const emailCategories: MultiSelectOption[] = [
+    {
+      label: "Job Application Confirmation",
+      value: "Application",
+      color: "bg-blue-500",
+    },
+    { label: "Interview Invite", value: "Interview", color: "bg-green-500" },
+    { label: "Recruiter Outreach", value: "Recruiter", color: "bg-purple-500" },
+    {
+      label: "Availability Request",
+      value: "Availability",
+      color: "bg-amber-500",
+    },
+    { label: "Offer", value: "Offer", color: "bg-emerald-500" },
+    { label: "Rejection", value: "Rejection", color: "bg-red-500" },
+    { label: "Follow-up Required", value: "Follow-up", color: "bg-indigo-500" },
+    { label: "Other", value: "Other", color: "bg-gray-500" },
   ];
 
   const handleSelectAccount = (email: string) => {
@@ -637,7 +644,7 @@ Top Talent Recruiters`,
     let response = "";
 
     switch (selectedEmail.category) {
-      case "Interview Invite":
+      case "Interview":
         response = `Dear ${selectedEmail.from.name.split(" ")[0]},
 
 Thank you for considering my application and inviting me for an interview. I am very interested in this opportunity.
@@ -655,7 +662,7 @@ Best regards,
 [Your Name]`;
         break;
 
-      case "Availability Request":
+      case "Availability":
         response = `Dear ${selectedEmail.from.name.split(" ")[0]},
 
 Thank you for your email. I'm excited about the opportunity to interview with the team.
@@ -767,9 +774,14 @@ Best regards,
       <div className="flex flex-col h-full gap-2">
         <div className="col-span-12 md:col-span-4 lg:col-span-2 flex gap-2 items-center">
           <div className="text-xs font-medium w-20 text-right">Accounts:</div>
-          <GmailAccountFilter
-            accounts={availableAccounts}
-            onFilterChange={handleFilterChange}
+          <MultiSelect
+            options={availableAccounts.map((account) => ({
+              label: account.email,
+              value: account.email,
+            }))}
+            onFilterChange={(selectedOptions) =>
+              handleFilterChange(selectedOptions.map((o) => o.value))
+            }
           />
         </div>
         <div className="grid grid-cols-12 gap-4 h-full">
@@ -912,44 +924,21 @@ Best regards,
             <div className="p-2">
               <h3 className="text-xs font-medium mb-3">Email Types</h3>
               <div className="space-y-1">
-                <button
-                  className={`flex items-center justify-between w-full px-3 py-1 text-xs font-medium rounded-md ${
-                    categoryFilter === "All"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-secondary"
-                  }`}
-                  onClick={() => setCategoryFilter("All")}
-                >
-                  <div className="flex items-center">
-                    <Tag className="h-4 w-4 mr-1" />
-                    All
-                  </div>
-                </button>
-
-                {emailCategories.map((category) => (
-                  <button
-                    key={category}
-                    className={`flex items-center justify-between w-full px-1 py-1 text-xs font-medium rounded-md ${
-                      categoryFilter === category
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                    onClick={() => setCategoryFilter(category)}
-                  >
-                    <div className="flex items-center">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            {getCategoryBadge(category)}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <span className="ml-1">{category}</span>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </button>
-                ))}
+                <MultiSelect
+                  options={emailCategories}
+                  onFilterChange={(selectedOptions) => {
+                    if (
+                      selectedOptions.length === 0 ||
+                      emailCategories.length === selectedOptions.length
+                    ) {
+                      setCategoryFilter([]);
+                    } else {
+                      setCategoryFilter(
+                        selectedOptions.map((o) => o.value as EmailCategory)
+                      );
+                    }
+                  }}
+                />
               </div>
             </div>
 
@@ -958,15 +947,17 @@ Best regards,
             <div className="p-4">
               <h3 className="text-sm font-medium mb-3">Connected Accounts</h3>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm">
-                    <UserCheck className="h-4 w-4" />
-                    <span>Personal Gmail</span>
+                {availableAccounts.map((account) => (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm">
+                      <UserCheck className="h-4 w-4" />
+                      <span>{account.email}</span>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Connected
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="text-xs">
-                    Connected
-                  </Badge>
-                </div>
+                ))}
                 <Button
                   variant="ghost"
                   size="sm"

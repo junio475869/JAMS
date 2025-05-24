@@ -10,7 +10,7 @@ const app = express();
 // CORS configuration - more permissive in development
 const isDev = process.env.NODE_ENV !== 'production';
 app.use(cors({
-  origin: isDev ? true : process.env.CLIENT_URL || 'http://localhost:8080',
+  origin: isDev ? true : process.env.CLIENT_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -75,9 +75,9 @@ app.use((req, res, next) => {
         await new Promise((resolve, reject) => {
           server.listen({
             port,
-            host: "localhost",
+            host: process.env.HOST,
           }, () => {
-            log(`Server running on http://localhost:${port}`);
+            log(`Server running on http://${process.env.HOST}:${port}`);
             serverStarted = true;
             resolve(true);
           }).on('error', (err: NodeJS.ErrnoException) => {
