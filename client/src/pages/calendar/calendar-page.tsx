@@ -8,6 +8,7 @@ import multiMonthPlugin from "@fullcalendar/multimonth";
 import rrulePlugin from "@fullcalendar/rrule";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import resourceDayGridPlugin from "@fullcalendar/resource-daygrid";
+import "@/styles/calendar.css";
 import {
   Card,
   CardContent,
@@ -999,7 +1000,7 @@ export default function CalendarPage() {
                 // Add custom event border colors
                 eventBorderColor={getEventColor}
                 // Add custom event text colors
-                // eventTextColor="#ffffff"
+                eventTextColor="#ffffff"
               />
             </CardContent>
           </Card>

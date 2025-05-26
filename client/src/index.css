@@ -194,4 +194,8 @@
   .input-enhanced {
     @apply border-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200;
   }
+
+  .fc .fc-scrollgrid-section-sticky {
+    @apply bg-background text-foreground;
+  }
 }

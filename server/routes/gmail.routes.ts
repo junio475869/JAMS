@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { gmailService } from '../services/gmail';
+import { GmailConnection, gmailService } from '../services/gmail';
 import { storage } from '../storage';
 
 const router = Router();
@@ -57,6 +57,54 @@ router.delete('/connections/:email', async (req, res) => {
   } catch (error) {
     console.error('Error disconnecting Gmail account:', error);
     res.status(500).json({ error: 'Failed to disconnect Gmail account' });
+  }
+});
+
+router.get("/inbox", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  try {
+    const connections = await storage.getGmailConnections(req.user!.id);
+    if (!connections || connections.length === 0) {
+      return res.status(404).json({ error: "No Gmail accounts connected" });
+    }
+
+    // Get emails from filtered accounts
+    const allEmails = await Promise.all(
+      connections.map(async (connection) => {
+        const emails = await gmailService.getEmails(connection as GmailConnection);
+        return emails;
+      })
+    );
+
+    // Flatten and deduplicate emails based on Message-ID
+    const emailMap = new Map();
+    allEmails.flat().forEach(email => {
+      const key = email.id;
+      if (!emailMap.has(key)) {
+        emailMap.set(key, email);
+      } else {
+        // If we have a duplicate, keep the one with the most recent date
+        const existingEmail = emailMap.get(key);
+        if (new Date(email.date) > new Date(existingEmail.date)) {
+          emailMap.set(key, email);
+        }
+      }
+    });
+
+    // Convert back to array and sort by date
+    const emails = Array.from(emailMap.values())
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Return both emails and available Gmail accounts
+    res.json({
+      emails,
+      availableAccounts: connections.map(conn => ({
+        email: conn.email,
+        isSelected: true
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 

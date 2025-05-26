@@ -129,9 +129,9 @@ export default function ProfilePage() {
 
   // Add Gmail connections query
   const { data: gmailAccounts, isLoading: isLoadingGmail } = useQuery({
-    queryKey: ["/api/gmail/accounts"],
+    queryKey: ["/api/gmail/connections"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/gmail/accounts");
+      const res = await apiRequest("GET", "/api/gmail/connections");
       return res.json();
     },
   });
@@ -151,7 +151,7 @@ export default function ProfilePage() {
       await apiRequest("DELETE", `/api/gmail/connections/${email}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/gmail/accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/gmail/connections"] });
       toast({
         title: "Gmail disconnected",
         description: "The Gmail account has been successfully disconnected",

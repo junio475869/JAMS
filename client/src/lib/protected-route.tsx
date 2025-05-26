@@ -60,7 +60,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user && !isDemoMode() && !isAuthChecking) {
-    return <Redirect to="/auth" />;
+    // return <Redirect to="/auth" />;
   }
 
   return <>{children}</>;

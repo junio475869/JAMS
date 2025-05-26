@@ -11,6 +11,7 @@ import aiRoutes from "./ai.routes";
 import gmailRoutes from "./gmail.routes";
 import { setupAuth } from "../middleware/auth";
 import profilesRoutes from "./profile.routes";
+import calendarRoutes from "./calendar.routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -24,6 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/documents", documentRoutes);
   app.use("/api/interviews", interviewRoutes);
   app.use("/api/ai", aiRoutes);
+  app.use("/api/calendar", calendarRoutes);
 
   // Error handling middleware
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {

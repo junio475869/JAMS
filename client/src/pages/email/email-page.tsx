@@ -147,10 +147,10 @@ export default function EmailPage() {
     try {
       setLoading(true);
       const response = await apiRequest("GET", "/api/gmail/inbox");
-        const data = await response.json();
-        setEmails(data.emails);
-        setAvailableAccounts(data.availableAccounts);
-        setIsConnected(true);
+      const data = await response.json();
+      setEmails(data.emails);
+      setAvailableAccounts(data.availableAccounts);
+      setIsConnected(true);
     } catch (error) {
       console.error("Failed to fetch emails:", error);
     } finally {
