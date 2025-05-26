@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ResponsiveBar } from "@nivo/bar";
@@ -61,6 +62,7 @@ export default function AnalyticsPage() {
   // Query for dashboard stats
   const { data: stats, isLoading, error } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !isDemoMode,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

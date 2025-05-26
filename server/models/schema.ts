@@ -33,7 +33,7 @@ export const interviews = pgTable('interviews', {
   type: text('type').notNull(),
   title: text('title').notNull(),
   company: text('company').notNull(),
-  scheduledDate: timestamp('scheduled_date'),
+  scheduledAt: timestamp('scheduled_at'),
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -120,6 +120,7 @@ export const jobProfiles = pgTable('job_profiles', {
   skills: json('skills').$type<string[]>(),
   experience: text('experience'),
   education: text('education'),
+  birthday: timestamp('birthday'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 }); 

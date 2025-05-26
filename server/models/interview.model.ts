@@ -9,7 +9,7 @@ export class InterviewModel {
       .select()
       .from(interviews)
       .where(eq(interviews.id, id));
-    return interview as Interview;
+    return interview as unknown as Interview;
   }
 
   async findByApplicationId(applicationId: number): Promise<Interview[]> {
@@ -17,8 +17,8 @@ export class InterviewModel {
       .select()
       .from(interviews)
       .where(eq(interviews.applicationId, applicationId))
-      .orderBy(interviews.scheduledDate);
-    return results as Interview[];
+      .orderBy(interviews.scheduledAt);
+    return results as unknown as Interview[];
   }
 
   async findByUserId(userId: number): Promise<Interview[]> {
@@ -26,8 +26,8 @@ export class InterviewModel {
       .select()
       .from(interviews)
       .where(eq(interviews.userId, userId))
-      .orderBy(interviews.scheduledDate);
-    return results as Interview[];
+      .orderBy(interviews.scheduledAt);
+    return results as unknown as Interview[];
   }
 
   async create(data: InsertInterview): Promise<Interview> {
@@ -39,7 +39,7 @@ export class InterviewModel {
         updatedAt: new Date(),
       })
       .returning();
-    return interview as Interview;
+    return interview as unknown as Interview;
   }
 
   async update(id: number, data: Partial<Interview>): Promise<Interview> {
@@ -48,7 +48,7 @@ export class InterviewModel {
       .set({ ...data, updatedAt: new Date() })
       .where(eq(interviews.id, id))
       .returning();
-    return interview as Interview;
+    return interview as unknown as Interview;
   }
 
   async delete(id: number): Promise<void> {

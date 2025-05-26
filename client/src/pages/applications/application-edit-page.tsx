@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { InterviewStepsDialog } from "@/components/ui/interview-steps-dialog";
+import { apiRequest } from "@/lib/queryClient";
 
 const STEP_TEMPLATES = [
   { name: "Apply", type: "APPLY" },
@@ -106,17 +107,10 @@ export default function ApplicationEditPage() {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(`/api/applications/${applicationId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...formData, interviewSteps }),
+      const response = await apiRequest("PUT", `/api/applications/${applicationId}`, {
+        ...formData,
+        interviewSteps,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to save application: ${response.statusText}`);
-      }
 
       toast({
         title: "Application saved successfully!",

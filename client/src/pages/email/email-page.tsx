@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MultiSelect, MultiSelectOption } from "@/components/MultiSelect";
+import { apiRequest } from "@/lib/queryClient";
 
 // Email types
 type EmailCategory =
@@ -129,7 +130,7 @@ export default function EmailPage() {
   // Connect Gmail account
   const connectGmail = async () => {
     try {
-      const response = await fetch("/api/gmail/auth");
+      const response = await apiRequest("GET", "/api/gmail/auth");
       const data = await response.json();
       if (data.authUrl) {
         window.location.href = data.authUrl;
@@ -145,13 +146,11 @@ export default function EmailPage() {
 
     try {
       setLoading(true);
-      const response = await fetch("/api/gmail/inbox");
-      if (response.ok) {
+      const response = await apiRequest("GET", "/api/gmail/inbox");
         const data = await response.json();
         setEmails(data.emails);
         setAvailableAccounts(data.availableAccounts);
         setIsConnected(true);
-      }
     } catch (error) {
       console.error("Failed to fetch emails:", error);
     } finally {

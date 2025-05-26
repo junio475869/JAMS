@@ -60,7 +60,7 @@ export function Sidebar({
     { href: "/email", label: "Email", icon: Mail },
     { href: "/analytics", label: "Analytics", icon: LineChart },
     { href: "/chat", label: "Chat", icon: MessagesSquare },
-    { href: "/profile", label: "Profile", icon: UserCircle },
+    { href: "/settings", label: "Settings", icon: UserCircle },
   ];
   // const jobBidderItems = [
     // { href: "/job-apply", label: "Job Apply", icon: Briefcase },

@@ -5,13 +5,16 @@ import { db } from '../utils/db';
 import { DocumentModel } from '../models/document.model';
 
 const router = Router();
-const documentController = new DocumentController(new DocumentModel(db));
+const documentController = new DocumentController();
 
 // Get documents
 router.get('/', async (req, res) => {
   try {
-    const userId = req.user.id;
-    const type = req.query.type ? (req.query.type as string) as DocumentType : undefined;
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const type = req.query.type ? (req.query.type as string) as DocumentType[keyof typeof DocumentType] : undefined;
     const documents = await documentController.getDocumentsByUserId(userId, type);
     res.json(documents);
   } catch (error) {
@@ -37,10 +40,14 @@ router.get('/:id', async (req, res) => {
 // Create document
 router.post('/', async (req, res) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const document = await documentController.createDocument({
-      userId: req.user.id,
-      type: req.body.type as DocumentType,
-      title: req.body.title,
+      userId,
+      type: req.body.type as DocumentType[keyof typeof DocumentType],
+      name: req.body.name,
       content: req.body.content,
       version: req.body.version,
     });
@@ -55,7 +62,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const document = await documentController.updateDocument(parseInt(req.params.id), {
-      title: req.body.title,
+      name: req.body.name,
       content: req.body.content,
       version: req.body.version,
     });

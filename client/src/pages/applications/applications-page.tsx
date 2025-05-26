@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowUpDown, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { ApplicationStatus } from "@shared/schema";
+import { ApplicationStatus, Application } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,8 +17,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { formatDistanceToNow } from "date-fns";
 
 const ITEMS_PER_PAGE = 10;
+
+interface ApplicationsResponse {
+  applications: Application[];
+  totalPages: number;
+  currentPage: number;
+  totalItems: number;
+  itemsPerPage: number;
+}
 
 export default function ApplicationsPage() {
   const [_, setLocation] = useLocation();
@@ -31,22 +40,16 @@ export default function ApplicationsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["applications", activeTab, page, searchQuery, sortField, sortOrder],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        status: activeTab !== "all" ? activeTab : "",
-        page: page.toString(),
-        limit: ITEMS_PER_PAGE.toString(),
-        sortBy: sortField,
-        sortOrder: sortOrder,
-        ...(searchQuery && { search: searchQuery }),
-      });
-
-      const response = await fetch(`/api/applications?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch applications");
-      return response.json();
-    },
+  const { data, isLoading } = useQuery<ApplicationsResponse>({
+    queryKey: ["/api/applications", {
+      status: activeTab !== "all" ? activeTab : "",
+      page: page.toString(),
+      limit: ITEMS_PER_PAGE.toString(),
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      ...(searchQuery && { search: searchQuery }),
+    }],
+    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   const applications = data?.applications || [];
@@ -149,7 +152,7 @@ export default function ApplicationsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {applications.map((app) => (
+            {applications.map((app: Application) => (
               <TableRow
                 key={app.id}
                 className="cursor-pointer hover:bg-muted/50"
@@ -160,8 +163,12 @@ export default function ApplicationsPage() {
                 <TableCell>{app.location || "N/A"}</TableCell>
                 <TableCell>{app.jobType || "N/A"}</TableCell>
                 <TableCell>{app.salary || "N/A"}</TableCell>
-                <TableCell>{new Date(app.appliedDate).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(app.lastActivity).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {app.appliedDate ? formatDistanceToNow(new Date(app.appliedDate), { addSuffix: true }) : 'N/A'}
+                </TableCell>
+                <TableCell>
+                  {app.lastActivity ? formatDistanceToNow(new Date(app.lastActivity), { addSuffix: true }) : 'N/A'}
+                </TableCell>
                 <TableCell>
                   <span
                     className={`px-2 py-1 rounded-full text-xs

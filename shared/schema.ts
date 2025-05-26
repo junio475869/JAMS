@@ -2,6 +2,7 @@ import {
   pgTable,
   text,
   serial,
+  date,
   integer,
   boolean,
   timestamp,
@@ -426,7 +427,7 @@ export const jobProfiles = pgTable("job_profiles", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
 
-  birthday: timestamp("birthday"),
+  birthday: date("birthday"),
   phone: text("phone"),
   country: text("country"),
   state: text("state"),

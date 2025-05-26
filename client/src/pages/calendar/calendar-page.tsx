@@ -79,6 +79,7 @@ import {
   addMonths,
   getWeek,
 } from "date-fns";
+import { apiRequest } from "@/lib/queryClient";
 
 // Calendar event types
 interface CalendarEvent {
@@ -196,11 +197,9 @@ export default function CalendarPage() {
   useEffect(() => {
     const loadGmailConnections = async () => {
       try {
-        const response = await fetch("/api/gmail/connections");
-        if (response.ok) {
+        const response = await apiRequest("GET", "/api/gmail/connections");
           const data = await response.json();
           setGmailConnections(data.connections);
-        }
       } catch (error) {
         console.error("Error loading Gmail connections:", error);
       } finally {
@@ -359,8 +358,7 @@ export default function CalendarPage() {
       } else {
         // Load real calendar events
         try {
-          const response = await fetch("/api/calendar/events");
-          if (response.ok) {
+          const response = await apiRequest("GET", "/api/calendar/events");
             const data = await response.json();
             // Transform Google Calendar events to our format
             const transformedEvents = data.events.flat().map((event: any) => ({
@@ -385,7 +383,6 @@ export default function CalendarPage() {
               ...extractMetadataFromDescription(event.description),
             }));
             setEvents(transformedEvents);
-          }
         } catch (error) {
           console.error("Error loading calendar events:", error);
           toast({
@@ -461,11 +458,9 @@ export default function CalendarPage() {
   // Handle Gmail calendar connection
   const handleConnectCalendar = async () => {
     try {
-      const response = await fetch("/api/gmail/auth");
-      if (response.ok) {
+      const response = await apiRequest("GET", "/api/gmail/auth");
         const { authUrl } = await response.json();
         window.location.href = authUrl;
-      }
     } catch (error) {
       toast({
         title: "Error",
@@ -487,17 +482,13 @@ export default function CalendarPage() {
 
     setIsSyncingCalendar(true);
     try {
-      const response = await fetch("/api/calendar/sync", {
-        method: "POST",
-      });
-      if (response.ok) {
+      const response = await apiRequest("POST", "/api/calendar/sync");
         const data = await response.json();
         setEvents(data.events);
         toast({
           title: "Success",
           description: "Calendar synchronized successfully",
         });
-      }
     } catch (error) {
       toast({
         title: "Error",
@@ -525,8 +516,7 @@ export default function CalendarPage() {
       const startTime = new Date(`${eventDate}T${eventStartTime}`);
       const endTime = new Date(`${eventDate}T${eventEndTime}`);
 
-      const response = await fetch("/api/calendar/events", {
-        method: "POST",
+      const response = await apiRequest("POST", "/api/calendar/events", {
         headers: {
           "Content-Type": "application/json",
         },
@@ -1082,8 +1072,7 @@ export default function CalendarPage() {
                     className="w-full"
                     onClick={async () => {
                       try {
-                        const response = await fetch("/api/calendar/events", {
-                          method: "POST",
+                        const response = await apiRequest("POST", "/api/calendar/events", {
                           headers: {
                             "Content-Type": "application/json",
                           },

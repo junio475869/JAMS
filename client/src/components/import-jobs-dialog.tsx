@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ImportJobsDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,13 +52,12 @@ export default function ImportJobsDialog() {
 
   const handleSaveSettings = async () => {
     try {
-      const response = await fetch("/api/sheet-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, sheetUrl: url, columnMapping }),
+      const response = await apiRequest("POST", "/api/sheet-settings", {
+        name,
+        email,
+        sheetUrl: url,
+        columnMapping,
       });
-      if (!response.ok) throw new Error("Failed to save settings");
-
       const newSettings = await response.json();
       setSavedSettings([...savedSettings, newSettings]);
       toast({ title: "Settings saved successfully" });

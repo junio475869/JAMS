@@ -4,12 +4,15 @@ import { db } from '../utils/db';
 import { InterviewModel } from '../models/interview.model';
 
 const router = Router();
-const interviewController = new InterviewController(new InterviewModel(db));
+const interviewController = new InterviewController();
 
 // Get interviews
 router.get('/', async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const interviews = await interviewController.getInterviewsByUserId(userId);
     res.json(interviews);
   } catch (error) {
@@ -35,13 +38,17 @@ router.get('/:id', async (req, res) => {
 // Create interview
 router.post('/', async (req, res) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const interview = await interviewController.createInterview({
-      userId: req.user.id,
+      userId,
       applicationId: req.body.applicationId,
       type: req.body.type,
       title: req.body.title,
       company: req.body.company,
-      scheduledDate: req.body.scheduledDate ? new Date(req.body.scheduledDate) : undefined,
+      scheduledAt: req.body.scheduledAt ? new Date(req.body.scheduledAt) : undefined,
       notes: req.body.notes,
     });
     res.status(201).json(interview);
@@ -58,7 +65,7 @@ router.put('/:id', async (req, res) => {
       type: req.body.type,
       title: req.body.title,
       company: req.body.company,
-      scheduledDate: req.body.scheduledDate ? new Date(req.body.scheduledDate) : undefined,
+      scheduledAt: req.body.scheduledAt ? new Date(req.body.scheduledAt) : undefined,
       notes: req.body.notes,
     });
     if (!interview) {

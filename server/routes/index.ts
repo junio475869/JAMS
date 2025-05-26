@@ -18,13 +18,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount route modules
   app.use("/api/admin", adminRoutes);
   app.use("/api/team", teamRoutes);
-  app.use("/api", apiRoutes);
   app.use("/api/gmail", gmailRoutes);
   app.use("/api/profiles", profilesRoutes);
-  app.use("/api/applications", (req, res) => {
-    res.json({ message: "Hello, world!" });
-  });
-  // app.use("/api/applications", applicationRoutes);
+  app.use("/api/applications", applicationRoutes);
   app.use("/api/documents", documentRoutes);
   app.use("/api/interviews", interviewRoutes);
   app.use("/api/ai", aiRoutes);

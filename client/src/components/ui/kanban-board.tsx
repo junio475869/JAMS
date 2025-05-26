@@ -5,6 +5,7 @@ import { Filter, SortAsc } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
+import { apiRequest } from "@/lib/queryClient";
 
 const COLUMN_DEFINITIONS = [
   { id: ApplicationStatus.APPLIED, title: "Applied", color: "bg-sky-500" },
@@ -58,7 +59,7 @@ export default function KanbanBoard({
         ...(sortConfig.order && { sortOrder: sortConfig.order })
       });
 
-      const response = await fetch(`/api/applications?${params}`);
+      const response = await apiRequest("GET", `/api/applications?${params}`);
       const data = await response.json();
       setColumnData((prev) => ({
         ...prev,

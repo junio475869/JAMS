@@ -10,6 +10,7 @@ import {
 } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { getQueryFn } from "@/lib/queryClient";
 
 interface ApplicationsContextType {
   applications: Application[];
@@ -113,6 +114,7 @@ export function ApplicationProvider({ children }: { children: ReactNode }) {
     error: apiError,
   } = useQuery<Application[], Error>({
     queryKey: ["/api/applications"],
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !isDemoMode,
     onError: (error) => {
       toast({

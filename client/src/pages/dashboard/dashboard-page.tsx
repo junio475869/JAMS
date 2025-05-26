@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 import StatsCard from "@/components/stats-card";
 import KanbanBoard from "@/components/ui/kanban-board";
 import InterviewList from "@/components/interview-list";
@@ -38,18 +39,21 @@ export default function DashboardPage() {
   // Fetch dashboard stats
   const { data: stats, isLoading: isLoadingStats } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user,
   });
 
   // Fetch upcoming interviews
   const { data: interviews, isLoading: isLoadingInterviews } = useQuery<Interview[]>({
     queryKey: ["/api/interviews"],
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user,
   });
 
   // Fetch documents
   const { data: documents, isLoading: isLoadingDocuments } = useQuery<Document[]>({
     queryKey: ["/api/documents"],
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!user,
   });
 

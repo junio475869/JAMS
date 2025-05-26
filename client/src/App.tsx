@@ -4,28 +4,27 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { RoleBasedRoute } from "./components/role-based-route";
 import { MainLayout } from "./components/layout/main-layout";
 import { UserRole } from "@shared/schema";
-import { AuthProvider } from "@/hooks/use-auth"; // Assuming this is where your AuthProvider is
+import { AuthProvider } from "@/hooks/use-auth";
 import { ApplicationProvider } from "./contexts/application-context";
 import { ThemeProvider } from "./contexts/theme-context";
 
-import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
-import DashboardPage from "@/pages/dashboard-page";
-import ApplicationsPage from "@/pages/applications-page";
-import ApplicationEditPage from "@/pages/application-edit-page";
-import DocumentsPage from "@/pages/documents-page";
-import ProfilePage from "@/pages/profile-page";
-import AnalyticsPage from "@/pages/analytics-page";
-import CalendarPage from "@/pages/calendar-page";
-import EmailPage from "@/pages/email-page";
-import InterviewPrepPage from "@/pages/interview-prep-page";
-import TeamManagementPage from "@/pages/team-management-page";
-import JobApplyPage from "@/pages/job-apply-page";
-import ChatPage from "@/pages/chat-page";
-import AdminPage from "./pages/admin-page";
+import NotFound from "@/pages/error/not-found";
+import AuthPage from "@/pages/auth/auth-page";
+import DashboardPage from "@/pages/dashboard/dashboard-page";
+import AnalyticsPage from "@/pages/dashboard/analytics-page";
+import ApplicationsPage from "@/pages/applications/applications-page";
+import ApplicationEditPage from "@/pages/applications/application-edit-page";
+import DocumentsPage from "@/pages/documents/documents-page";
+import SettingsPage from "@/pages/settings";
+import CalendarPage from "@/pages/calendar/calendar-page";
+import EmailPage from "@/pages/email/email-page";
+import InterviewPrepPage from "@/pages/interviews/interview-prep-page";
+import TeamManagementPage from "@/pages/team/team-management-page";
+import JobApplyPage from "@/pages/applications/job-apply-page";
+import ChatPage from "@/pages/chat/chat-page";
+import AdminPage from "@/pages/admin/admin-page";
 
 import { queryClient } from "./lib/query-store";
-
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
@@ -35,7 +34,6 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
           <ApplicationProvider>
-            {/* Added AuthProvider wrapper */}
             <Switch>
               <Route path="/auth" component={AuthPage} />
 
@@ -61,7 +59,7 @@ function App() {
                           path="/interview"
                           component={InterviewPrepPage}
                         />
-                        <Route path="/profile" component={ProfilePage} />
+                        <Route path="/settings" component={SettingsPage} />
                         <Route path="/chat" component={ChatPage} />
                         <Route path="/team-management">
                           {() => (

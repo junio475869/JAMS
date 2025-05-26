@@ -322,8 +322,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/interviews", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
+    try {
     const interviews = await storage.getInterviewsByUserId(req.user!.id);
     res.json(interviews);
+    } catch (error) {
+      console.error("Error fetching interviews:", error);
+      res.status(500).json({ error: "Failed to fetch interviews" });
+    }
   });
 
   app.post("/api/interviews", async (req, res) => {

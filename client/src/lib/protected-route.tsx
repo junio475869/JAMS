@@ -22,6 +22,7 @@ const isDemoMode = () => {
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const [checkingDemo, setCheckingDemo] = useState(true);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -44,7 +45,13 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  if (isLoading || checkingDemo) {
+  useEffect(() => {
+    if (!isLoading) {
+      setIsAuthChecking(false);
+    }
+  }, [isLoading]);
+
+  if (isLoading || checkingDemo || isAuthChecking) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
@@ -52,7 +59,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && !isDemoMode()) {
+  if (!user && !isDemoMode() && !isAuthChecking) {
     return <Redirect to="/auth" />;
   }
 

@@ -10,7 +10,7 @@ async function throwIfResNotOk(res: Response) {
 export async function apiRequest(
   method: string,
   url: string,
-  data?: unknown | undefined,
+  data?: unknown | undefined
 ): Promise<Response> {
   const res = await fetch(url, {
     method,
@@ -24,12 +24,24 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    // Handle both string URLs and array query keys
+    const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
+    const params = Array.isArray(queryKey) && queryKey.length > 1 ? queryKey[1] : undefined;
+
+    // Build the full URL with query parameters if they exist
+    const fullUrl = params ? `${url}?${new URLSearchParams(params as Record<string, string>)}` : url;
+
+    const res = await fetch(fullUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
       credentials: "include",
     });
 

@@ -25,6 +25,7 @@ router.post("/", async (req, res) => {
     const profileData = {
       ...req.body,
       userId: req.user!.id,
+      birthday: new Date(req.body.birthday),
     };
     const profile = await storage.createJobProfile(profileData);
     res.status(201).json(profile);

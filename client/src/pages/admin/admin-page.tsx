@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -19,23 +20,19 @@ export default function AdminPage() {
   }, []);
 
   const fetchChannels = async () => {
-    const response = await fetch('/api/admin/channels');
+    const response = await apiRequest("GET", "/api/admin/channels");
     const data = await response.json();
     setChannels(data);
   };
 
   const fetchUsers = async () => {
-    const response = await fetch('/api/admin/users');
+    const response = await apiRequest("GET", "/api/admin/users");
     const data = await response.json();
     setUsers(data);
   };
 
   const createChannel = async () => {
-    const response = await fetch('/api/admin/channels', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newChannelName })
-    });
+    const response = await apiRequest("POST", "/api/admin/channels", { name: newChannelName });
 
     if (response.ok) {
       toast({
@@ -48,9 +45,7 @@ export default function AdminPage() {
   };
 
   const deleteChannel = async (channelId) => {
-    const response = await fetch(`/api/admin/channels/${channelId}`, {
-      method: 'DELETE'
-    });
+    const response = await apiRequest("DELETE", `/api/admin/channels/${channelId}`);
 
     if (response.ok) {
       toast({
@@ -62,11 +57,7 @@ export default function AdminPage() {
   };
 
   const updateUserRole = async (userId, role) => {
-    const response = await fetch(`/api/admin/users/${userId}/role`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role })
-    });
+    const response = await apiRequest("PUT", `/api/admin/users/${userId}/role`, { role });
 
     if (response.ok) {
       toast({

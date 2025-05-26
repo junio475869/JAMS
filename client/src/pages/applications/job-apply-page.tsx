@@ -39,6 +39,7 @@ import Header from "@/components/layout/header";
 import { useToast } from "@/hooks/use-toast";
 import { JOB_PLATFORMS } from "@/config/job-platforms";
 import type { JobPlatform } from "@/config/job-platforms";
+import { apiRequest } from "@/lib/queryClient";
 
 interface JobListing {
   id: string;
@@ -73,23 +74,13 @@ export default function JobApplyPage() {
   const handleSearch = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/jobs/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await apiRequest("POST", "/api/jobs/search", {
           platform: activePlatform.id,
           params: {
             ...searchParams,
             limit: 100, // Get more results for client-side pagination
           },
-        }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch jobs");
-      }
 
       const data = await response.json();
       setJobs(data.jobs);
@@ -143,9 +134,7 @@ export default function JobApplyPage() {
   const handleApplyDone = async (job: JobListing) => {
     try {
       // Check for duplicates
-      const checkResponse = await fetch(
-        `/api/applications/check-duplicate?platformJobId=${job.id}&platform=${job.platform}`,
-      );
+      const checkResponse = await apiRequest("GET", `/api/applications/check-duplicate?platformJobId=${job.id}&platform=${job.platform}`);
       const { exists } = await checkResponse.json();
 
       if (exists) {
@@ -157,12 +146,7 @@ export default function JobApplyPage() {
         return;
       }
 
-      const response = await fetch("/api/applications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await apiRequest("POST", "/api/applications", {
           company: job.company,
           position: job.title,
           url: job.url,
@@ -175,12 +159,7 @@ export default function JobApplyPage() {
           salary: job.salary,
           jobType: job.jobType,
           notes: `Applied via ${job.platform}\nLocation: ${job.location}\nSalary: ${job.salary || "-"}\nJob Type: ${job.jobType || "-"}`,
-        }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to save application");
-      }
 
       setAppliedJobs((prev) => new Set([...prev, job.id]));
       toast({
