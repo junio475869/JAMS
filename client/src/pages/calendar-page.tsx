@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Calendar } from "@/components/ui/calendar";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import listPlugin from "@fullcalendar/list";
+import multiMonthPlugin from "@fullcalendar/multimonth";
+import rrulePlugin from "@fullcalendar/rrule";
+import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
+import resourceDayGridPlugin from "@fullcalendar/resource-daygrid";
 import {
   Card,
   CardContent,
@@ -47,6 +55,7 @@ import {
   Link,
   Loader2,
   RefreshCw,
+  Calendar,
 } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import {
@@ -697,6 +706,62 @@ export default function CalendarPage() {
     }));
   };
 
+  // Transform events for FullCalendar
+  const getFullCalendarEvents = () => {
+    return events.map((event) => ({
+      id: event.id,
+      title: event.title,
+      start: event.startTime || event.date,
+      end: event.endTime || addHours(event.date, 1),
+      extendedProps: {
+        type: event.type,
+        description: event.description,
+        location: event.location,
+        company: event.company,
+        jobUrl: event.jobUrl,
+        interviewLink: event.interviewLink,
+        contactEmail: event.contactEmail,
+        htmlLink: event.htmlLink,
+        status: event.status,
+        visibility: event.visibility,
+        attendees: event.attendees,
+        reminders: event.reminders,
+        timeZone: event.timeZone,
+      },
+      backgroundColor: getEventColor(event.type),
+      borderColor: getEventColor(event.type),
+    }));
+  };
+
+  // Get event color based on type
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case "interview":
+        return "#3b82f6"; // blue-500
+      case "followup":
+        return "#8b5cf6"; // purple-500
+      case "deadline":
+        return "#ef4444"; // red-500
+      default:
+        return "#6b7280"; // gray-500
+    }
+  };
+
+  // Handle event click
+  const handleEventClick = (info: any) => {
+    const event = events.find((e) => e.id === info.event.id);
+    if (event) {
+      setSelectedEvent(event);
+      setShowEventModal(true);
+    }
+  };
+
+  // Handle date click
+  const handleDateClick = (info: any) => {
+    setDate(info.date);
+    setShowEventModal(true);
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       {isDemoMode && (
@@ -740,373 +805,212 @@ export default function CalendarPage() {
         </TabsList>
 
         <TabsContent value="calendar">
-          <div className="mb-6 flex flex-wrap justify-between items-center">
-            <div className="flex items-center space-x-2 mb-2 sm:mb-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setDate((prev) =>
-                    prev
-                      ? subDays(
-                          prev,
-                          calendarViewType === "monthly"
-                            ? 30
-                            : calendarViewType === "weekly"
-                              ? 7
-                              : 1
-                        )
-                      : new Date()
-                  )
-                }
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDate(new Date())}
-              >
-                Today
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setDate((prev) =>
-                    prev
-                      ? addDays(
-                          prev,
-                          calendarViewType === "monthly"
-                            ? 30
-                            : calendarViewType === "weekly"
-                              ? 7
-                              : 1
-                        )
-                      : new Date()
-                  )
-                }
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <span className="text-lg font-medium">
-                {calendarViewType === "daily"
-                  ? format(date || new Date(), "MMMM d, yyyy")
-                  : calendarViewType === "weekly"
-                    ? `Week of ${format(startOfWeek(date || new Date(), { weekStartsOn: 1 }), "MMM d")} - ${format(endOfWeek(date || new Date(), { weekStartsOn: 1 }), "MMM d, yyyy")}`
-                    : format(date || new Date(), "MMMM yyyy")}
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Select
-                value={calendarViewType}
-                onValueChange={(value) => setCalendarViewType(value as any)}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="timeline">Timeline</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="relative w-64 max-w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search events..."
-                  className="pl-10"
-                  onChange={(e) => {
-                    // Search functionality would go here in a real implementation
-                    if (e.target.value) {
-                      toast({
-                        title: "Search not available in demo mode",
-                        description:
-                          "This would search through your calendar events",
-                      });
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Calendar View Tabs */}
           <Card className="mb-6">
             <CardContent className="p-6">
-              {calendarViewType === "monthly" && (
-                <div>
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="w-full"
-                    modifiers={{
-                      event: (date) =>
-                        events.some((event) => isSameDay(date, event.date)),
-                      weekend: isWeekend,
-                    }}
-                    modifiersClassNames={{
-                      event: "border-2 border-primary font-bold",
-                      weekend: "text-red-500",
-                    }}
-                  />
-
-                  {/* Show events for selected day */}
-                  {date && (
-                    <div className="mt-6 border-t pt-6">
-                      <h3 className="font-medium mb-4">
-                        Events for {format(date, "MMMM d, yyyy")}
-                      </h3>
-
-                      {events.filter((event) => isSameDay(event.date, date))
-                        .length > 0 ? (
-                        <div className="space-y-3">
-                          {events
-                            .filter((event) => isSameDay(event.date, date))
-                            .sort((a, b) => a.date.getTime() - b.date.getTime())
-                            .map((event) => (
-                              <button
-                                key={event.id}
-                                className="w-full text-left border rounded-md p-3 hover:border-primary transition-colors"
-                                onClick={() => handleViewEvent(event)}
-                              >
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <div className="font-medium">
-                                      {event.title}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground flex items-center mt-1">
-                                      <Clock className="h-3 w-3 mr-1" />
-                                      {format(event.date, "h:mm a")}
-                                      {event.location && (
-                                        <span className="ml-2">
-                                          • {event.location}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <Badge
-                                    className={getEventBadgeColor(event.type)}
-                                  >
-                                    {event.type}
-                                  </Badge>
-                                </div>
-                              </button>
-                            ))}
+              <FullCalendar
+                plugins={[
+                  dayGridPlugin,
+                  timeGridPlugin,
+                  interactionPlugin,
+                  listPlugin,
+                  multiMonthPlugin,
+                  rrulePlugin,
+                  resourceTimelinePlugin,
+                  resourceDayGridPlugin,
+                ]}
+                initialView="timeGridWeek"
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek,resourceTimelineDay",
+                }}
+                views={{
+                  multiMonthYear: {
+                    type: "multiMonth",
+                    duration: { years: 1 },
+                    multiMonthMaxColumns: 3,
+                    multiMonthMinWidth: 300,
+                  },
+                  timeGridWeek: {
+                    titleFormat: { year: "numeric", month: "long", day: "2-digit" },
+                    slotLabelFormat: { hour: "2-digit", minute: "2-digit", hour12: true },
+                    slotMinTime: "08:00:00",
+                    slotMaxTime: "20:00:00",
+                    slotDuration: "00:30:00",
+                    allDaySlot: true,
+                    allDayText: "All Day",
+                    nowIndicator: true,
+                    eventMinHeight: 25,
+                    eventMinWidth: 25,
+                    eventMaxStack: 3,
+                    eventOverlap: true,
+                  },
+                  listWeek: {
+                    listDayFormat: { weekday: "long", month: "long", day: "numeric", year: "numeric" },
+                    listDaySideFormat: { hour: "2-digit", minute: "2-digit", hour12: true },
+                    noEventsMessage: "No events to display",
+                  },
+                  resourceTimelineDay: {
+                    resourceAreaWidth: "15%",
+                    slotDuration: "00:30:00",
+                    slotLabelFormat: { hour: "2-digit", minute: "2-digit", hour12: true },
+                  },
+                }}
+                events={getFullCalendarEvents()}
+                eventClick={handleEventClick}
+                dateClick={handleDateClick}
+                height="auto"
+                nowIndicator={true}
+                selectable={true}
+                selectMirror={true}
+                dayMaxEvents={true}
+                weekends={true}
+                eventTimeFormat={{
+                  hour: "numeric",
+                  minute: "2-digit",
+                  meridiem: "short",
+                }}
+                slotMinTime="08:00:00"
+                slotMaxTime="20:00:00"
+                allDaySlot={true}
+                slotDuration="00:30:00"
+                expandRows={true}
+                stickyHeaderDates={true}
+                dayHeaderFormat={{ weekday: "long" }}
+                eventDisplay="block"
+                eventMinHeight={25}
+                eventMinWidth={25}
+                eventMaxStack={3}
+                eventOverlap={true}
+                eventConstraint={{
+                  startTime: "08:00",
+                  endTime: "20:00",
+                  dows: [1, 2, 3, 4, 5], // Monday to Friday
+                }}
+                eventDidMount={(info) => {
+                  // Add tooltips or custom styling
+                  info.el.title = info.event.title;
+                  // Add custom classes based on event type
+                  const eventType = info.event.extendedProps.type;
+                  info.el.classList.add(`event-type-${eventType}`);
+                }}
+                select={(info) => {
+                  // Handle date range selection
+                  setDateRange({
+                    from: info.start,
+                    to: info.end,
+                  });
+                  setShowEventModal(true);
+                }}
+                eventDrop={(info) => {
+                  // Handle event drag and drop
+                  const event = events.find((e) => e.id === info.event.id);
+                  if (event) {
+                    event.date = info.event.start!;
+                    if (info.event.end) {
+                      event.endTime = info.event.end;
+                    }
+                    // Update event in backend
+                    toast({
+                      title: "Event moved",
+                      description: `${event.title} has been moved to ${format(event.date, "PPp")}`,
+                    });
+                  }
+                }}
+                eventResize={(info) => {
+                  // Handle event resizing
+                  const event = events.find((e) => e.id === info.event.id);
+                  if (event) {
+                    event.date = info.event.start!;
+                    if (info.event.end) {
+                      event.endTime = info.event.end;
+                    }
+                    // Update event in backend
+                    toast({
+                      title: "Event resized",
+                      description: `${event.title} duration has been updated`,
+                    });
+                  }
+                }}
+                datesSet={(info) => {
+                  // Handle view change
+                  setDate(info.start);
+                }}
+                loading={(isLoading) => {
+                  // Handle loading state
+                  if (isLoading) {
+                    toast({
+                      title: "Loading events",
+                      description: "Please wait while we fetch your calendar events",
+                    });
+                  }
+                }}
+                eventContent={(info) => {
+                  // Custom event rendering
+                  return (
+                    <div className="fc-event-main-frame">
+                      <div className="fc-event-title-container">
+                        <div className="fc-event-title fc-sticky">
+                          {info.event.title}
                         </div>
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <CalendarIcon className="h-8 w-8 mx-auto mb-2" />
-                          <p>No events for this day</p>
+                      </div>
+                      {info.event.extendedProps.location && (
+                        <div className="fc-event-location text-xs text-muted-foreground">
+                          {info.event.extendedProps.location}
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
-              )}
-
-              {calendarViewType === "weekly" && (
-                <div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {getWeeklyViewData().map((day, index) => (
-                      <div
-                        key={index}
-                        className={`min-h-60 border rounded-md ${isSameDay(day.date, new Date()) ? "bg-primary/5 border-primary" : isWeekend(day.date) ? "bg-muted/30" : ""}`}
-                      >
-                        <div className="p-2 text-center border-b sticky top-0 bg-card">
-                          <div className="font-medium">
-                            {format(day.date, "EEE")}
-                          </div>
-                          <div
-                            className={`text-2xl ${isSameDay(day.date, new Date()) ? "font-bold text-primary" : ""}`}
-                          >
-                            {format(day.date, "d")}
-                          </div>
-                        </div>
-                        <div className="p-1">
-                          {day.events.length > 0 ? (
-                            <div className="space-y-1">
-                              {day.events
-                                .sort(
-                                  (a, b) => a.date.getTime() - b.date.getTime()
-                                )
-                                .map((event) => (
-                                  <button
-                                    key={event.id}
-                                    className="w-full text-left text-xs p-1 rounded-sm bg-primary/10 hover:bg-primary/20"
-                                    onClick={() => handleViewEvent(event)}
-                                  >
-                                    <div className="font-medium truncate">
-                                      {event.title}
-                                    </div>
-                                    <div className="text-muted-foreground">
-                                      {format(event.date, "h:mm a")}
-                                    </div>
-                                  </button>
-                                ))}
-                            </div>
-                          ) : (
-                            <div className="h-full flex items-center justify-center text-xs text-muted-foreground p-4">
-                              No events
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {calendarViewType === "daily" && (
-                <div>
-                  <div className="text-center mb-4">
-                    <h3 className="text-xl font-medium">
-                      {format(date || new Date(), "EEEE, MMMM d, yyyy")}
-                    </h3>
-                  </div>
-
-                  <div className="border rounded-md">
-                    {getDailyViewData().map((hourSlot, index) => (
-                      <div
-                        key={index}
-                        className={`flex border-b last:border-b-0 ${
-                          hourSlot.hour === getHours(new Date())
-                            ? "bg-primary/5"
-                            : ""
-                        }`}
-                      >
-                        <div className="w-20 p-2 border-r text-sm text-muted-foreground flex-shrink-0">
-                          {hourSlot.time}
-                        </div>
-                        <div className="flex-grow p-1">
-                          {hourSlot.events.length > 0 ? (
-                            <div className="space-y-1">
-                              {hourSlot.events.map((event) => (
-                                <button
-                                  key={event.id}
-                                  className="w-full text-left p-2 rounded-md border border-primary/20 bg-primary/5 hover:bg-primary/10"
-                                  onClick={() => handleViewEvent(event)}
-                                >
-                                  <div className="font-medium">
-                                    {event.title}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground flex items-center mt-1">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    {format(event.date, "h:mm a")}
-                                    {event.location && (
-                                      <span className="ml-2">
-                                        • {event.location}
-                                      </span>
-                                    )}
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {calendarViewType === "timeline" && (
-                <div className="overflow-x-auto">
-                  <div className="min-w-[800px]">
-                    <div className="grid grid-cols-[100px_minmax(0,1fr)] border rounded-md">
-                      <div className="border-r">
-                        <div className="h-12 border-b"></div>
-                        <div className="p-2 h-12 border-b font-medium">
-                          All Day
-                        </div>
-                        {Array.from({ length: 12 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className="p-2 h-12 border-b text-sm text-muted-foreground"
-                          >
-                            {format(setHours(new Date(), i + 8), "h a")}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div
-                        className="grid"
-                        style={{
-                          gridTemplateColumns: `repeat(${getTimelineViewData().length}, minmax(120px, 1fr))`,
-                        }}
-                      >
-                        {getTimelineViewData().map((day, dayIndex) => (
-                          <div
-                            key={dayIndex}
-                            className={`border-r last:border-r-0 ${day.isWeekend ? "bg-muted/30" : ""} ${day.isToday ? "bg-primary/5" : ""}`}
-                          >
-                            <div className="h-12 border-b p-2 text-center sticky top-0 bg-card">
-                              <div className="font-medium">
-                                {format(day.date, "EEE")}
-                              </div>
-                              <div
-                                className={
-                                  day.isToday ? "font-bold text-primary" : ""
-                                }
-                              >
-                                {format(day.date, "MMM d")}
-                              </div>
-                            </div>
-
-                            {/* All day events */}
-                            <div className="p-1 h-12 border-b">
-                              {day.events
-                                .filter(
-                                  (event) =>
-                                    getHours(event.date) === 0 ||
-                                    event.type === "deadline"
-                                )
-                                .map((event, i) => (
-                                  <button
-                                    key={`${event.id}-${i}`}
-                                    className="w-full text-left text-xs p-0.5 rounded-sm bg-primary/10 hover:bg-primary/20 truncate"
-                                    onClick={() => handleViewEvent(event)}
-                                  >
-                                    {event.title}
-                                  </button>
-                                ))}
-                            </div>
-
-                            {/* Hourly events */}
-                            {Array.from({ length: 12 }).map((_, hourIndex) => {
-                              const hour = hourIndex + 8; // Start from 8 AM
-                              const hourEvents = day.events.filter(
-                                (event) => getHours(event.date) === hour
-                              );
-
-                              return (
-                                <div
-                                  key={hourIndex}
-                                  className="p-1 h-12 border-b"
-                                >
-                                  {hourEvents.map((event) => (
-                                    <button
-                                      key={event.id}
-                                      className={`w-full text-left text-xs p-0.5 rounded-sm ${getEventBadgeColor(event.type)} text-white truncate`}
-                                      onClick={() => handleViewEvent(event)}
-                                    >
-                                      {format(event.date, "h:mm")} {event.title}
-                                    </button>
-                                  ))}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  );
+                }}
+                dayMaxEventRows={true}
+                moreLinkContent={(args) => {
+                  return `+${args.num} more`;
+                }}
+                navLinks={true}
+                businessHours={{
+                  daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
+                  startTime: "08:00",
+                  endTime: "20:00",
+                }}
+                firstDay={0} // Start week on Sunday
+                weekNumbers={true}
+                weekText="Week"
+                eventMinDistance={5}
+                eventLongPressDelay={300}
+                longPressDelay={300}
+                forceEventDuration={true}
+                displayEventTime={true}
+                displayEventEnd={true}
+                eventOrder="start,-duration"
+                rerenderDelay={10}
+                progressiveEventRendering={true}
+                handleWindowResize={true}
+                windowResizeDelay={100}
+                locale="en"
+                direction="ltr"
+                buttonText={{
+                  today: "Today",
+                  month: "Month",
+                  week: "Week",
+                  day: "Day",
+                  list: "List",
+                }}
+                titleFormat={{
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }}
+                // Add custom CSS classes
+                className="calendar-container"
+                // Add custom event colors
+                eventColor={getEventColor}
+                // Add custom event background colors
+                eventBackgroundColor={getEventColor}
+                // Add custom event border colors
+                eventBorderColor={getEventColor}
+                // Add custom event text colors
+                // eventTextColor="#ffffff"
+              />
             </CardContent>
           </Card>
 
@@ -1312,7 +1216,7 @@ export default function CalendarPage() {
                   <Calendar
                     mode="range"
                     selected={dateRange}
-                    onSelect={setDateRange}
+                    onSelect={(dateRange) => setDateRange(dateRange)}
                     numberOfMonths={2}
                     className="w-full"
                     modifiers={{
@@ -1637,14 +1541,12 @@ export default function CalendarPage() {
                     </div>
                   )}
 
-                  {selectedEvent.company && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Company</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedEvent.company}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Company</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedEvent.company || "N/A"}
+                    </p>
+                  </div>
 
                   {selectedEvent.attendees &&
                     selectedEvent.attendees.length > 0 && (
@@ -1690,44 +1592,30 @@ export default function CalendarPage() {
                     </div>
                   )}
 
-                  {selectedEvent.description && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Description</h3>
-                      <ScrollArea className="max-h-[calc(100vh-300px)]">
-                        <div
-                          className="text-sm text-muted-foreground prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{
-                            __html: selectedEvent.description,
-                          }}
-                        />
-                      </ScrollArea>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  {selectedEvent.contactEmail && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Contact</h3>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Contact</h3>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      {selectedEvent.contactEmail ? (
                         <a
                           href={`mailto:${selectedEvent.contactEmail}`}
                           className="text-sm text-blue-500 hover:underline"
                         >
                           {selectedEvent.contactEmail}
                         </a>
-                      </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          N/A
+                        </span>
+                      )}
                     </div>
-                  )}
+                  </div>
 
-                  {selectedEvent.interviewLink && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">
-                        Interview Link
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Video className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Interview Link</h3>
+                    <div className="flex items-center gap-2">
+                      <Video className="h-4 w-4 text-muted-foreground" />
+                      {selectedEvent.interviewLink ? (
                         <a
                           href={selectedEvent.interviewLink}
                           target="_blank"
@@ -1736,15 +1624,19 @@ export default function CalendarPage() {
                         >
                           Join Meeting
                         </a>
-                      </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          N/A
+                        </span>
+                      )}
                     </div>
-                  )}
+                  </div>
 
-                  {selectedEvent.jobUrl && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Job Posting</h3>
-                      <div className="flex items-center gap-2">
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Job Posting</h3>
+                    <div className="flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      {selectedEvent.jobUrl ? (
                         <a
                           href={selectedEvent.jobUrl}
                           target="_blank"
@@ -1753,17 +1645,19 @@ export default function CalendarPage() {
                         >
                           View Job Posting
                         </a>
-                      </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          N/A
+                        </span>
+                      )}
                     </div>
-                  )}
+                  </div>
 
-                  {selectedEvent.htmlLink && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">
-                        Calendar Link
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Calendar Link</h3>
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                      {selectedEvent.htmlLink ? (
                         <a
                           href={selectedEvent.htmlLink}
                           target="_blank"
@@ -1772,7 +1666,27 @@ export default function CalendarPage() {
                         >
                           View in Google Calendar
                         </a>
-                      </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          N/A
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {selectedEvent.description && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">Description</h3>
+                      <ScrollArea className="max-h-[calc(100vh-300px)]">
+                        <div
+                          className="text-sm text-muted-foreground prose prose-sm max-w-none whitespace-pre-line"
+                          dangerouslySetInnerHTML={{
+                            __html: selectedEvent.description,
+                          }}
+                        />
+                      </ScrollArea>
                     </div>
                   )}
                 </div>
