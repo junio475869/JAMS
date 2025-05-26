@@ -24,9 +24,14 @@ import JobApplyPage from "@/pages/job-apply-page";
 import ChatPage from "@/pages/chat-page";
 import AdminPage from "./pages/admin-page";
 
+import { queryClient } from "./lib/query-store";
+
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
 function App() {
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider>
           <ApplicationProvider>
@@ -106,8 +111,8 @@ function App() {
           </ApplicationProvider>
         </ThemeProvider>
       </AuthProvider>
-      {/* Closed AuthProvider wrapper */}
-    </>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }
 

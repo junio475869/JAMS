@@ -102,7 +102,7 @@ export default function AuthPage() {
   const handleGoogleSignIn = async () => {
     try {
       await googleSignIn();
-      // Navigation is handled by the useEffect below once the user state updates
+      // The useEffect below will handle navigation when user state updates
     } catch (error) {
       console.error("Google sign in failed:", error);
     }
@@ -110,10 +110,10 @@ export default function AuthPage() {
 
   // If user is already logged in, redirect to dashboard
   useEffect(() => {
-    if (user) {
+    if (user && !isLoading) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
 
   if (isLoading) {
     return (

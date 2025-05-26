@@ -1,4 +1,12 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,7 +18,7 @@ export const UserRole = {
   JOB_BIDDER: "job_bidder",
 } as const;
 
-export type UserRoleType = typeof UserRole[keyof typeof UserRole];
+export type UserRoleType = (typeof UserRole)[keyof typeof UserRole];
 
 // Users
 export const users = pgTable("users", {
@@ -24,7 +32,7 @@ export const users = pgTable("users", {
   role: text("role").notNull().default(UserRole.JOB_SEEKER),
   teamId: integer("team_id"), // For group members to be associated with a team
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -41,7 +49,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
 // Applications
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   company: text("company").notNull(),
   position: text("position").notNull(),
   status: text("status").notNull().default("applied"),
@@ -60,39 +70,47 @@ export const applications = pgTable("applications", {
   appliedDate: timestamp("applied_date").defaultNow(),
   lastActivity: timestamp("last_activity").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertApplicationSchema = createInsertSchema(applications).pick({
-  userId: true,
-  company: true,
-  position: true,
-  status: true,
-  url: true,
-  description: true,
-  notes: true,
-  appliedDate: true,
-}).extend({
-  interviewSteps: z.array(z.object({
-    id: z.number(),
-    stepName: z.string(),
-    sequence: z.number(),
-    completed: z.boolean(),
-    scheduledDate: z.date().optional(),
-    interviewerName: z.string().optional(),
-    interviewerLinkedIn: z.string().optional(),
-    meetingUrl: z.string().optional(),
-    duration: z.number().optional(),
-    comments: z.string().optional(),
-    feedback: z.string().optional()
-  })).optional()
-});
+export const insertApplicationSchema = createInsertSchema(applications)
+  .pick({
+    userId: true,
+    company: true,
+    position: true,
+    status: true,
+    url: true,
+    description: true,
+    notes: true,
+    appliedDate: true,
+  })
+  .extend({
+    interviewSteps: z
+      .array(
+        z.object({
+          id: z.number(),
+          stepName: z.string(),
+          sequence: z.number(),
+          completed: z.boolean(),
+          scheduledDate: z.date().optional(),
+          interviewerName: z.string().optional(),
+          interviewerLinkedIn: z.string().optional(),
+          meetingUrl: z.string().optional(),
+          duration: z.number().optional(),
+          comments: z.string().optional(),
+          feedback: z.string().optional(),
+        })
+      )
+      .optional(),
+  });
 
 // Interviews
 export const interviews = pgTable("interviews", {
   id: serial("id").primaryKey(),
   applicationId: integer("application_id").references(() => applications.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   title: text("title").notNull(),
   company: text("company").notNull(),
   type: text("type").notNull(), // 'phone', 'technical', 'onsite', 'hr', 'panel'
@@ -103,21 +121,23 @@ export const interviews = pgTable("interviews", {
   scheduledAt: timestamp("scheduled_at").defaultNow(),
   completedAt: timestamp("completed_at"),
   completed: boolean("completed").default(false),
-  feedback: text("feedback").default(''),
+  feedback: text("feedback").default(""),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Documents
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   name: text("name").notNull(),
   type: text("type").notNull(), // 'resume', 'cover_letter'
   content: text("content").notNull(),
   version: integer("version").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertDocumentSchema = createInsertSchema(documents).pick({
@@ -131,7 +151,9 @@ export const insertDocumentSchema = createInsertSchema(documents).pick({
 // Interview Steps
 export const interviewSteps = pgTable("interview_steps", {
   id: serial("id").primaryKey(),
-  applicationId: integer("application_id").notNull().references(() => applications.id),
+  applicationId: integer("application_id")
+    .notNull()
+    .references(() => applications.id),
   stepName: text("step_name").notNull(),
   sequence: integer("sequence").notNull(),
   interviewerName: text("interviewer_name"),
@@ -144,7 +166,7 @@ export const interviewSteps = pgTable("interview_steps", {
   interviewer: integer("interviewer").references(() => users.id),
   completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertInterviewStepSchema = createInsertSchema(interviewSteps);
@@ -167,15 +189,19 @@ export const insertInterviewSchema = createInsertSchema(interviews).pick({
 // Contacts
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
-  applicationId: integer("application_id").notNull().references(() => applications.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  applicationId: integer("application_id")
+    .notNull()
+    .references(() => applications.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   name: text("name").notNull(),
   title: text("title"),
   email: text("email"),
   phone: text("phone"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertContactSchema = createInsertSchema(contacts).pick({
@@ -191,17 +217,23 @@ export const insertContactSchema = createInsertSchema(contacts).pick({
 // Timeline events
 export const timelineEvents = pgTable("timeline_events", {
   id: serial("id").primaryKey(),
-  applicationId: integer("application_id").notNull().references(() => applications.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  applicationId: integer("application_id")
+    .notNull()
+    .references(() => applications.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   title: text("title").notNull(),
   description: text("description"),
   date: timestamp("date").defaultNow(),
   type: text("type").notNull(), // 'application', 'interview', 'offer', 'rejection', 'note'
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertTimelineEventSchema = createInsertSchema(timelineEvents).pick({
+export const insertTimelineEventSchema = createInsertSchema(
+  timelineEvents
+).pick({
   applicationId: true,
   userId: true,
   title: true,
@@ -235,18 +267,19 @@ export const ApplicationStatus = {
   INTERVIEW: "interview",
   OFFER: "offer",
   REJECTED: "rejected",
-  ACCEPTED: "accepted"
+  ACCEPTED: "accepted",
 } as const;
 
-export type ApplicationStatusType = typeof ApplicationStatus[keyof typeof ApplicationStatus];
+export type ApplicationStatusType =
+  (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
 
 // Document type enum
 export const DocumentType = {
   RESUME: "resume",
-  COVER_LETTER: "cover_letter"
+  COVER_LETTER: "cover_letter",
 } as const;
 
-export type DocumentTypeType = typeof DocumentType[keyof typeof DocumentType];
+export type DocumentTypeType = (typeof DocumentType)[keyof typeof DocumentType];
 
 // Interview type enum
 export const InterviewType = {
@@ -254,38 +287,49 @@ export const InterviewType = {
   TECHNICAL: "technical",
   ONSITE: "onsite",
   HR: "hr",
-  PANEL: "panel"
+  PANEL: "panel",
 } as const;
 
-export type InterviewTypeType = typeof InterviewType[keyof typeof InterviewType];
+export type InterviewTypeType =
+  (typeof InterviewType)[keyof typeof InterviewType];
 
 // Interview Feedback
 export const interviewFeedback = pgTable("interview_feedback", {
   id: serial("id").primaryKey(),
-  interviewId: integer("interview_id").notNull().references(() => interviews.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  interviewId: integer("interview_id")
+    .notNull()
+    .references(() => interviews.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   comments: text("comments").notNull(),
   videoUrl: text("video_url"),
   tags: text("tags").array(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertInterviewFeedbackSchema = createInsertSchema(interviewFeedback).pick({
+export const insertInterviewFeedbackSchema = createInsertSchema(
+  interviewFeedback
+).pick({
   interviewId: true,
   userId: true,
   comments: true,
   videoUrl: true,
-  tags: true
+  tags: true,
 });
 
 export type InterviewFeedback = typeof interviewFeedback.$inferSelect;
-export type InsertInterviewFeedback = z.infer<typeof insertInterviewFeedbackSchema>;
+export type InsertInterviewFeedback = z.infer<
+  typeof insertInterviewFeedbackSchema
+>;
 
 // Interview Questions
 export const interviewQuestions = pgTable("interview_questions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   company: text("company").notNull(),
   role: text("role").notNull(),
   question: text("question").notNull(),
@@ -297,10 +341,12 @@ export const interviewQuestions = pgTable("interview_questions", {
   downvotes: integer("downvotes").default(0),
   public: boolean("public").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertInterviewQuestionSchema = createInsertSchema(interviewQuestions).pick({
+export const insertInterviewQuestionSchema = createInsertSchema(
+  interviewQuestions
+).pick({
   userId: true,
   company: true,
   role: true,
@@ -309,11 +355,13 @@ export const insertInterviewQuestionSchema = createInsertSchema(interviewQuestio
   category: true,
   difficulty: true,
   aiGenerated: true,
-  public: true
+  public: true,
 });
 
 export type InterviewQuestion = typeof interviewQuestions.$inferSelect;
-export type InsertInterviewQuestion = z.infer<typeof insertInterviewQuestionSchema>;
+export type InsertInterviewQuestion = z.infer<
+  typeof insertInterviewQuestionSchema
+>;
 
 // Interview Question Category enum
 export const InterviewQuestionCategory = {
@@ -321,67 +369,98 @@ export const InterviewQuestionCategory = {
   TECHNICAL: "technical",
   SITUATIONAL: "situational",
   COMPANY: "company",
-  OTHER: "other"
+  OTHER: "other",
 } as const;
 
-export type InterviewQuestionCategoryType = typeof InterviewQuestionCategory[keyof typeof InterviewQuestionCategory];
+export type InterviewQuestionCategoryType =
+  (typeof InterviewQuestionCategory)[keyof typeof InterviewQuestionCategory];
 
 // Interview Question Difficulty enum
 export const InterviewQuestionDifficulty = {
   EASY: "easy",
   MEDIUM: "medium",
-  HARD: "hard"
+  HARD: "hard",
 } as const;
 
-export type InterviewQuestionDifficultyType = typeof InterviewQuestionDifficulty[keyof typeof InterviewQuestionDifficulty];
+export type InterviewQuestionDifficultyType =
+  (typeof InterviewQuestionDifficulty)[keyof typeof InterviewQuestionDifficulty];
 
 // Interview Assistance
 export const interviewAssistance = pgTable("interview_assistance", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   interviewId: integer("interview_id").references(() => interviews.id),
   transcriptText: text("transcript_text"),
   questions: jsonb("questions").notNull(),
   responses: jsonb("responses").notNull(),
   feedback: jsonb("feedback"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertInterviewAssistanceSchema = createInsertSchema(interviewAssistance).pick({
+export const insertInterviewAssistanceSchema = createInsertSchema(
+  interviewAssistance
+).pick({
   userId: true,
   interviewId: true,
   transcriptText: true,
   questions: true,
   responses: true,
-  feedback: true
+  feedback: true,
 });
 
 export type InterviewAssistance = typeof interviewAssistance.$inferSelect;
-export type InsertInterviewAssistance = z.infer<typeof insertInterviewAssistanceSchema>;
+export type InsertInterviewAssistance = z.infer<
+  typeof insertInterviewAssistanceSchema
+>;
 
 // Job Profiles
 export const jobProfiles = pgTable("job_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  name: text("name").notNull(),
-  title: text("title").notNull(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+
+  birthday: timestamp("birthday"),
+  phone: text("phone"),
+  country: text("country"),
+  state: text("state"),
+  city: text("city"),
+  zip: text("zip"),
+  address: text("address"),
+
   summary: text("summary"),
-  skills: jsonb("skills").default([]).notNull(),
-  experience: jsonb("experience").default([]).notNull(),
-  education: jsonb("education").default([]).notNull(),
+  skills: jsonb("skills").default([]),
+  experience: jsonb("experience").default([]),
+  education: jsonb("education").default([]),
+  gmails: jsonb("gmails").default([]),
   defaultResume: integer("default_resume").references(() => documents.id),
-  defaultCoverLetter: integer("default_cover_letter").references(() => documents.id),
+  defaultCoverLetter: integer("default_cover_letter").references(
+    () => documents.id
+  ),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertJobProfileSchema = createInsertSchema(jobProfiles).pick({
   userId: true,
-  name: true,
-  title: true,
+  firstName: true,
+  lastName: true,
+  birthday: true,
+  phone: true,
+  country: true,
+  state: true,
+  city: true,
+  address: true,
+  zip: true,
   summary: true,
   skills: true,
+  gmails: true,
   experience: true,
   education: true,
   defaultResume: true,
@@ -396,10 +475,12 @@ export const chatChannels = pgTable("chat_channels", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   type: text("type").notNull(), // 'direct', 'group', 'channel'
-  createdBy: integer("created_by").notNull().references(() => users.id),
+  createdBy: integer("created_by")
+    .notNull()
+    .references(() => users.id),
   isPrivate: boolean("is_private").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertChatChannelSchema = createInsertSchema(chatChannels).pick({
@@ -412,14 +493,20 @@ export const insertChatChannelSchema = createInsertSchema(chatChannels).pick({
 // Chat Channel Members
 export const chatChannelMembers = pgTable("chat_channel_members", {
   id: serial("id").primaryKey(),
-  channelId: integer("channel_id").notNull().references(() => chatChannels.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  channelId: integer("channel_id")
+    .notNull()
+    .references(() => chatChannels.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   role: text("role").default("member").notNull(), // 'owner', 'admin', 'member'
   joinedAt: timestamp("joined_at").defaultNow(),
   lastRead: timestamp("last_read").defaultNow(),
 });
 
-export const insertChatChannelMemberSchema = createInsertSchema(chatChannelMembers).pick({
+export const insertChatChannelMemberSchema = createInsertSchema(
+  chatChannelMembers
+).pick({
   channelId: true,
   userId: true,
   role: true,
@@ -428,8 +515,12 @@ export const insertChatChannelMemberSchema = createInsertSchema(chatChannelMembe
 // Chat Messages
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
-  channelId: integer("channel_id").notNull().references(() => chatChannels.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  channelId: integer("channel_id")
+    .notNull()
+    .references(() => chatChannels.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   content: text("content"),
   type: text("type").default("text").notNull(), // 'text', 'image', 'file', 'voice', 'video'
   attachmentUrl: text("attachment_url"),
@@ -453,7 +544,9 @@ export type ChatChannel = typeof chatChannels.$inferSelect;
 export type InsertChatChannel = z.infer<typeof insertChatChannelSchema>;
 
 export type ChatChannelMember = typeof chatChannelMembers.$inferSelect;
-export type InsertChatChannelMember = z.infer<typeof insertChatChannelMemberSchema>;
+export type InsertChatChannelMember = z.infer<
+  typeof insertChatChannelMemberSchema
+>;
 
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
@@ -462,56 +555,65 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export const ChatChannelType = {
   DIRECT: "direct",
   GROUP: "group",
-  CHANNEL: "channel"
+  CHANNEL: "channel",
 } as const;
 
-export type ChatChannelTypeType = typeof ChatChannelType[keyof typeof ChatChannelType];
+export type ChatChannelTypeType =
+  (typeof ChatChannelType)[keyof typeof ChatChannelType];
 
 export const ChatMemberRole = {
   OWNER: "owner",
   ADMIN: "admin",
-  MEMBER: "member"
+  MEMBER: "member",
 } as const;
 
-export type ChatMemberRoleType = typeof ChatMemberRole[keyof typeof ChatMemberRole];
+export type ChatMemberRoleType =
+  (typeof ChatMemberRole)[keyof typeof ChatMemberRole];
 
 export const ChatMessageType = {
   TEXT: "text",
   IMAGE: "image",
   FILE: "file",
   VOICE: "voice",
-  VIDEO: "video"
+  VIDEO: "video",
 } as const;
 
-export type ChatMessageTypeType = typeof ChatMessageType[keyof typeof ChatMessageType];
+export type ChatMessageTypeType =
+  (typeof ChatMessageType)[keyof typeof ChatMessageType];
 
 // Sheet Import Settings
 export const sheetImportSettings = pgTable("sheet_import_settings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   name: text("name").notNull(),
   email: text("email").notNull(),
   sheetUrl: text("sheet_url").notNull(),
   columnMapping: jsonb("column_mapping").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertSheetImportSettingsSchema = createInsertSchema(sheetImportSettings);
+export const insertSheetImportSettingsSchema =
+  createInsertSchema(sheetImportSettings);
 export type SheetImportSettings = typeof sheetImportSettings.$inferSelect;
-export type InsertSheetImportSettings = z.infer<typeof insertSheetImportSettingsSchema>;
-
+export type InsertSheetImportSettings = z.infer<
+  typeof insertSheetImportSettingsSchema
+>;
 
 // Gmail Connections
 export const gmailConnections = pgTable("gmail_connections", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   email: text("email").notNull(),
   accessToken: text("access_token").notNull(),
   refreshToken: text("refresh_token").notNull(),
   expiry: timestamp("expiry").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertGmailConnectionSchema = createInsertSchema(gmailConnections);

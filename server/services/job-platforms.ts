@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { JobPlatform, JOB_PLATFORMS } from "../client/src/config/job-platforms";
+import { JobPlatform, JOB_PLATFORMS } from "../../client/src/config/job-platforms";
 
 export { JOB_PLATFORMS };
 

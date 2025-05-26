@@ -5,7 +5,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { User as SelectUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { getQueryFn, apiRequest } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import {
@@ -20,6 +20,9 @@ import {
   setPersistence,
 } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
+import { QUERY_KEYS, updateUserStore, clearQueryStore } from "@/lib/query-store";
+import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 
 const loginSchema = z.object({
   email: z.string().email("Must be a valid email"),
@@ -90,14 +93,15 @@ export const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const {
     data: user,
     error,
     isLoading,
-    refetch,
   } = useQuery<Omit<SelectUser, "password"> | undefined, Error>({
-    queryKey: ["/api/user"],
+    queryKey: QUERY_KEYS.USER.CURRENT,
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
@@ -105,11 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Firebase user is authenticated, check if they exist in our backend
         try {
-          // Get the ID token to pass to backend
           const idToken = await firebaseUser.getIdToken();
-          // Call our API to login/register this Firebase user
           const res = await apiRequest("POST", "/api/firebase-auth", {
             idToken,
             email: firebaseUser.email,
@@ -117,13 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photoURL: firebaseUser.photoURL,
           });
           const userData = await res.json();
-          queryClient.setQueryData(["/api/user"], userData);
+          updateUserStore(userData);
         } catch (error) {
           console.error("Error syncing Firebase user with backend:", error);
         }
-      } else {
-        // Not needed if the backend session is separate and has its own /api/user endpoint
-        // We'll keep backend session management separate from Firebase
       }
     });
 
@@ -134,15 +132,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       try {
-        // Sign out any existing Firebase user
         if (auth.currentUser) {
           await signOut(auth);
         }
 
-        // Clear any persisted auth state
         await setPersistence(auth, browserLocalPersistence);
 
-        // Authenticate with Firebase
         let firebaseResult: UserCredential;
         try {
           firebaseResult = await signInWithEmailAndPassword(
@@ -151,7 +146,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             credentials.password
           );
         } catch (firebaseError: any) {
-          // Handle specific Firebase auth errors
           switch (firebaseError.code) {
             case 'auth/invalid-credential':
               throw new Error('Invalid email or password. Please try again.');
@@ -167,10 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Get the Firebase ID token
         const idToken = await firebaseResult.user.getIdToken();
 
-        // Authenticate with our backend using Firebase token
         const res = await apiRequest("POST", "/api/firebase-auth", {
           idToken,
           email: credentials.email,
@@ -185,18 +177,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return await res.json();
       } catch (error: any) {
-        // Sign out on error
         await signOut(auth);
         throw new Error(error.message || "Login failed");
       }
     },
     onSuccess: (user: Omit<SelectUser, "password">) => {
-      queryClient.setQueryData(["/api/user"], user);
+      updateUserStore(user);
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-      window.location.href = '/';
+      setLocation('/');
     },
     onError: (error: Error) => {
       toast({
@@ -210,7 +201,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Google Sign In
   const googleSignIn = async () => {
     try {
-      // Sign out any existing Firebase user first
       if (auth.currentUser) {
         await signOut(auth);
       }
@@ -219,31 +209,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const result = await signInWithPopup(auth, googleProvider);
         const idToken = await result.user.getIdToken();
 
-      const res = await apiRequest("POST", "/api/firebase-auth", {
-        idToken,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
-      });
+        const res = await apiRequest("POST", "/api/firebase-auth", {
+          idToken,
+          email: result.user.email,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
+        });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(
-          errorData.message || "Failed to authenticate with server",
-        );
-      }
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Failed to authenticate with server");
+        }
 
-      const userData = await res.json();
-      queryClient.setQueryData(["/api/user"], userData);
+        const userData = await res.json();
+        updateUserStore(userData);
 
-      toast({
-        title: "Google Sign In Successful",
-        description: "You have successfully signed in with Google.",
-      });
-      
-      window.location.href = '/';
-      return userData;
-    } catch (firebaseError: any) {
+        toast({
+          title: "Google Sign In Successful",
+          description: "You have successfully signed in with Google.",
+        });
+        
+        // Force a refetch of the user data
+        await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.CURRENT });
+        
+        return userData;
+      } catch (firebaseError: any) {
         console.error("Firebase Google sign in error:", firebaseError);
         switch (firebaseError.code) {
           case 'auth/operation-not-allowed':
@@ -273,31 +263,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
       try {
-        // First try to register with Firebase
         if (auth.currentUser) {
           await signOut(auth);
         }
 
         try {
-          // Try Firebase registration first
           await createUserWithEmailAndPassword(
             auth,
             userData.email,
             userData.password,
           );
         } catch (firebaseError: any) {
-          console.log(
-            "Firebase registration failed, trying backend only:",
-            firebaseError,
-          );
-          // If it's not email-already-in-use, we continue with backend registration
+          console.log("Firebase registration failed, trying backend only:", firebaseError);
           if (firebaseError.code === "auth/email-already-in-use") {
             throw new Error("Email is already in use in Firebase");
           }
-          // For other errors, we'll try the backend registration
         }
 
-        // Register with our backend
         const res = await apiRequest("POST", "/api/register", userData);
         if (!res.ok) {
           const errorData = await res.json();
@@ -309,7 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: (user: Omit<SelectUser, "password">) => {
-      queryClient.setQueryData(["/api/user"], user);
+      updateUserStore(user);
       toast({
         title: "Account created",
         description: "Your account has been successfully created.",
@@ -344,23 +326,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-
   // Logout from both Firebase and our backend
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // Sign out from Firebase
       await signOut(auth);
-      // Sign out from our backend
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
-      queryClient.invalidateQueries();
+      clearQueryStore();
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
-      window.location.href = '/auth';
+      setLocation('/auth');
     },
     onError: (error: Error) => {
       toast({

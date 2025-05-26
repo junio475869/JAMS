@@ -2,7 +2,7 @@ import type { Express } from "express";
 // Error handling type for better error messages
 type ApiError = Error | { message?: string };
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
+import { setupAuth } from "./middleware/auth";
 import { setupTeamRoutes } from "./team-routes";
 import { storage } from "./storage";
 import {
@@ -15,7 +15,7 @@ import {
   createMockInterview,
   analyzeApplicationStatus,
   StatusColorAnalysis,
-} from "./ai";
+} from "./utils/ai";
 import { z } from "zod";
 import {
   insertApplicationSchema,
@@ -31,12 +31,12 @@ import {
   InterviewQuestionDifficulty,
   insertSheetImportSettingsSchema,
 } from "@shared/schema";
-import { db } from "./db";
-import { gmailService } from "./gmail-service";
+import { db } from "./utils/db";
+import { gmailService } from "./services/gmail";
 import { CalendarService } from "./microservices/calendar/calendar.service";
-import { searchJobs } from "./job-platforms";
+import { searchJobs } from "./services/job-platforms";
 import { JOB_PLATFORMS } from "../client/src/config/job-platforms";
-import gmailRoutes from "./routes/gmail";
+import gmailRoutes from "./routes/gmail.routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Sets up /api/register, /api/login, /api/logout, /api/user
@@ -1344,6 +1344,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete setting" });
+    }
+  });
+
+  // Profile endpoints
+  app.get("/api/profiles", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const profiles = await storage.getJobProfilesByUserId(req.user!.id);
+      res.json(profiles);
+    } catch (error) {
+      console.error("Error fetching profiles:", error);
+      res.status(500).json({ error: "Failed to fetch profiles" });
+    }
+  });
+
+  app.post("/api/profiles", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const profileData = {
+        ...req.body,
+        userId: req.user!.id
+      };
+      const profile = await storage.createJobProfile(profileData);
+      res.status(201).json(profile);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid request";
+      res.status(400).json({ error: errorMessage });
+    }
+  });
+
+  app.put("/api/profiles/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const profileId = parseInt(req.params.id);
+    if (isNaN(profileId)) {
+      return res.status(400).json({ error: "Invalid profile ID" });
+    }
+
+    try {
+      const profile = await storage.getJobProfileById(profileId);
+      if (!profile || profile.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      const updatedProfile = await storage.updateJobProfile(profileId, req.body);
+      res.json(updatedProfile);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid request";
+      res.status(400).json({ error: errorMessage });
+    }
+  });
+
+  app.delete("/api/profiles/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const profileId = parseInt(req.params.id);
+    if (isNaN(profileId)) {
+      return res.status(400).json({ error: "Invalid profile ID" });
+    }
+
+    try {
+      const profile = await storage.getJobProfileById(profileId);
+      if (!profile || profile.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      await storage.deleteJobProfile(profileId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting profile:", error);
+      res.status(500).json({ error: "Failed to delete profile" });
     }
   });
 

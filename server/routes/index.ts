@@ -1,18 +1,33 @@
 import { Express, Request, Response, NextFunction } from "express";
-import adminRoutes from "./admin";
-import teamRoutes from "./team";
+import adminRoutes from "./admin.routes";
+import teamRoutes from "./team.routes";
 import apiRoutes from "./api";
 import path from "path";
 import { createServer, type Server } from "http";
-import { setupVite, serveStatic } from "../vite";
+import applicationRoutes from "./application.routes";
+import documentRoutes from "./document.routes";
+import interviewRoutes from "./interview.routes";
+import aiRoutes from "./ai.routes";
+import gmailRoutes from "./gmail.routes";
+import { setupAuth } from "../middleware/auth";
+import profilesRoutes from "./profile.routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  setupAuth(app);
+
   // Mount route modules
   app.use("/api/admin", adminRoutes);
   app.use("/api/team", teamRoutes);
   app.use("/api", apiRoutes);
-
-  const server = createServer(app);
+  app.use("/api/gmail", gmailRoutes);
+  app.use("/api/profiles", profilesRoutes);
+  app.use("/api/applications", (req, res) => {
+    res.json({ message: "Hello, world!" });
+  });
+  // app.use("/api/applications", applicationRoutes);
+  app.use("/api/documents", documentRoutes);
+  app.use("/api/interviews", interviewRoutes);
+  app.use("/api/ai", aiRoutes);
 
   // Error handling middleware
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -47,12 +62,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
   // Catch-all route for client-side routing
   app.get("*", (req: Request, res: Response, next: NextFunction) => {
     // Skip API routes and static files
@@ -69,5 +78,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(process.cwd(), "dist", "index.html"));
   });
 
+  const server = createServer(app);
   return server;
 }

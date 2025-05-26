@@ -23,11 +23,14 @@ import {
   type InsertGmailConnection,
   type InterviewStep,
   type InsertInterviewStep,
+  type Profile,
+  type InsertProfile,
+  profiles,
 } from "@shared/schema";
 import { eq, and, desc, count } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
-import { db, pool } from "./db";
+import { db, pool } from "./utils/db";
 import { IStorage } from "./storage";
 
 const PostgresSessionStore = connectPg(session);
@@ -495,5 +498,41 @@ export class DatabaseStorage implements IStorage {
       offers: Number(offersCount),
       completionRate,
     };
+  }
+
+  // Profile methods
+  async getProfilesByUserId(userId: number): Promise<Profile[]> {
+    return await db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.userId, userId));
+  }
+
+  async createProfile(profile: InsertProfile): Promise<Profile> {
+    const [newProfile] = await db
+      .insert(profiles)
+      .values({
+        ...profile,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newProfile;
+  }
+
+  async updateProfile(id: number, updates: Partial<Profile>): Promise<Profile> {
+    const [updatedProfile] = await db
+      .update(profiles)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(profiles.id, id))
+      .returning();
+    return updatedProfile;
+  }
+
+  async deleteProfile(id: number): Promise<void> {
+    await db.delete(profiles).where(eq(profiles.id, id));
   }
 }

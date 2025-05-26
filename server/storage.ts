@@ -25,12 +25,16 @@ import {
   type InterviewAssistance,
   type InsertInterviewAssistance,
   ApplicationStatus,
+  jobProfiles,
+  InsertJobProfile,
+  JobProfile,
 } from "@shared/schema";
 import { eq, and, desc, count, asc, or, sql } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
-import { db, pool } from "./db";
-import { GmailConnection } from "./gmail-service";
+import { db, pool } from "./utils/db";
+import { GmailConnection } from "./services/gmail";
+import { Profile } from "passport";
 
 // Placeholder type - needs to be defined elsewhere
 async function getAllUserGmailData(userId: number) {
@@ -1267,6 +1271,49 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(gmailConnections)
       .where(and(eq(gmailConnections.userId, userId), eq(gmailConnections.email, email)));
+  }
+
+  // Profile methods
+  async getJobProfilesByUserId(userId: number): Promise<JobProfile[]> {
+    return await db
+      .select()
+      .from(jobProfiles)
+      .where(eq(jobProfiles.userId, userId));
+  }
+
+  async getJobProfileById(id: number): Promise<JobProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(jobProfiles)
+      .where(eq(jobProfiles.id, id));
+    return profile;
+  }
+  async createJobProfile(profile: InsertJobProfile): Promise<JobProfile> {
+    const [newProfile] = await db
+      .insert(jobProfiles)
+      .values({
+        ...profile,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newProfile;
+  }
+
+  async updateJobProfile(id: number, updates: Partial<JobProfile>): Promise<JobProfile> {
+    const [updatedProfile] = await db
+      .update(jobProfiles)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(jobProfiles.id, id))
+      .returning();
+    return updatedProfile;
+  }
+
+  async deleteJobProfile(id: number): Promise<void> {
+    await db.delete(jobProfiles).where(eq(jobProfiles.id, id));
   }
 }
 

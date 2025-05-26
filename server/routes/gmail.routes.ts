@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { gmailService } from '../gmail-service';
+import { gmailService } from '../services/gmail';
 import { storage } from '../storage';
 
 const router = Router();

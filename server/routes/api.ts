@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { z } from "zod";
 import { storage } from "../storage";
 import { insertApplicationSchema, insertDocumentSchema } from "@shared/schema";
-import { gmailService } from "../gmail-service";
+import { gmailService } from "../services/gmail";
 
 const router = Router();
 

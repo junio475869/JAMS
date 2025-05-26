@@ -235,7 +235,22 @@ async function createTables() {
       CREATE TABLE IF NOT EXISTS job_profiles (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        birthday DATE NOT NULL,
+        phone TEXT NOT NULL,
+        country TEXT NOT NULL,
+        state TEXT NOT NULL,
+        city TEXT NOT NULL,
+        zip TEXT NOT NULL,
+        address TEXT NOT NULL,
+        summary TEXT,
+        skills JSONB,
+        experience JSONB,
+        education JSONB,
+        gmails JSONB,
+        default_resume INTEGER,
+        default_cover_letter INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -278,6 +293,38 @@ async function createTables() {
         certification TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS profiles (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        date_of_birth DATE NOT NULL,
+        state TEXT NOT NULL,
+        city TEXT NOT NULL,
+        address TEXT NOT NULL,
+        country TEXT NOT NULL,
+        phone_number TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS profile_resumes (
+        id SERIAL PRIMARY KEY,
+        profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+        url TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS profile_gmails (
+        id SERIAL PRIMARY KEY,
+        profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+        email TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(profile_id, email)
       );
     `);
 
