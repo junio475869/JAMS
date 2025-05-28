@@ -7,6 +7,7 @@ import { createServer, type Server } from "http";
 import applicationRoutes from "./application.routes";
 import documentRoutes from "./document.routes";
 import interviewRoutes from "./interview.routes";
+import interviewPrepRoutes from "./interview-prep";
 import aiRoutes from "./ai.routes";
 import gmailRoutes from "./gmail.routes";
 import { setupAuth } from "../middleware/auth";
@@ -24,6 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/applications", applicationRoutes);
   app.use("/api/documents", documentRoutes);
   app.use("/api/interviews", interviewRoutes);
+  app.use("/api/interview-prep", interviewPrepRoutes);
   app.use("/api/ai", aiRoutes);
   app.use("/api/calendar", calendarRoutes);
 

@@ -67,6 +67,7 @@ export function Sidebar({
   // ];
   const jobSeekerItems = [
     { href: "/job-apply", label: "Job Apply", icon: Briefcase },
+    { href: "/interview-assistant", label: "Interview Assistant", icon: BotIcon },
   ];
   const groupManagerItems = [
     { href: "/team-management", label: "Team Management", icon: Users },

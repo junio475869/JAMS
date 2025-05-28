@@ -1,5 +1,4 @@
 import { db } from "./db";
-import * as schema from "@shared/schema";
 
 async function createTables() {
   try {
@@ -54,8 +53,7 @@ async function createTables() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      DROP TABLE IF EXISTS interviews;
-      CREATE TABLE interviews (
+      CREATE TABLE IF NOT EXISTS interviews (
         id SERIAL PRIMARY KEY,
         application_id INTEGER,
         user_id INTEGER NOT NULL,
@@ -73,7 +71,6 @@ async function createTables() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       CREATE TABLE IF NOT EXISTS timeline_events (
         id SERIAL PRIMARY KEY,
         application_id INTEGER NOT NULL,
@@ -94,6 +91,7 @@ async function createTables() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
 
       CREATE TABLE IF NOT EXISTS interview_assistance (
         id SERIAL PRIMARY KEY,
@@ -162,6 +160,48 @@ async function createTables() {
         interview_step_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
         tag TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS interview_prep_questions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        question TEXT NOT NULL,
+        answer TEXT,
+        category TEXT NOT NULL,
+        difficulty TEXT NOT NULL,
+        company TEXT,
+        role TEXT,
+        upvotes INTEGER DEFAULT 0,
+        downvotes INTEGER DEFAULT 0,
+        tags TEXT[] DEFAULT '{}',
+        is_public BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS mock_interviews (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        role TEXT NOT NULL,
+        company TEXT,
+        duration INTEGER NOT NULL,
+        question_count INTEGER NOT NULL,
+        difficulty TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP,
+        score NUMERIC,
+        feedback TEXT,
+        questions JSONB NOT NULL DEFAULT '[]'
+      );
+
+      CREATE TABLE IF NOT EXISTS ai_interview_responses (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        question TEXT NOT NULL,
+        response TEXT NOT NULL,
+        timestamp TIMESTAMP NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -328,9 +368,9 @@ async function createTables() {
       );
     `);
 
-    console.log('Database tables created successfully (no foreign keys)');
+    console.log('All tables created successfully');
   } catch (error) {
-    console.error('Error creating database tables:', error);
+    console.error('Error creating tables:', error);
     throw error;
   }
 }

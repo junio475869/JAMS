@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 
 // Configure database pool
 export const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL || "postgres://avnadmin:AVNS_TSHCpCN-1ASEeI4spMD@pg-ada48aa-junio475869-6768.b.aivencloud.com:24381/defaultdb",
+  connectionString: process.env.DATABASE_URL,
   // ssl: {
   //   rejectUnauthorized: false // Required for Aiven PostgreSQL
   // },

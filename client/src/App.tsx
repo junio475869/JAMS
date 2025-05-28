@@ -19,6 +19,7 @@ import SettingsPage from "@/pages/settings";
 import CalendarPage from "@/pages/calendar/calendar-page";
 import EmailPage from "@/pages/email/email-page";
 import InterviewPrepPage from "@/pages/interviews/interview-prep-page";
+import InterviewAssistant from "@/pages/InterviewAssistant";
 import TeamManagementPage from "@/pages/team/team-management-page";
 import JobApplyPage from "@/pages/applications/job-apply-page";
 import ChatPage from "@/pages/chat/chat-page";
@@ -59,6 +60,7 @@ function App() {
                           path="/interview"
                           component={InterviewPrepPage}
                         />
+                        <Route path="/interview-assistant" component={InterviewAssistant} />
                         <Route path="/settings" component={SettingsPage} />
                         <Route path="/chat" component={ChatPage} />
                         <Route path="/team-management">

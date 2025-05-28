@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition.tsx";
+import { useInterviewPrep } from "@/hooks/useInterviewPrep";
 import {
   Card,
   CardContent,
@@ -52,63 +53,34 @@ import {
   Timer,
   User,
   Users,
+  Loader2,
 } from "lucide-react";
-import { format, subDays } from "date-fns";
-
-interface InterviewQuestion {
-  id: string;
-  question: string;
-  answer?: string;
-  category: string;
-  difficulty: "Easy" | "Medium" | "Hard" | "Expert";
-  company?: string;
-  role?: string;
-  upvotes: number;
-  downvotes: number;
-  tags: string[];
-  createdAt: Date;
-  userId: string;
-  isPublic: boolean;
-}
-
-interface MockInterview {
-  id: string;
-  title: string;
-  role: string;
-  company?: string;
-  duration: number; // in minutes
-  questionCount: number;
-  difficulty: "Easy" | "Medium" | "Hard" | "Expert";
-  createdAt: Date;
-  completedAt?: Date;
-  score?: number;
-  feedback?: string;
-  questions: {
-    id: string;
-    question: string;
-    answer?: string;
-    aiAnalysis?: {
-      score: number;
-      feedback: string;
-      strengths: string[];
-      weaknesses: string[];
-      improvementSuggestions: string[];
-    };
-  }[];
-}
+import { format } from "date-fns";
 
 export default function InterviewPrepPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("questions");
-
-  // Demo mode check
-  const isDemoMode = localStorage.getItem("demoMode") === "true";
+  const { transcript, listening, waveformData, duration, startListening, stopListening, resetTranscript } = useSpeechRecognition();
+  const {
+    questions,
+    isLoadingQuestions,
+    createQuestion,
+    updateQuestion,
+    deleteQuestion,
+    mockInterviews,
+    isLoadingMockInterviews,
+    createMockInterview,
+    updateMockInterview,
+    deleteMockInterview,
+    aiResponses,
+    isLoadingAIResponses,
+    createAIResponse,
+    deleteAIResponse,
+  } = useInterviewPrep();
 
   // Question management
-  const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
   const [questionFilter, setQuestionFilter] = useState("");
-  const [selectedQuestion, setSelectedQuestion] =
-    useState<InterviewQuestion | null>(null);
+  const [selectedQuestion, setSelectedQuestion] = useState<typeof questions[0] | null>(null);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [newQuestion, setNewQuestion] = useState({
     question: "",
@@ -117,14 +89,12 @@ export default function InterviewPrepPage() {
     difficulty: "Medium" as "Easy" | "Medium" | "Hard" | "Expert",
     company: "",
     role: "",
-    tags: "",
+    tags: [] as string[],
     isPublic: true,
   });
 
   // Mock interview management
-  const [mockInterviews, setMockInterviews] = useState<MockInterview[]>([]);
-  const [selectedInterview, setSelectedInterview] =
-    useState<MockInterview | null>(null);
+  const [selectedInterview, setSelectedInterview] = useState<typeof mockInterviews[0] | null>(null);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [interviewInProgress, setInterviewInProgress] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -134,278 +104,6 @@ export default function InterviewPrepPage() {
 
   // AI Interview Assistance
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiResponses, setAiResponses] = useState<
-    {
-      question: string;
-      response: string;
-      timestamp: Date;
-    }[]
-  >([]);
-
-  useEffect(() => {
-    if (isDemoMode) {
-      // Generate mock interview questions
-      const mockQuestions: InterviewQuestion[] = [
-        {
-          id: "1",
-          question:
-            "Tell me about a time you had to handle a difficult situation with a team member.",
-          answer:
-            "The STAR method is useful here: describe the Situation, Task, Action, and Result. Focus on how you communicated effectively and found a resolution that benefited the team.",
-          category: "Behavioral",
-          difficulty: "Medium",
-          company: "Amazon",
-          role: "Product Manager",
-          upvotes: 143,
-          downvotes: 12,
-          tags: ["leadership", "conflict-resolution", "teamwork"],
-          createdAt: subDays(new Date(), 120),
-          userId: "user1",
-          isPublic: true,
-        },
-        {
-          id: "2",
-          question:
-            "How would you design a URL shortening service like bit.ly?",
-          answer:
-            "Consider: 1) Hash function to create unique short URLs 2) Database schema 3) API design 4) Analytics features 5) Rate limiting 6) Caching strategy 7) Scaling considerations for high traffic",
-          category: "System Design",
-          difficulty: "Hard",
-          company: "Google",
-          role: "Senior Software Engineer",
-          upvotes: 210,
-          downvotes: 18,
-          tags: ["system-design", "scalability", "backend"],
-          createdAt: subDays(new Date(), 90),
-          userId: "user2",
-          isPublic: true,
-        },
-        {
-          id: "3",
-          question:
-            "Implement a function to check if a binary tree is balanced.",
-          category: "Coding",
-          difficulty: "Medium",
-          company: "Microsoft",
-          role: "Software Engineer",
-          upvotes: 87,
-          downvotes: 5,
-          tags: ["binary-tree", "recursion", "dfs"],
-          createdAt: subDays(new Date(), 60),
-          userId: "user3",
-          isPublic: true,
-        },
-        {
-          id: "4",
-          question:
-            "How would you improve the search functionality on our e-commerce platform?",
-          answer:
-            "Consider: 1) Implementing autocomplete 2) Fuzzy search for typos 3) Semantic search 4) Faceted filtering 5) Personalized results based on user behavior 6) A/B testing different approaches",
-          category: "Product",
-          difficulty: "Medium",
-          company: "Shopify",
-          role: "Product Manager",
-          upvotes: 65,
-          downvotes: 8,
-          tags: ["search", "product-improvement", "user-experience"],
-          createdAt: subDays(new Date(), 45),
-          userId: "user4",
-          isPublic: true,
-        },
-        {
-          id: "5",
-          question:
-            "What are the key considerations when designing a distributed cache?",
-          category: "System Design",
-          difficulty: "Expert",
-          company: "Netflix",
-          role: "Senior Backend Engineer",
-          upvotes: 132,
-          downvotes: 11,
-          tags: ["distributed-systems", "caching", "scalability"],
-          createdAt: subDays(new Date(), 30),
-          userId: "user5",
-          isPublic: true,
-        },
-        {
-          id: "6",
-          question:
-            "Describe a time when you had to make a difficult decision with limited information.",
-          category: "Behavioral",
-          difficulty: "Hard",
-          company: "Apple",
-          role: "Engineering Manager",
-          upvotes: 97,
-          downvotes: 9,
-          tags: ["decision-making", "leadership", "uncertainty"],
-          createdAt: subDays(new Date(), 25),
-          userId: "user6",
-          isPublic: true,
-        },
-        {
-          id: "7",
-          question: "How would you implement a rate limiter for an API?",
-          answer:
-            "There are several approaches: 1) Token bucket algorithm 2) Leaky bucket algorithm 3) Fixed window counter 4) Sliding window log. Consider distributed implementation with Redis. Track by IP, user ID, or API key.",
-          category: "System Design",
-          difficulty: "Medium",
-          company: "Stripe",
-          role: "Backend Engineer",
-          upvotes: 76,
-          downvotes: 4,
-          tags: ["api-design", "rate-limiting", "backend"],
-          createdAt: subDays(new Date(), 15),
-          userId: "user7",
-          isPublic: true,
-        },
-        {
-          id: "8",
-          question: "What motivates you to work in this industry?",
-          category: "Behavioral",
-          difficulty: "Easy",
-          upvotes: 54,
-          downvotes: 3,
-          tags: ["motivation", "career-goals"],
-          createdAt: subDays(new Date(), 10),
-          userId: "user8",
-          isPublic: true,
-        },
-      ];
-
-      // Create some mock interviews
-      const mockInterviewsData: MockInterview[] = [
-        {
-          id: "1",
-          title: "Frontend Developer Practice",
-          role: "Frontend Developer",
-          company: "Tech Innovations Inc.",
-          duration: 30,
-          questionCount: 5,
-          difficulty: "Medium",
-          createdAt: subDays(new Date(), 5),
-          completedAt: subDays(new Date(), 4),
-          score: 8.5,
-          feedback:
-            "Good knowledge of React and state management. Could improve on system design explanations.",
-          questions: [
-            {
-              id: "q1",
-              question: "Explain the virtual DOM and its benefits.",
-              answer:
-                "I explained how React uses a virtual DOM to optimize rendering by minimizing actual DOM manipulations.",
-              aiAnalysis: {
-                score: 9,
-                feedback: "Excellent explanation of the virtual DOM concept.",
-                strengths: [
-                  "Clear technical explanation",
-                  "Good examples",
-                  "Showed deep understanding",
-                ],
-                weaknesses: [
-                  "Could have mentioned reconciliation process more specifically",
-                ],
-                improvementSuggestions: [
-                  "Add a brief comparison with other frameworks",
-                ],
-              },
-            },
-            {
-              id: "q2",
-              question:
-                "How would you optimize the performance of a React application?",
-              answer:
-                "I discussed code splitting, memoization, lazy loading, and using production builds.",
-              aiAnalysis: {
-                score: 8,
-                feedback: "Good coverage of optimization techniques.",
-                strengths: [
-                  "Comprehensive list of techniques",
-                  "Practical focus",
-                ],
-                weaknesses: ["Didn't mention profiling tools"],
-                improvementSuggestions: [
-                  "Include examples of when to use each technique",
-                ],
-              },
-            },
-          ],
-        },
-        {
-          id: "2",
-          title: "System Design Interview Prep",
-          role: "Senior Backend Engineer",
-          duration: 45,
-          questionCount: 3,
-          difficulty: "Hard",
-          createdAt: subDays(new Date(), 2),
-          questions: [
-            {
-              id: "q1",
-              question:
-                "Design a distributed file storage system like Google Drive.",
-            },
-            {
-              id: "q2",
-              question: "How would you design Twitter's timeline feature?",
-            },
-            {
-              id: "q3",
-              question: "Design a global video streaming service like Netflix.",
-            },
-          ],
-        },
-        {
-          id: "3",
-          title: "Product Manager Interview",
-          role: "Product Manager",
-          company: "FinTech Startup",
-          duration: 25,
-          questionCount: 4,
-          difficulty: "Medium",
-          createdAt: subDays(new Date(), 1),
-          questions: [
-            {
-              id: "q1",
-              question:
-                "How would you prioritize features for our new mobile banking app?",
-            },
-            {
-              id: "q2",
-              question:
-                "Describe a product you managed from ideation to launch.",
-            },
-            {
-              id: "q3",
-              question: "How do you gather and incorporate user feedback?",
-            },
-            {
-              id: "q4",
-              question: "How would you measure the success of a new feature?",
-            },
-          ],
-        },
-      ];
-
-      setQuestions(mockQuestions);
-      setMockInterviews(mockInterviewsData);
-
-      // Sample AI responses
-      setAiResponses([
-        {
-          question: "How should I prepare for a system design interview?",
-          response:
-            "For system design interviews, focus on understanding scalability concepts, database design, caching strategies, load balancing, and microservices architecture. Practice drawing system diagrams and explaining your thought process clearly. Study existing system designs of popular applications like Twitter, Netflix, or Uber. Be ready to discuss trade-offs between different approaches.",
-          timestamp: subDays(new Date(), 2),
-        },
-        {
-          question: "What's a good answer for 'Tell me about yourself'?",
-          response:
-            "A strong response to 'Tell me about yourself' should be concise (1-2 minutes) and structured like this:\n\n1. Current role and key responsibilities\n2. Relevant past experience that prepared you for this role\n3. Key achievements or skills that align with the job\n4. Why you're interested in this specific position and company\n\nFocus on professional information relevant to the role rather than personal details. Tailor your answer to highlight experiences that match the job description.",
-          timestamp: subDays(new Date(), 1),
-        },
-      ]);
-    }
-  }, [isDemoMode]);
 
   // Filter questions based on search input
   const filteredQuestions = questionFilter
@@ -423,75 +121,72 @@ export default function InterviewPrepPage() {
       )
     : questions;
 
-  // Sort questions by upvotes (most popular first)
-  const sortedQuestions = [...filteredQuestions].sort(
-    (a, b) => b.upvotes - a.upvotes,
-  );
-
-  const handleCreateQuestion = () => {
-    if (!newQuestion.question.trim()) {
+  const handleCreateQuestion = async () => {
+    try {
+      await createQuestion.mutateAsync({
+        ...newQuestion,
+        tags: newQuestion.tags.filter(Boolean),
+        upvotes: 0,
+        downvotes: 0,
+        userId: 1, // This should come from the authenticated user
+      });
+      setShowQuestionModal(false);
+      setNewQuestion({
+        question: "",
+        answer: "",
+        category: "Behavioral",
+        difficulty: "Medium",
+        company: "",
+        role: "",
+        tags: [],
+        isPublic: true,
+      });
       toast({
-        title: "Question is required",
-        description: "Please enter a question before submitting.",
+        title: "Success",
+        description: "Question created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create question",
         variant: "destructive",
       });
-      return;
     }
-
-    // In a real app, this would make an API call
-    const question: InterviewQuestion = {
-      id: `new-${Math.random().toString(36).substr(2, 9)}`,
-      question: newQuestion.question,
-      answer: newQuestion.answer,
-      category: newQuestion.category,
-      difficulty: newQuestion.difficulty,
-      company: newQuestion.company || undefined,
-      role: newQuestion.role || undefined,
-      upvotes: 0,
-      downvotes: 0,
-      tags: newQuestion.tags
-        ? newQuestion.tags.split(",").map((tag) => tag.trim())
-        : [],
-      createdAt: new Date(),
-      userId: "current-user",
-      isPublic: newQuestion.isPublic,
-    };
-
-    setQuestions([question, ...questions]);
-    setShowQuestionModal(false);
-    setNewQuestion({
-      question: "",
-      answer: "",
-      category: "Behavioral",
-      difficulty: "Medium",
-      company: "",
-      role: "",
-      tags: "",
-      isPublic: true,
-    });
-
-    toast({
-      title: "Question created",
-      description: "Your question has been added successfully.",
-    });
   };
 
-  const handleVote = (id: string, isUpvote: boolean) => {
-    setQuestions(
-      questions.map((q) => {
-        if (q.id === id) {
-          return {
-            ...q,
-            upvotes: isUpvote ? q.upvotes + 1 : q.upvotes,
-            downvotes: !isUpvote ? q.downvotes + 1 : q.downvotes,
-          };
-        }
-        return q;
-      }),
-    );
+  const handleUpdateQuestion = async (id: number, data: Partial<typeof questions[0]>) => {
+    try {
+      await updateQuestion.mutateAsync({ id, data });
+      toast({
+        title: "Success",
+        description: "Question updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update question",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleStartMockInterview = (interview: MockInterview) => {
+  const handleDeleteQuestion = async (id: number) => {
+    try {
+      await deleteQuestion.mutateAsync(id);
+      toast({
+        title: "Success",
+        description: "Question deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete question",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStartMockInterview = (interview: typeof mockInterviews[0]) => {
     setSelectedInterview(interview);
     setCurrentQuestionIndex(0);
     setUserAnswer("");
@@ -499,7 +194,7 @@ export default function InterviewPrepPage() {
     setInterviewComplete(false);
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (!selectedInterview) return;
 
     // Save the answer to the current question
@@ -518,60 +213,62 @@ export default function InterviewPrepPage() {
       updatedInterview.feedback =
         "Good answers overall. You demonstrated strong technical knowledge and communication skills. Consider providing more specific examples in behavioral questions.";
 
-      // Update mock interviews list
-      setMockInterviews(
-        mockInterviews.map((mi) =>
-          mi.id === updatedInterview.id ? updatedInterview : mi,
-        ),
-      );
+      try {
+        await updateMockInterview.mutateAsync({
+          id: updatedInterview.id,
+          data: updatedInterview,
+        });
 
-      setSelectedInterview(updatedInterview);
-      setInterviewComplete(true);
+        setSelectedInterview(updatedInterview);
+        setInterviewComplete(true);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save interview progress",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleAskAI = () => {
-    if (!aiPrompt.trim()) {
+  const handleCreateAIResponse = async () => {
+    if (!aiPrompt.trim()) return;
+
+    try {
+      await createAIResponse.mutateAsync({
+        question: aiPrompt,
+        response: "This is a mock AI response. In a real app, this would be generated by an AI model.",
+      });
+      setAiPrompt("");
       toast({
-        title: "Question is required",
-        description: "Please enter a question to ask the AI assistant.",
+        title: "Success",
+        description: "AI response created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create AI response",
         variant: "destructive",
       });
-      return;
     }
+  };
 
-    // In a real app, this would call the OpenAI API
-    const mockResponse =
-      "To prepare effectively for this interview, I recommend researching the company's products, values, and recent news. Practice answering common questions for your specific role using the STAR method (Situation, Task, Action, Result) for behavioral questions. Prepare questions to ask the interviewer that demonstrate your interest in the role. For technical interviews, review fundamentals and practice problem-solving out loud to demonstrate your thought process.";
+  const handleStartRecording = () => {
+    resetTranscript();
+    startListening();
+    setShowMicModal(true);
+  };
 
-    setAiResponses([
-      {
-        question: aiPrompt,
-        response: mockResponse,
-        timestamp: new Date(),
-      },
-      ...aiResponses,
-    ]);
-
-    setAiPrompt("");
-
-    toast({
-      title: "AI response generated",
-      description: "The AI assistant has answered your question.",
-    });
+  const handleStopRecording = () => {
+    stopListening();
+    setShowMicModal(false);
+    if (transcript) {
+      setUserAnswer(transcript);
+    }
   };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {isDemoMode && (
-        <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6">
-          <p className="text-blue-300 font-medium">
-            You're in demo mode. Interview preparation features use sample data
-            only.
-          </p>
-        </div>
-      )}
-
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Interview Preparation</h1>
       </div>
@@ -601,12 +298,15 @@ export default function InterviewPrepPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {sortedQuestions.length > 0 ? (
-              sortedQuestions.map((question) => (
+            {isLoadingQuestions ? (
+              <div className="col-span-2 flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredQuestions.length > 0 ? (
+              filteredQuestions.map((question) => (
                 <Card key={question.id} className="overflow-hidden">
                   <CardHeader className="pb-3">
-                    <div className="flex justify-between">
-                      <Badge variant="outline">{question.category}</Badge>
+                    <div className="flex justify-between items-start">
                       <Badge
                         variant={
                           question.difficulty === "Easy"
@@ -620,17 +320,37 @@ export default function InterviewPrepPage() {
                       >
                         {question.difficulty}
                       </Badge>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleUpdateQuestion(question.id, { upvotes: question.upvotes + 1 })}
+                        >
+                          <ThumbsUp className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {question.upvotes}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleUpdateQuestion(question.id, { downvotes: question.downvotes + 1 })}
+                        >
+                          <ThumbsDown className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {question.downvotes}
+                        </span>
+                      </div>
                     </div>
-                    <CardTitle className="text-lg mt-2 line-clamp-2">
-                      {question.question}
-                    </CardTitle>
-                    {(question.company || question.role) && (
-                      <CardDescription>
-                        {question.company && `${question.company}`}
-                        {question.company && question.role && " • "}
-                        {question.role && `${question.role}`}
-                      </CardDescription>
-                    )}
+                    <CardTitle className="text-lg mt-2">{question.question}</CardTitle>
+                    <CardDescription>
+                      {question.category}
+                      {question.company && ` • ${question.company}`}
+                      {question.role && ` • ${question.role}`}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {question.answer ? (
@@ -656,26 +376,6 @@ export default function InterviewPrepPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between border-t pt-4 pb-2">
-                    <div className="flex items-center space-x-1 text-sm">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-green-600"
-                        onClick={() => handleVote(question.id, true)}
-                      >
-                        <ThumbsUp className="h-4 w-4 mr-1" />
-                        <span>{question.upvotes}</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-red-600"
-                        onClick={() => handleVote(question.id, false)}
-                      >
-                        <ThumbsDown className="h-4 w-4 mr-1" />
-                        <span>{question.downvotes}</span>
-                      </Button>
-                    </div>
                     <Button
                       variant="outline"
                       size="sm"
@@ -704,7 +404,11 @@ export default function InterviewPrepPage() {
         </TabsContent>
 
         <TabsContent value="mock">
-          {interviewInProgress ? (
+          {isLoadingMockInterviews ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : interviewInProgress ? (
             <div>
               <div className="flex justify-between items-center mb-6">
                 <div>
@@ -832,7 +536,7 @@ export default function InterviewPrepPage() {
                           variant="outline"
                           size="sm"
                           className="mr-2"
-                          onClick={() => setShowMicModal(true)}
+                          onClick={handleStartRecording}
                         >
                           <Mic className="h-4 w-4 mr-1" />
                           Record Answer
@@ -955,82 +659,85 @@ export default function InterviewPrepPage() {
             <div>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Practice Interviews</h2>
-                <Button
-                  onClick={() =>
-                    toast({
-                      title: "Not available in demo mode",
-                      description: "This would create a custom mock interview",
-                    })
-                  }
-                >
+                <Button onClick={() => setShowInterviewModal(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Custom Interview
                 </Button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {mockInterviews.map((interview) => (
-                  <Card key={interview.id} className="overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <Badge
-                          variant={
-                            interview.difficulty === "Easy"
-                              ? "outline"
-                              : interview.difficulty === "Medium"
-                                ? "secondary"
-                                : interview.difficulty === "Hard"
-                                  ? "destructive"
-                                  : "default"
-                          }
-                        >
-                          {interview.difficulty}
-                        </Badge>
-                        <div className="text-sm text-muted-foreground">
-                          {interview.duration} min
+                {mockInterviews.length > 0 ? (
+                  mockInterviews.map((interview) => (
+                    <Card key={interview.id} className="overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <Badge
+                            variant={
+                              interview.difficulty === "Easy"
+                                ? "outline"
+                                : interview.difficulty === "Medium"
+                                  ? "secondary"
+                                  : interview.difficulty === "Hard"
+                                    ? "destructive"
+                                    : "default"
+                            }
+                          >
+                            {interview.difficulty}
+                          </Badge>
+                          <div className="text-sm text-muted-foreground">
+                            {interview.duration} min
+                          </div>
                         </div>
-                      </div>
-                      <CardTitle className="text-lg mt-2">
-                        {interview.title}
-                      </CardTitle>
-                      <CardDescription>
-                        {interview.role}
-                        {interview.company && ` • ${interview.company}`}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-sm text-muted-foreground mb-4">
-                        {interview.questionCount} questions
-                      </div>
+                        <CardTitle className="text-lg mt-2">
+                          {interview.title}
+                        </CardTitle>
+                        <CardDescription>
+                          {interview.role}
+                          {interview.company && ` • ${interview.company}`}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm text-muted-foreground mb-4">
+                          {interview.questionCount} questions
+                        </div>
 
-                      {interview.completedAt && (
-                        <div className="flex items-center text-sm mb-4">
-                          <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                          <span>
-                            Completed on{" "}
-                            {format(interview.completedAt, "MMM d, yyyy")}
-                          </span>
-                          {interview.score && (
-                            <Badge className="ml-2 bg-green-100 text-green-800 hover:bg-green-100">
-                              Score: {interview.score}/10
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex justify-between border-t pt-4">
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => handleStartMockInterview(interview)}
-                      >
-                        {interview.completedAt
-                          ? "Review Interview"
-                          : "Start Interview"}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
+                        {interview.completedAt && (
+                          <div className="flex items-center text-sm mb-4">
+                            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                            <span>
+                              Completed on{" "}
+                              {format(interview.completedAt, "MMM d, yyyy")}
+                            </span>
+                            {interview.score && (
+                              <Badge className="ml-2 bg-green-100 text-green-800 hover:bg-green-100">
+                                Score: {interview.score}/10
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex justify-between border-t pt-4">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => handleStartMockInterview(interview)}
+                        >
+                          {interview.completedAt
+                            ? "Review Interview"
+                            : "Start Interview"}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-12">
+                    <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No mock interviews</h3>
+                    <p className="text-muted-foreground">
+                      Create your first mock interview to start practicing.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-10">
@@ -1151,7 +858,11 @@ export default function InterviewPrepPage() {
                 <CardContent className="p-0">
                   <ScrollArea className="h-[calc(100vh-450px)]">
                     <div className="p-4 space-y-6">
-                      {aiResponses.length > 0 ? (
+                      {isLoadingAIResponses ? (
+                        <div className="flex justify-center items-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : aiResponses.length > 0 ? (
                         aiResponses.map((response, index) => (
                           <div key={index} className="space-y-3">
                             <div className="flex items-start">
@@ -1181,15 +892,11 @@ export default function InterviewPrepPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="text-center py-10">
-                          <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-medium mb-2">
-                            AI Assistant
-                          </h3>
-                          <p className="text-muted-foreground max-w-md mx-auto">
-                            Ask questions about interview preparation, get
-                            feedback on answers, or request tips for specific
-                            interview types.
+                        <div className="text-center py-12">
+                          <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                          <h3 className="text-lg font-medium mb-2">No AI responses yet</h3>
+                          <p className="text-muted-foreground">
+                            Ask a question to get started with the AI assistant.
                           </p>
                         </div>
                       )}
@@ -1207,14 +914,14 @@ export default function InterviewPrepPage() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
-                          handleAskAI();
+                          handleCreateAIResponse();
                         }
                       }}
                     />
                     <Button
                       size="icon"
                       className="h-10 w-10"
-                      onClick={handleAskAI}
+                      onClick={handleCreateAIResponse}
                       disabled={!aiPrompt.trim()}
                     >
                       <Send className="h-4 w-4" />
@@ -1539,9 +1246,12 @@ export default function InterviewPrepPage() {
                   <Input
                     id="tags"
                     placeholder="e.g. algorithms, leadership, teamwork (comma separated)"
-                    value={newQuestion.tags}
+                    value={newQuestion.tags.join(", ")}
                     onChange={(e) =>
-                      setNewQuestion({ ...newQuestion, tags: e.target.value })
+                      setNewQuestion({
+                        ...newQuestion,
+                        tags: e.target.value.split(", ").map((tag) => tag.trim()),
+                      })
                     }
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -1581,7 +1291,7 @@ export default function InterviewPrepPage() {
                   difficulty: "Medium",
                   company: "",
                   role: "",
-                  tags: "",
+                  tags: [],
                   isPublic: true,
                 });
               }}
@@ -1606,48 +1316,50 @@ export default function InterviewPrepPage() {
 
       {/* Recording Modal */}
       <Dialog open={showMicModal} onOpenChange={setShowMicModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Record Your Answer</DialogTitle>
+            <DialogTitle>Voice Recording</DialogTitle>
             <DialogDescription>
-              Speak your answer and we'll transcribe it for you
+              Speak your answer clearly. The recording will automatically stop after 2 minutes.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="flex flex-col items-center py-8">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 relative">
-              <Mic className="h-10 w-10 text-primary animate-pulse" />
-              <div className="absolute inset-0 rounded-full border-4 border-primary/40 animate-ping"></div>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center justify-center">
+              <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
+                {waveformData?.map((value, index) => (
+                  <div
+                    key={index}
+                    className="absolute bottom-0 bg-blue-500"
+                    style={{
+                      left: `${(index / waveformData.length) * 100}%`,
+                      width: `${100 / waveformData.length}%`,
+                      height: `${(value / 255) * 100}%`,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-            <p className="text-center text-muted-foreground">
-              Recording in progress...
-            </p>
+            <div className="flex items-center justify-center space-x-4">
+              <Button
+                variant={listening ? "destructive" : "default"}
+                onClick={listening ? handleStopRecording : handleStartRecording}
+                className="w-24"
+              >
+                {listening ? "Stop" : "Record"}
+              </Button>
+              <div className="text-sm text-gray-500">
+                {Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-700">{transcript || "Your speech will appear here..."}</p>
+            </div>
           </div>
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowMicModal(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                setShowMicModal(false);
-
-                // Mock transcription
-                setUserAnswer(
-                  userAnswer +
-                    (userAnswer ? "\n\n" : "") +
-                    "In my previous role, I implemented a caching layer that reduced database load by 30%. I identified that our application was making redundant queries which was causing performance issues during peak hours. After analyzing the access patterns, I implemented a Redis cache with appropriate TTL values based on data volatility. This not only improved response times by 40% but also reduced our infrastructure costs.",
-                );
-
-                toast({
-                  title: "Answer transcribed",
-                  description:
-                    "Your spoken answer has been added to the text area",
-                });
-              }}
-            >
-              Stop & Transcribe
-            </Button>
+            <Button onClick={handleStopRecording}>Save Answer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

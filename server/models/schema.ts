@@ -1,5 +1,5 @@
 import { pgTable, serial, text, timestamp, integer, boolean, json } from 'drizzle-orm/pg-core';
-import { ApplicationStatus, DocumentType } from '@shared/schema';
+import { ApplicationStatus, DocumentType } from '@shared/schema.js';
 
 export const applications = pgTable('applications', {
   id: serial('id').primaryKey(),
@@ -123,4 +123,68 @@ export const jobProfiles = pgTable('job_profiles', {
   birthday: timestamp('birthday'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-}); 
+});
+
+export const interviewPrepQuestions = pgTable('interview_prep_questions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  question: text('question').notNull(),
+  answer: text('answer'),
+  category: text('category').notNull(),
+  difficulty: text('difficulty').notNull(),
+  company: text('company'),
+  role: text('role'),
+  upvotes: integer('upvotes').default(0),
+  downvotes: integer('downvotes').default(0),
+  tags: text('tags').$type<string[]>(),
+  isPublic: boolean('is_public').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const mockInterviews = pgTable('mock_interviews', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  title: text('title').notNull(),
+  role: text('role').notNull(),
+  company: text('company'),
+  duration: integer('duration').notNull(), // in minutes
+  questionCount: integer('question_count').notNull(),
+  difficulty: text('difficulty').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  score: integer('score'),
+  feedback: text('feedback'),
+  questions: json('questions').$type<{
+    id: string;
+    question: string;
+    answer?: string;
+    aiAnalysis?: {
+      score: number;
+      feedback: string;
+      strengths: string[];
+      weaknesses: string[];
+      improvementSuggestions: string[];
+    };
+  }[]>(),
+});
+
+export const aiInterviewResponses = pgTable('ai_interview_responses', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  question: text('question').notNull(),
+  response: text('response').notNull(),
+  timestamp: timestamp('timestamp').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export default {
+  applications,
+  documents,
+  interviews,
+  interviewQuestions,
+  interviewPrepQuestions,
+  mockInterviews,
+  aiInterviewResponses,
+}; 
