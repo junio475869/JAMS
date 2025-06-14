@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { users } from './schema';
-import { User, InsertUser } from '@shared/schema';
+
+import { User, InsertUser, users } from '@shared/schema';
 
 export class UserModel {
   constructor(private db: any) {}

@@ -8,7 +8,7 @@ const demoUser = {
   id: 999,
   username: "demo-user",
   email: "demo@example.com",
-  fullName: "Demo User",
+  fullname: "Demo User",
   profilePicture: "",
   createdAt: new Date(),
   updatedAt: new Date(),

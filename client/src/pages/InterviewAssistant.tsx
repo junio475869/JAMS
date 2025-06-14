@@ -436,7 +436,7 @@ const InterviewAssistant: React.FC = () => {
                       {inputDevices.map((device) => (
                         <SelectItem
                           key={device.deviceId}
-                          value={device.deviceId}
+                          value={device.deviceId || "default"}
                         >
                           {device.label}
                         </SelectItem>
@@ -460,7 +460,7 @@ const InterviewAssistant: React.FC = () => {
                       {outputDevices.map((device) => (
                         <SelectItem
                           key={device.deviceId}
-                          value={device.deviceId}
+                          value={device.deviceId || "default"}
                         >
                           {device.label}
                         </SelectItem>

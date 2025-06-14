@@ -137,7 +137,7 @@ export default function TeamManagementPage() {
       username: formData.get("username") as string,
       email: formData.get("email") as string,
       password: formData.get("password") as string,
-      fullName: formData.get("fullName") as string,
+      fullname: formData.get("fullname") as string,
       role: formData.get("role") as string,
       teamId: user?.role === UserRole.GROUP_LEADER ? user.teamId : parseInt(formData.get("teamId") as string),
     };
@@ -152,7 +152,7 @@ export default function TeamManagementPage() {
     const formData = new FormData(e.currentTarget);
     
     const updates = {
-      fullName: formData.get("fullName") as string,
+      fullname: formData.get("fullname") as string,
       role: formData.get("role") as string,
       teamId: user?.role === UserRole.GROUP_LEADER ? user.teamId : parseInt(formData.get("teamId") as string),
     };
@@ -228,8 +228,8 @@ export default function TeamManagementPage() {
                   <Input id="password" name="password" type="password" required />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input id="fullName" name="fullName" />
+                  <Label htmlFor="fullname">Full Name</Label>
+                  <Input id="fullname" name="fullname" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="role">Role</Label>
@@ -292,7 +292,7 @@ export default function TeamManagementPage() {
             <TableBody>
               {teamMembers.map((member) => (
                 <TableRow key={member.id}>
-                  <TableCell className="font-medium">{member.fullName || 'N/A'}</TableCell>
+                  <TableCell className="font-medium">{member.fullname || 'N/A'}</TableCell>
                   <TableCell>{member.username}</TableCell>
                   <TableCell>{member.email}</TableCell>
                   <TableCell>
@@ -345,11 +345,11 @@ export default function TeamManagementPage() {
             <form onSubmit={handleUpdateUser}>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-fullName">Full Name</Label>
+                  <Label htmlFor="edit-fullname">Full Name</Label>
                   <Input 
-                    id="edit-fullName" 
-                    name="fullName" 
-                    defaultValue={selectedUser.fullName || ''} 
+                    id="edit-fullname" 
+                    name="fullname" 
+                    defaultValue={selectedUser.fullname || ''} 
                   />
                 </div>
                 <div className="grid gap-2">
@@ -404,7 +404,7 @@ export default function TeamManagementPage() {
             <DialogHeader>
               <DialogTitle>Confirm Delete</DialogTitle>
               <DialogDescription>
-                Are you sure you want to remove {selectedUser.fullName || selectedUser.username} from your team? 
+                Are you sure you want to remove {selectedUser.fullname || selectedUser.username} from your team? 
                 This action cannot be undone.
               </DialogDescription>
             </DialogHeader>

@@ -224,7 +224,7 @@ export function Sidebar({
                 {!sidebarCollapsed && (
                   <div className="ml-3 text-left">
                     <p className="text-sm font-medium text-white">
-                      {user?.fullName || user?.username}
+                      {user?.fullname || user?.username}
                     </p>
                     <p className="text-xs text-gray-400">{user?.email}</p>
                   </div>

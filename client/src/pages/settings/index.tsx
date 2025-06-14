@@ -25,7 +25,7 @@ import { DeleteConfirmationModal } from "./components/modals/delete-confirmation
 
 // Profile update form schema
 const profileFormSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
+  fullname: z.string().min(1, "Full name is required"),
   username: z.string().min(1, "Username is required"),
   email: z.string().email("Invalid email address"),
   profilePicture: z.string().optional(),
@@ -236,24 +236,13 @@ export default function ProfilePage() {
     }
   }, [user, profileForm]);
 
-  const onPasswordSubmit = (data: PasswordFormValues) => {
-    updatePasswordMutation.mutate({
-      currentPassword: data.currentPassword,
-      newPassword: data.newPassword,
-    });
-  };
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   // Update password mutation
   const updatePasswordMutation = useMutation({
     mutationFn: async (data: {
       currentPassword: string;
       newPassword: string;
     }) => {
-      const res = await apiRequest("POST", `/api/user/password`, data);
+      const res = await apiRequest("PUT", `/api/users/${user?.id}/password`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -271,6 +260,17 @@ export default function ProfilePage() {
       });
     },
   });
+
+  const onPasswordSubmit = (data: PasswordFormValues) => {
+    updatePasswordMutation.mutate({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+    });
+  };
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   // Check if in demo mode
   const isDemoMode = localStorage.getItem("demoMode") === "true";
@@ -311,8 +311,8 @@ export default function ProfilePage() {
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (user?.fullName) {
-      return user.fullName
+    if (user?.fullname) {
+      return user.fullname
         .split(" ")
         .map((name) => name[0])
         .join("")
@@ -356,17 +356,13 @@ export default function ProfilePage() {
             </TabsList>
 
             <TabsContent value="account">
-              <AccountTab
-                form={profileForm}
-                onSubmit={onSubmitProfile}
-                isPending={profileMutation.isPending}
-              />
+              <AccountTab />
             </TabsContent>
 
             <TabsContent value="security">
               <SecurityTab
                 form={passwordForm}
-                onSubmit={updatePasswordMutation.mutate}
+                onSubmit={onPasswordSubmit}
                 isPending={updatePasswordMutation.isPending}
               />
             </TabsContent>

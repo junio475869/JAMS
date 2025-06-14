@@ -74,7 +74,7 @@ export default function AuthPage() {
     defaultValues: {
       email: "",
       password: "",
-      fullName: "",
+      fullname: "",
     },
   });
 
@@ -85,13 +85,13 @@ export default function AuthPage() {
   const onRegisterSubmit = async (data: {
     email: string;
     password: string;
-    fullName: string;
+    fullname: string;
   }) => {
     try {
       await registerMutation.mutateAsync({
         email: data.email,
         password: data.password,
-        fullName: data.fullName,
+        fullname: data.fullname,
       });
       // navigate("/");
     } catch (error) {
@@ -297,7 +297,7 @@ export default function AuthPage() {
                   />
                   <FormField
                     control={registerForm.control}
-                    name="fullName"
+                    name="fullname"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>

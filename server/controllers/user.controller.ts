@@ -1,8 +1,12 @@
 import { UserModel } from '../models/user.model';
 import { User, InsertUser } from '@shared/schema';
+import { storage } from '../storage';
 
 export class UserController {
-  constructor(private userModel: UserModel) {}
+  private userModel: UserModel;
+  constructor() {
+    this.userModel = new UserModel(storage as any);
+  }
 
   async getUserById(id: number): Promise<User | undefined> {
     return this.userModel.findById(id);

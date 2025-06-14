@@ -87,7 +87,7 @@ export function setupAuth(app: Express) {
   const registerSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
-    fullName: z.string().min(1),
+    fullname: z.string().min(1),
   });
 
   const loginSchema = z.object({
@@ -119,7 +119,7 @@ export function setupAuth(app: Express) {
           // Update existing user with Firebase UID and latest info
           user = await storage.updateUser(user.id, { 
             firebaseUID,
-            fullName: displayName || user.fullName,
+            fullname: displayName || user.fullname,
             profilePicture: photoURL || user.profilePicture,
             email: email // Update email in case it changed
           });
@@ -129,7 +129,7 @@ export function setupAuth(app: Express) {
           user = await storage.createUser({
             username,
             email,
-            fullName: displayName || username,
+            fullname: displayName || username,
             password: await hashPassword(generateRandomPassword()),
             profilePicture: photoURL || '',
             firebaseUID,

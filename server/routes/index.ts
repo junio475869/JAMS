@@ -13,11 +13,13 @@ import gmailRoutes from "./gmail.routes";
 import { setupAuth } from "../middleware/auth";
 import profilesRoutes from "./profile.routes";
 import calendarRoutes from "./calendar.routes";
+import userRoutes from "./user.routes.ts";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Mount route modules
+  app.use("/api/users", userRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/team", teamRoutes);
   app.use("/api/gmail", gmailRoutes);
